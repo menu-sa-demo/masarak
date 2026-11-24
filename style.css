@@ -503,7 +503,7 @@ button,input,select,textarea{font-family:inherit}
 .xn{flex:none;width:36px;height:36px;border-radius:50%;background:var(--c);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
 .xqt{flex:1;font-size:22px;font-weight:700;line-height:1.7}.xm{flex:none;font-size:13px;color:#777;padding-top:6px}
 .xo{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin:8px 48px 0 0;font-size:20px}
-.xo span{display:flex;align-items:center;gap:8px}
+.xo>span{display:flex;align-items:center;gap:8px;direction:rtl}
 .xl{font-style:normal;width:30px;height:30px;border:2px solid var(--c);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--c);flex:none}
 .xf{position:absolute;inset-inline:0;bottom:0;height:46px;background:var(--c);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:0 36px;font-weight:700;font-size:16px}
 .xkb h4{margin:18px 0 8px;font-size:20px;color:var(--c)}.xkg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;font-size:20px}.xkg span{border:2px solid var(--c);border-radius:10px;padding:6px 12px}.xkg b{color:var(--c)}
@@ -522,7 +522,8 @@ button,input,select,textarea{font-family:inherit}
 .th-royal:not(.slide) .h2,.th-playful:not(.slide) .h2{margin-bottom:16px}
 
 .xsec{background:var(--c);color:#fff;border-radius:10px;padding:6px 16px;font-size:19px;font-weight:700;display:flex;justify-content:space-between;margin-top:4px}
-.xtf{display:flex;gap:40px;margin:8px 48px 0 0;font-size:20px}.xtf span{display:flex;align-items:center;gap:8px}.xtf .xl{width:30px;height:30px;border-radius:6px}
+.xtf{display:flex;gap:40px;margin:8px 48px 0 0;font-size:20px}.xtf>span{display:flex;align-items:center;gap:8px}.xtf .xl{width:30px;height:30px;border-radius:6px}
 .xlines{margin:6px 48px 0 0}.xlines i{display:block;border-bottom:1.5px dotted #777;height:36px}
 .xks{margin:12px 0 6px;font-weight:700;color:#14213d}.xke div{border-bottom:1px dashed #bbb;padding:6px 4px;font-size:16px}.xke b{color:var(--c)}
 .xkg{grid-template-columns:repeat(4,1fr)!important}.xkg span{font-size:17px!important}
+.xp .m,.page .m{display:inline-block;direction:ltr;unicode-bidi:isolate}.xp sup,.page sup{vertical-align:super;font-size:.62em;line-height:0;margin-inline-start:1px}
