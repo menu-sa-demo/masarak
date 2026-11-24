@@ -401,22 +401,26 @@
   }
   var XH = { mcq: 108, tf: 84, fill: 70, essay: 200 };
   function examPages(x, d, model) {
-    var secs = xsections(x, model), pages = [[]], used = 0, cap = 700;
+    var secs = xsections(x, model), N = +x.sheets || 0, tot = 0;
+    secs.forEach(function (sec) { tot += 50 + sec.items.length * XH[sec.k]; });
+    var s = 1; if (N > 0) { s = Math.max(0.6, Math.min(1, (700 + (N - 1) * 900) * 0.88 / tot)); }
+    x.warn = N > 0 && tot * 0.6 > 0.88 * (700 + (N - 1) * 900);
+    var pages = [[]], used = 0, cap = 700;
     secs.forEach(function (sec, si) {
-      var total = sec.items.reduce(function (t, it) { return t + (it.k === 'essay' ? x.pe : x.per); }, 0);
+      var total = sec.items.reduce(function (t, it) { return t + (it.k === 'essay' ? x.pe : x.per); }, 0), hh = XH[sec.k] * s, sh = 50 * s;
       var hd = '<div class="xsec"><b>السؤال ' + ORD[si] + ':</b> ' + XSEC[sec.k] + '<span>(' + total + ' درجات)</span></div>';
-      if (used + 50 + XH[sec.k] > cap) { pages.push([]); used = 0; cap = 900; }
-      pages[pages.length - 1].push(hd); used += 50;
+      if (used + sh + hh > cap) { pages.push([]); used = 0; cap = 900; }
+      pages[pages.length - 1].push(hd); used += sh;
       sec.items.forEach(function (it, i) {
-        if (used + XH[sec.k] > cap) { pages.push([]); used = 0; cap = 900; }
-        pages[pages.length - 1].push(xblock(x, it, i + 1)); used += XH[sec.k];
+        if (used + hh > cap) { pages.push([]); used = 0; cap = 900; }
+        pages[pages.length - 1].push(xblock(x, it, i + 1)); used += hh;
       });
     });
-    var out = '', count = xitems(x, 'A').length;
+    var wn = x.warn ? '<div class="xwarn">عدد الأسئلة كبير على ' + (N === 1 ? 'ورقة واحدة' : 'ورقتين') + '، قلل الأسئلة أو اختار ورقتين عشان الخط يفضل مقروء.</div>' : '', out = '', count = xitems(x, 'A').length;
     pages.forEach(function (pg, pi) {
       out += xopen(d) + xhead(x, d, model);
       if (pi === 0) out += '<div class="xinfo"><span>اسم الطالب: ................................</span><span>الفصل: ..........</span><span>التاريخ: ....../....../......</span></div><div class="xmeta"><span>الزمن: ' + (+x.time || 30) + ' دقيقة</span><span>عدد الأسئلة: ' + count + '</span><span>الدرجة الكلية: ' + xmarks(x) + '</span></div><div class="xins">أجب عن جميع الأسئلة الآتية.</div>';
-      out += '<div class="xqs">' + pg.join('') + '</div>' + xfoot(d, pi + 1, pages.length) + '</div>';
+      out += (pi === 0 ? wn : '') + '<div class="xqs" style="zoom:' + s + '">' + pg.join('') + '</div>' + xfoot(d, pi + 1, pages.length) + '</div>';
     });
     return out;
   }
@@ -446,7 +450,7 @@
       '<div class="lab">أنواع الأسئلة وعددها (الصفر يعني النوع ده مش هيظهر)</div>' +
       num('n', 'اختر الإجابة الصحيحة (متاح ' + cp.mcq + ')', cp.mcq) + num('nt', 'صح أو خطأ (متاح ' + cp.tf + ')', cp.tf) + num('nf', 'أكمل (متاح ' + cp.fill + ')', cp.fill) + num('ne', 'أسئلة مقالية (متاح ' + cp.essay + ')', cp.essay) +
       num('per', 'درجة السؤال (اختر، صح وخطأ، أكمل)', 10) + num('pe', 'درجة السؤال المقالي', 20) + num('time', 'الزمن بالدقائق', 180) +
-      '<div class="lab">النماذج</div><div class="pick">' + chip('data-xmd', '1', x.models === 1, 'نموذج واحد') + chip('data-xmd', '2', x.models === 2, 'نموذجين (أ و ب) بترتيب مختلف') + '</div>' +
+      '<div class="lab">حجم الاختبار على الورق</div><div class="pick">' + chip('data-xsh', '0', !x.sheets, 'تلقائي') + chip('data-xsh', '1', x.sheets === 1, 'ورقة واحدة') + chip('data-xsh', '2', x.sheets === 2, 'ورقتين') + '</div>' + '<div class="lab">النماذج</div><div class="pick">' + chip('data-xmd', '1', x.models === 1, 'نموذج واحد') + chip('data-xmd', '2', x.models === 2, 'نموذجين (أ و ب) بترتيب مختلف') + '</div>' +
       '<div class="lab">نموذج الإجابة</div><div class="pick">' + chip('data-xkey', '1', x.key, 'اطبعه مع الاختبار') + chip('data-xkey', '0', !x.key, 'من غير') + '</div>' +
       '<button type="button" class="chip" id="xre" style="margin-top:12px;width:100%">🔀 أسئلة مختلفة من نفس الدروس</button>' +
       '<details class="xcus"><summary>+ أضف سؤال من عندك (أي نوع)</summary><label>نوع السؤال<select id="ck"><option value="mcq">اختر</option><option value="tf">صح أو خطأ</option><option value="fill">أكمل</option><option value="essay">مقالي</option></select></label><label>نص السؤال<input id="cq" placeholder="مثلا: ناتج {{2^3 × 2^2}} يساوي:"></label>' + ['أ', 'ب', 'ج', 'د'].map(function (l, k) { return '<label>الاختيار ' + l + ' (للاختر فقط)<input class="co" data-co="' + k + '"></label>'; }).join('') + '<label>الإجابة الصحيحة (للاختر: رقم الاختيار 1 إلى 4، لصح وخطأ: اكتب صح أو خطأ، للأكمل والمقالي: الإجابة النموذجية)<input id="ca"></label><button type="button" class="chip" id="cadd" style="margin-top:8px">إضافة السؤال</button>' + (x.custom.length ? '<div class="lab">أسئلتك (' + x.custom.length + ')</div>' + x.custom.map(function (c, i) { return '<div class="xcl"><span>' + txt(c.t) + '</span><button type="button" class="chip" data-cdel="' + i + '" aria-label="حذف">×</button></div>'; }).join('') : '') + '</details></div>';
@@ -458,7 +462,7 @@
     return '<section class="page-s"><h2>الاختبارات</h2><p class="sub">اعمل اختبار شهري على اللي اتشرح في الشهر، أو اختبار شامل على المنهج كله، بكل أنواع الأسئلة: اختر، صح وخطأ، أكمل، ومقالي. كل اختبار بيطلع باسمك وبرقمك وجاهز للطباعة، بنموذجين ونموذج إجابة.</p><div id="xl"></div><div class="ed"><div id="xc"></div><div class="prev"><div class="tabs" id="xtabs"></div><div id="xv"></div><button class="btn" id="xpr" style="margin-top:14px">اطبع الاختبار أو احفظ PDF</button> <button class="chip" id="xsv" style="margin-top:14px">💾 احفظ الاختبار</button><p class="muted" id="xmsg"></p></div></div></section>';
   };
   function examInit() {
-    if (!X) { X = newExam(); xgen(X); }
+    if (!X) { X = newExam(); var qs = /[?&]sh=(\d)/.exec(location.search); if (qs) X.sheets = +qs[1]; xgen(X); }
     var draw = function (full) {
       if (full !== false) { $('#xc').innerHTML = xcontrols(); xbind(); }
       $('#xl').innerHTML = xlist(); xbindList();
@@ -477,6 +481,7 @@
       c.querySelectorAll('[data-xt]').forEach(function (b) { b.onclick = function () { X.type = b.dataset.xt; if (X.type === 'full') { X.topics = TOPICS.map(function (t) { return t[0]; }); var cp = xcaps(X); X.n = cp.mcq; X.nt = Math.min(5, cp.tf); X.nf = Math.min(5, cp.fill); X.ne = Math.min(3, cp.essay); X.time = 90; } xgen(X); draw(); }; });
       c.querySelectorAll('[data-xm]').forEach(function (b) { b.onclick = function () { X.month = b.dataset.xm; draw(); }; });
       c.querySelectorAll('[data-xtp]').forEach(function (b) { b.onclick = function () { var t = b.dataset.xtp, i = X.topics.indexOf(t); if (i >= 0) { if (X.topics.length > 1) X.topics.splice(i, 1); } else X.topics.push(t); xgen(X); draw(); }; });
+      c.querySelectorAll('[data-xsh]').forEach(function (b) { b.onclick = function () { X.sheets = +b.dataset.xsh; draw(); }; });
       c.querySelectorAll('[data-xmd]').forEach(function (b) { b.onclick = function () { X.models = +b.dataset.xmd; draw(); }; });
       c.querySelectorAll('[data-xkey]').forEach(function (b) { b.onclick = function () { X.key = b.dataset.xkey === '1'; draw(); }; });
       $('#xre').onclick = function () { X.seed += 13; xgen(X); draw(false); };
