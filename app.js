@@ -87,16 +87,16 @@
   window.addEventListener('resize', fitAll);
   function fitBox(html, kind, d) { var w = dims(kind || 's', d || D); return '<div class="fit" data-w="' + w[0] + '" data-h="' + w[1] + '"><div class="scale" style="width:' + w[0] + 'px">' + html + '</div></div>'; }
 
-  function isPaid() { return !!(USER && USER.name && USER.plan === 'paid'); }
-  function paywall() {
+  function isPaid(k) { return !!(USER && USER.name && (k === 'x' ? USER.xplan : USER.plan) === 'paid'); }
+  function paywall(k) {
     var old = document.getElementById('pw'); if (old) old.remove();
     var li = !!(USER && USER.name), d = document.createElement('div'); d.id = 'pw';
-    d.innerHTML = '<div class="pwb" role="dialog" aria-modal="true"><div class="pwi">🔒</div><h3>الميزة دي للمشتركين</h3><p>' + (li ? 'تصفّح واعمل اللي تحبه، لكن التحميل والطباعة بيتفتحوا بعد الاشتراك. اطلب الاشتراك من حسابك وبعد تأكيد التحويل بيتفعّل.' : 'تصفّح واعمل اللي تحبه، لكن التحميل والطباعة للمشتركين بس. سجّل حساب واطلب الاشتراك عشان تفتحهم.') + '</p><div class="pwr"><a class="btn y" href="#/account" id="pwgo">' + (li ? 'شوف الاشتراك' : 'إنشاء حساب') + '</a><button class="btn" id="pwx">مش دلوقتي</button></div></div>';
+    d.innerHTML = '<div class="pwb" role="dialog" aria-modal="true"><div class="pwi">🔒</div><h3>' + (k === 'x' ? 'الاختبارات باشتراك منفصل' : 'الميزة دي للمشتركين') + '</h3><p>' + (li ? 'تصفّح واعمل اللي تحبه، لكن التحميل والطباعة بيتفتحوا بعد الاشتراك. اطلب الاشتراك من حسابك وبعد تأكيد التحويل بيتفعّل.' : 'تصفّح واعمل اللي تحبه، لكن التحميل والطباعة للمشتركين بس. سجّل حساب واطلب الاشتراك عشان تفتحهم.') + '</p><div class="pwr"><a class="btn y" href="#/account" id="pwgo">' + (li ? 'شوف الاشتراك' : 'إنشاء حساب') + '</a><button class="btn" id="pwx">مش دلوقتي</button></div></div>';
     document.body.appendChild(d);
     d.onclick = function (e) { if (e.target === d || e.target.id === 'pwx' || e.target.id === 'pwgo') d.remove(); };
   }
-  function printPages(html, slide, free) {
-    if (!free && !isPaid()) { paywall(); return; }
+  function printPages(html, slide, free, kind) {
+    if (!free && !isPaid(kind)) { paywall(kind); return; }
     var st = $('#pgsty'); if (!st) { st = document.createElement('style'); st.id = 'pgsty'; document.head.appendChild(st); }
     st.textContent = slide ? '@page{size:1120px 630px;margin:0}' : '@page{size:A4;margin:0}';
     $('#print-area').innerHTML = html;
@@ -153,13 +153,18 @@
   function loadProfile() {
     return token().then(function (t) { return sbf('/rest/v1/profiles?select=*&limit=1', {}, t); }).then(function (r) {
       var p = r && r[0]; if (!p) throw new Error('noprofile');
-      USER = { name: p.name || 'حساب', phone: p.phone || '', email: p.email || SESS.email, plan: p.plan || 'free', id: p.id, admin: (p.email || '').toLowerCase() === ADMIN };
+      USER = { name: p.name || 'حساب', phone: p.phone || '', email: p.email || SESS.email, plan: p.plan || 'free', xplan: p.exams_plan || 'free', grades: p.grades || [], id: p.id, admin: (p.email || '').toLowerCase() === ADMIN };
       hdr();
     }).catch(function () { SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); });
   }
   function signOut() { SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); route(); }
-  function setPlan(plan) { return token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + USER.id, { method: 'PATCH', body: { plan: plan }, prefer: 'return=minimal' }, t); }); }
-  var ACCMODE = 'up', ACCERR = '';
+  function setPlan(plan, k) { return token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + USER.id, { method: 'PATCH', body: k === 'x' ? { exams_plan: plan } : { plan: plan }, prefer: 'return=minimal' }, t); }); }
+  var ACCMODE = 'up', ACCERR = '', PICK = [];
+  var STG = [['p', 'ابتدائي', '🎒', ['الأول', 'التاني', 'التالت', 'الرابع', 'الخامس', 'السادس']], ['m', 'إعدادي', '📘', ['الأول', 'التاني', 'التالت']], ['h', 'ثانوي', '🎓', ['الأول', 'التاني', 'التالت']]];
+  function gname(c) { var s = STG.filter(function (x) { return x[0] === c[0]; })[0]; return s ? s[1] + ' ' + s[3][+c.slice(1) - 1] : c; }
+  function picker() {
+    return '<div class="stg"><b>اختار المرحلة والصف (تقدر تختار أكتر من واحد)</b>' + STG.map(function (s) { return '<div class="stgr"><span class="stgi">' + s[2] + ' ' + s[1] + '</span>' + s[3].map(function (g, i) { var c = s[0] + (i + 1); return '<button type="button" class="chip" data-pk="' + c + '" aria-pressed="' + (PICK.indexOf(c) > -1) + '">' + g + '</button>'; }).join('') + '</div>'; }).join('') + '<p class="sub">المتاح دلوقتي: إعدادي - التالت. باقي الصفوف بنضيفها قريبًا وبتتسجل في حسابك.</p></div>';
+  }
   var ORDERS = []; try { ORDERS = JSON.parse(localStorage.getItem('masarak_orders') || '[]'); } catch (e) {}
   function cartItems() { return cart.map(function (id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean); }
   function cartSum(items) { var t = items.reduce(function (a, p) { return a + p.price; }, 0); return items.length === PRODUCTS.length ? BUNDLE : t; }
@@ -277,11 +282,11 @@
       }).join('') + '<p class="sub">في النموذج التجريبي حالة الطلب بتتغير بزر التجربة. في النسخة الحقيقية بتتغير بعد تأكيد التحويل.</p></section>';
     },
     account: function () {
-      if (USER.name) return '<section class="page-s"><h2>حسابك</h2><div class="panelw"><p>أهلًا <b>' + esc(USER.name) + '</b></p><p class="sub">' + esc(USER.phone || '') + ' ' + esc(USER.email || '') + '</p><a class="btn y" href="#/orders">طلباتك وملفاتك</a> ' + (USER.admin ? '<a class="btn" href="#/admin">صفحة الإدارة</a> ' : '') + '<button class="btn" id="lo">تسجيل خروج</button></div>' + planPanel() + '</section>';
+      if (USER.name) return '<section class="page-s"><h2>حسابك</h2><div class="panelw"><p>أهلًا <b>' + esc(USER.name) + '</b></p><p class="sub">' + esc(USER.phone || '') + ' ' + esc(USER.email || '') + '</p>' + (USER.grades && USER.grades.length ? '<p>صفوفك: ' + USER.grades.map(function (c) { return '<span class="badge">' + esc(gname(c)) + '</span>'; }).join(' ') + '</p>' : '') + '<a class="btn y" href="#/orders">طلباتك وملفاتك</a> ' + (USER.admin ? '<a class="btn" href="#/admin">صفحة الإدارة</a> ' : '') + '<button class="btn" id="lo">تسجيل خروج</button></div>' + planPanel() + '</section>';
       var up = ACCMODE === 'up';
       return '<section class="page-s"><h2>' + (up ? 'إنشاء حساب' : 'تسجيل الدخول') + '</h2><form id="acf" class="panelw"><div class="tabs"><button type="button" class="chip" data-am="up" aria-pressed="' + up + '">حساب جديد</button><button type="button" class="chip" data-am="in" aria-pressed="' + !up + '">عندي حساب</button></div>' +
         (up ? '<label>الاسم الكامل<input name="n" required></label><label>رقم الموبايل<input name="p" required dir="ltr" inputmode="tel"></label>' : '') +
-        '<label>الإيميل<input name="e" type="email" dir="ltr" required autocomplete="email"></label><label>كلمة السر<input name="w" type="password" dir="ltr" required minlength="6" autocomplete="' + (up ? 'new-password' : 'current-password') + '"></label>' +
+        (up ? picker() : '') + '<label>الإيميل<input name="e" type="email" dir="ltr" required autocomplete="email"></label><label>كلمة السر<input name="w" type="password" dir="ltr" required minlength="6" autocomplete="' + (up ? 'new-password' : 'current-password') + '"></label>' +
         '<p class="sub" id="acerr" style="color:#c0392b">' + esc(ACCERR) + '</p><button class="btn y" type="submit">' + (up ? 'إنشاء الحساب' : 'دخول') + '</button></form></section>';
     },
     admin: function () {
@@ -299,13 +304,18 @@
     }
   };
 
+  function planCard(k, title, desc, p) {
+    var h = '<div class="plc"><h4>' + title + '</h4><p class="sub">' + desc + '</p><p>السعر: <b>سعر تجريبي</b></p>';
+    if (p === 'paid') return h + '<p><span class="badge g">مفعّل</span></p></div>';
+    if (p === 'pending') return h + '<p><span class="badge">في الانتظار</span> بنأكد التحويل وبعدها بيتفعّل.</p></div>';
+    return h + '<button class="btn y" data-rq="' + k + '">اطلب الاشتراك</button></div>';
+  }
   function planPanel() {
-    var p = USER.plan || 'free', t = '<div class="panelw plan"><h3>اشتراكك</h3>';
-    if (p === 'paid') return t + '<p><span class="badge g">مفعّل</span> التحميل والطباعة مفتوحين لكل حاجة في الموقع.</p></div>';
-    t += '<p class="sub">حاليًا: <b>مجاني</b>. المفتوح: التصفح والتصميم والمعاينة وكل بنك الأسئلة. المقفول لحد الاشتراك: تحميل وطباعة PDF.</p>';
-    var pay = '<div class="payl"><b>طرق الدفع</b><ul><li>إنستا باي: <b dir="ltr">01147795940</b></li><li>تحويل بنكي: هيتضاف قريبًا</li><li>فودافون كاش: هيتضاف قريبًا</li></ul><p class="sub">السعر: <b>سعر تجريبي</b>. حوّل، وبعدها ابعت الإيصال واضغط الزر. بيتفعّل اشتراكك بعد التأكيد.</p></div>';
-    if (p === 'pending') return t + '<p><span class="badge">في الانتظار</span> بنأكد التحويل وبعدها بيتفعّل اشتراكك.</p>' + pay + '</div>';
-    return t + pay + '<button class="btn y" id="plreq">اطلب الاشتراك</button></div>';
+    var t = '<div class="panelw plan"><h3>اشتراكك</h3><p class="sub">التصفح والتصميم والمعاينة وكل بنك الأسئلة مفتوحين للكل. المقفول لحد الاشتراك: تحميل وطباعة PDF.</p><div class="plcs">' +
+      planCard('n', 'المذكرات وبنك الأسئلة', 'تحميل وطباعة المذكرات وكل أسئلة البنك.', USER.plan || 'free') +
+      planCard('x', 'الاختبارات', 'تحميل وطباعة الاختبارات. اشتراك منفصل وليه سعره.', USER.xplan || 'free') + '</div>';
+    if ((USER.plan !== 'paid') || (USER.xplan !== 'paid')) t += '<div class="payl"><b>طرق الدفع</b><ul><li>إنستا باي: <b dir="ltr">01147795940</b></li><li>تحويل بنكي: هيتضاف قريبًا</li><li>فودافون كاش: هيتضاف قريبًا</li></ul><p class="sub">حوّل، وابعت الإيصال، واضغط "اطلب الاشتراك". بيتفعّل بعد التأكيد.</p></div>';
+    return t + '</div>';
   }
   function viewer(mode, n) {
     var max = mode === 's' ? 10 : Q.length;
@@ -328,12 +338,28 @@
 
   function loadAdmin() {
     var box = $('#adl'); if (!box) return;
-    token().then(function (t) { return sbf('/rest/v1/profiles?select=id,name,phone,email,plan,created_at&order=created_at.desc', {}, t); }).then(function (r) {
+    token().then(function (t) { return sbf('/rest/v1/profiles?select=id,name,phone,email,plan,exams_plan,grades,created_at&order=created_at.desc', {}, t); }).then(function (r) {
       var lb = { free: 'مجاني', pending: 'طلب اشتراك', paid: 'مشترك' };
-      r.sort(function (a, b) { return (a.plan === 'pending' ? 0 : 1) - (b.plan === 'pending' ? 0 : 1); });
-      box.innerHTML = '<p class="sub">' + r.length + ' حساب</p>' + r.map(function (u) { return '<div class="ci"><span><b>' + esc(u.name) + '</b> <span class="sub" dir="ltr">' + esc(u.phone) + ' ' + esc(u.email) + '</span> <span class="badge' + (u.plan === 'paid' ? ' g' : '') + '">' + lb[u.plan] + '</span></span>' + (u.plan === 'paid' ? '<button class="btn" data-ap="' + u.id + '|free">إلغاء التفعيل</button>' : '<button class="btn y" data-ap="' + u.id + '|paid">فعّل</button>') + '</div>'; }).join('');
-      box.querySelectorAll('[data-ap]').forEach(function (b) { b.onclick = function () { var x = b.dataset.ap.split('|'); b.disabled = true; token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + x[0], { method: 'PATCH', body: { plan: x[1] }, prefer: 'return=minimal' }, t); }).then(loadAdmin).catch(function () { b.textContent = 'فشل'; }); }; });
+      var pd = function (a) { return a.plan === 'pending' || a.exams_plan === 'pending' ? 0 : 1; }; r.sort(function (a, b) { return pd(a) - pd(b); });
+      var btn = function (u, col, lbl) { var v = u[col]; return '<span class="sub">' + lbl + ': ' + lb[v] + '</span> ' + (v === 'paid' ? '<button class="btn" data-ap="' + u.id + '|' + col + '|free">إلغاء</button>' : '<button class="btn y" data-ap="' + u.id + '|' + col + '|paid">فعّل</button>'); };
+      box.innerHTML = '<p class="sub">' + r.length + ' حساب</p>' + r.map(function (u) { return '<div class="ci adr"><span><b>' + esc(u.name) + '</b> <span class="sub" dir="ltr">' + esc(u.phone) + ' ' + esc(u.email) + '</span>' + ((u.grades || []).length ? '<br><span class="sub">' + u.grades.map(gname).map(esc).join('، ') + '</span>' : '') + '</span><span>' + btn(u, 'plan', 'المذكرات') + '<br>' + btn(u, 'exams_plan', 'الاختبارات') + '</span></div>'; }).join('');
+      box.querySelectorAll('[data-ap]').forEach(function (b) { b.onclick = function () { var x = b.dataset.ap.split('|'), bd = {}; bd[x[1]] = x[2]; b.disabled = true; token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + x[0], { method: 'PATCH', body: bd, prefer: 'return=minimal' }, t); }).then(loadAdmin).catch(function () { b.textContent = 'فشل'; }); }; });
     }).catch(function () { box.textContent = 'مشكلة في التحميل.'; });
+  }
+  var TOUR = [['#/editor', '✏️', 'صمّم مذكرتك', 'اكتب اسمك ورقمك واختار اللون والإطار، وشوف المذكرة بتتغير قدامك.'], ['#/bank', '📚', 'بنك الأسئلة', 'أسئلة مرتبة بالحل والتلميح. التصفح مفتوح للكل.'], ['#/exams', '📝', 'الاختبارات', 'ركّب اختبار بالأسئلة اللي تختارها واطبعه بورقة أو ورقتين.'], ['#/account', '🔓', 'الاشتراك', 'سجّل حساب واختار صفك. التحميل والطباعة بيتفتحوا بعد تفعيل اشتراكك.']];
+  function sheet(html, id) { var o = document.getElementById('wl'); if (o) o.remove(); var d = document.createElement('div'); d.id = 'wl'; d.innerHTML = '<div class="wlb" role="dialog" aria-modal="true">' + html + '</div>'; document.body.appendChild(d); return d; }
+  function tourStep(i) {
+    if (i >= TOUR.length) { var o = document.getElementById('wl'); if (o) o.remove(); return; }
+    var t = TOUR[i]; location.hash = t[0];
+    var d = sheet('<div class="wlt"><span class="wli">' + t[1] + '</span><span class="sub">' + (i + 1) + ' / ' + TOUR.length + '</span></div><h3>' + t[2] + '</h3><p>' + t[3] + '</p><div class="wlr"><button class="btn y" id="wn">' + (i === TOUR.length - 1 ? 'خلصنا' : 'التالي') + '</button><button class="btn" id="ws">تخطّي</button></div>');
+    d.querySelector('#wn').onclick = function () { tourStep(i + 1); }; d.querySelector('#ws').onclick = function () { d.remove(); };
+  }
+  function welcome() {
+    try { if (localStorage.getItem('masarak_seen')) return; localStorage.setItem('masarak_seen', '1'); } catch (e) {}
+    setTimeout(function () {
+      var d = sheet('<h3>نورت مسارك 👋</h3><p>عاوز جولة سريعة تعرّفك على الموقع في نص دقيقة؟</p><div class="wlr"><button class="btn y" id="wg">يلا نبدأ</button><button class="btn" id="wx">لاحقًا</button></div>');
+      d.querySelector('#wg').onclick = function () { tourStep(0); }; d.querySelector('#wx').onclick = function () { d.remove(); };
+    }, 900);
   }
   function route() {
     var h = location.hash.replace(/^#\/?/, '') || '', parts = h.split('/'), app = $('#app'), name = parts[0] || 'home';
@@ -366,16 +392,17 @@
       var o = { id: 'MS-' + (1000 + ORDERS.length + 1), date: new Date().toLocaleDateString('ar-EG'), st: 1, pay: f.get('m'), total: cartSum(items), items: items.map(function (p) { return { id: p.id, t: p.title }; }), design: JSON.parse(JSON.stringify(D)) };
       ORDERS.unshift(o); localStorage.setItem('masarak_orders', JSON.stringify(ORDERS)); cart = []; saveCart(); location.hash = '#/orders';
     };
+    document.querySelectorAll('[data-pk]').forEach(function (b) { b.onclick = function () { var c = b.dataset.pk, i = PICK.indexOf(c); if (i > -1) PICK.splice(i, 1); else PICK.push(c); b.setAttribute('aria-pressed', i === -1); }; });
     document.querySelectorAll('[data-am]').forEach(function (b) { b.onclick = function () { ACCMODE = b.dataset.am; ACCERR = ''; route(); }; });
     var af = $('#acf'); if (af) af.onsubmit = function (e) {
       e.preventDefault(); var f = new FormData(af), em = String(f.get('e')).trim().toLowerCase(), pw = f.get('w'), btn = af.querySelector('button[type=submit]'), er = $('#acerr'); btn.disabled = true; er.textContent = '';
-      var go = ACCMODE === 'up' ? sbf('/auth/v1/signup', { method: 'POST', body: { email: em, password: pw, data: { name: String(f.get('n')).trim(), phone: String(f.get('p')).trim() } } }).then(function (j) { if (!j.access_token) throw new Error('confirm'); setSess(j); }) : sbf('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: em, password: pw } }).then(setSess);
+      var go = ACCMODE === 'up' ? sbf('/auth/v1/signup', { method: 'POST', body: { email: em, password: pw, data: { name: String(f.get('n')).trim(), phone: String(f.get('p')).trim(), grades: PICK } } }).then(function (j) { if (!j.access_token) throw new Error('confirm'); setSess(j); }) : sbf('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: em, password: pw } }).then(setSess);
       go.then(loadProfile).then(function () { if (USER.name && !D.name) { D.name = USER.name; D.phone = USER.phone; save(); } route(); }).catch(function (x) {
         var m = String(x.message); btn.disabled = false;
         er.textContent = /already|registered/i.test(m) ? 'الإيميل ده متسجل قبل كده. جرّب "عندي حساب".' : /invalid login/i.test(m) ? 'الإيميل أو كلمة السر غلط.' : /password/i.test(m) ? 'كلمة السر لازم ٦ حروف على الأقل.' : /rate|limit/i.test(m) ? 'محاولات كتير، جرّب بعد شوية.' : 'حصلت مشكلة، جرّب تاني.';
       });
     };
-    var pq = $('#plreq'); if (pq) pq.onclick = function () { pq.disabled = true; setPlan('pending').then(function () { USER.plan = 'pending'; route(); }).catch(function () { pq.disabled = false; pq.textContent = 'حصلت مشكلة، جرّب تاني'; }); };
+    document.querySelectorAll('[data-rq]').forEach(function (pq) { pq.onclick = function () { var k = pq.dataset.rq; pq.disabled = true; setPlan('pending', k).then(function () { if (k === 'x') USER.xplan = 'pending'; else USER.plan = 'pending'; route(); }).catch(function () { pq.disabled = false; pq.textContent = 'حصلت مشكلة، جرّب تاني'; }); }; });
     if (name === 'admin' && USER.admin) loadAdmin();
     var lo = $('#lo'); if (lo) lo.onclick = signOut;
     document.querySelectorAll('[data-adv]').forEach(function (b) { b.onclick = function () { ORDERS.forEach(function (o) { if (o.id === b.dataset.adv) o.st = Math.min(2, o.st + 1); }); localStorage.setItem('masarak_orders', JSON.stringify(ORDERS)); route(); }; });
@@ -568,11 +595,12 @@
       document.querySelectorAll('[data-xd]').forEach(function (b) { b.onclick = function () { EXAMS = EXAMS.filter(function (z) { return z.id !== b.dataset.xd; }); saveExams(); if (X && X.id === b.dataset.xd) { X = newExam(); xgen(X); } draw(); }; });
     }
     $('#xsv').onclick = function () { var i = EXAMS.map(function (z) { return z.id; }).indexOf(X.id); var cp = JSON.parse(JSON.stringify(X)); if (i >= 0) EXAMS[i] = cp; else EXAMS.push(cp); saveExams(); $('#xmsg').textContent = 'اتحفظ. تقدر تعمل اختبار تاني من "+ اختبار جديد".'; draw(false); };
-    $('#xpr').onclick = function () { printPages(xall(X, D)); };
+    $('#xpr').onclick = function () { printPages(xall(X, D), false, false, 'x'); };
     draw();
   }
 
   window.addEventListener('hashchange', route);
   route();
   if (SESS) loadProfile().then(route);
+  if (location.hash.indexOf('print') < 0) welcome();
 })();
