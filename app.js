@@ -88,9 +88,9 @@
   function fitBox(html, kind, d) { var w = dims(kind || 's', d || D); return '<div class="fit" data-w="' + w[0] + '" data-h="' + w[1] + '"><div class="scale" style="width:' + w[0] + 'px">' + html + '</div></div>'; }
 
   function live(p, u) { return p === 'paid' && (!u || new Date(u).getTime() > Date.now()); }
-  function isPaid(k) { return !!(USER && USER.name && (k === 'x' ? live(USER.xplan, USER.xuntil) : live(USER.plan, USER.until))); }
+  function isPaid(k) { return !!(USER && USER.name && live(USER.plan, USER.until)); }
   function daysLeft(u) { return Math.max(0, Math.ceil((new Date(u).getTime() - Date.now()) / 86400000)); }
-  function active() { return live(USER.plan, USER.until) || live(USER.xplan, USER.xuntil); }
+  function active() { return live(USER.plan, USER.until); }
   function forceOut() { ACCERR = 'انتهى اشتراكك وتم تسجيل خروجك. جدّد الاشتراك وادخل تاني.'; ACCMODE = 'in'; SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); location.hash = '#/account'; route(); }
   function checkExpiry() {
     if (!USER || !USER.name || !SESS) return;
@@ -324,9 +324,8 @@
   }
   function planPanel() {
     var t = '<div class="panelw plan"><h3>اشتراكك</h3><p class="sub">التصفح والتصميم والمعاينة وكل بنك الأسئلة مفتوحين للكل. المقفول لحد الاشتراك: تحميل وطباعة PDF.</p><div class="plcs">' +
-      planCard('n', 'المذكرات وبنك الأسئلة', 'تحميل وطباعة المذكرات وكل أسئلة البنك.', USER.plan || 'free', USER.until) +
-      planCard('x', 'الاختبارات', 'تحميل وطباعة الاختبارات. اشتراك منفصل وليه سعره.', USER.xplan || 'free', USER.xuntil) + '</div>';
-    if ((USER.plan !== 'paid') || (USER.xplan !== 'paid')) t += '<div class="payl"><b>طرق الدفع</b><ul><li>إنستا باي: <b dir="ltr">01147795940</b></li><li>تحويل بنكي: هيتضاف قريبًا</li><li>فودافون كاش: هيتضاف قريبًا</li></ul><p class="sub">حوّل، وابعت الإيصال، واضغط "اطلب الاشتراك". بيتفعّل بعد التأكيد.</p></div>';
+      planCard('n', 'الاشتراك الشهري', 'يفتح تحميل وطباعة المذكرات وبنك الأسئلة والاختبارات للصف اللي اشتركت فيه.', USER.plan || 'free', USER.until) + '</div>';
+    if (!live(USER.plan, USER.until)) t += '<div class="payl"><b>طرق الدفع</b><ul><li>إنستا باي: <b dir="ltr">01147795940</b></li><li>تحويل بنكي: هيتضاف قريبًا</li><li>فودافون كاش: هيتضاف قريبًا</li></ul><p class="sub">حوّل، وابعت الإيصال، واضغط "اطلب الاشتراك". بيتفعّل بعد التأكيد.</p></div>';
     return t + '</div>';
   }
   function viewer(mode, n) {
@@ -354,7 +353,7 @@
       var lb = { free: 'مجاني', pending: 'طلب اشتراك', paid: 'مشترك' };
       var pd = function (a) { return a.plan === 'pending' || a.exams_plan === 'pending' ? 0 : 1; }; r.sort(function (a, b) { return pd(a) - pd(b); });
       var btn = function (u, col, lbl) { var v = u[col], un = u[col === 'plan' ? 'plan_until' : 'exams_until'], left = v === 'paid' && un ? ' (' + daysLeft(un) + ' يوم)' : ''; return '<span class="sub">' + lbl + ': ' + lb[v] + left + '</span> ' + (v === 'paid' ? '<button class="btn y" data-ap="' + u.id + '|' + col + '|renew|' + (un || '') + '">+٣٠ يوم</button> <button class="btn" data-ap="' + u.id + '|' + col + '|free">إلغاء</button>' : '<button class="btn y" data-ap="' + u.id + '|' + col + '|renew|">فعّل ٣٠ يوم</button>'); };
-      box.innerHTML = '<p class="sub">' + r.length + ' حساب</p>' + r.map(function (u) { return '<div class="ci adr"><span><b>' + esc(u.name || 'بدون اسم') + '</b> <span class="sub" dir="ltr">' + esc(u.phone || '') + ' ' + esc(u.email) + '</span>' + ((u.grades || []).length ? '<br><span class="sub">' + u.grades.map(gname).map(esc).join('، ') + '</span>' : '') + '</span><span>' + btn(u, 'plan', 'المذكرات') + '<br>' + btn(u, 'exams_plan', 'الاختبارات') + '</span></div>'; }).join('');
+      box.innerHTML = '<p class="sub">' + r.length + ' حساب</p>' + r.map(function (u) { return '<div class="ci adr"><span><b>' + esc(u.name || 'بدون اسم') + '</b> <span class="sub" dir="ltr">' + esc(u.phone || '') + ' ' + esc(u.email) + '</span>' + ((u.grades || []).length ? '<br><span class="sub">' + u.grades.map(gname).map(esc).join('، ') + '</span>' : '') + '</span><span>' + btn(u, 'plan', 'الاشتراك') + '</span></div>'; }).join('');
       box.querySelectorAll('[data-ap]').forEach(function (b) { b.onclick = function () { var x = b.dataset.ap.split('|'), bd = {}, uc = x[1] === 'plan' ? 'plan_until' : 'exams_until'; if (x[2] === 'renew') { var base = Math.max(Date.now(), x[3] ? new Date(x[3]).getTime() : 0); bd[x[1]] = 'paid'; bd[uc] = new Date(base + 30 * 86400000).toISOString(); } else { bd[x[1]] = x[2]; bd[uc] = null; } b.disabled = true; token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + x[0], { method: 'PATCH', body: bd, prefer: 'return=minimal' }, t); }).then(loadAdmin).catch(function () { b.textContent = 'فشل'; }); }; });
     }).catch(function () { box.textContent = 'مشكلة في التحميل.'; });
   }
@@ -440,7 +439,7 @@
   function hdr() {
     var a = document.querySelector('.hbtns .acc'); if (a) a.textContent = USER.name ? USER.name.split(' ')[0] : 'إنشاء حساب';
     var d = document.getElementById('dl'), best = 0;
-    [[USER.plan, USER.until], [USER.xplan, USER.xuntil]].forEach(function (e) { if (e[0] === 'paid' && e[1] && new Date(e[1]).getTime() > Date.now()) best = Math.max(best, daysLeft(e[1])); });
+    [[USER.plan, USER.until]].forEach(function (e) { if (e[0] === 'paid' && e[1] && new Date(e[1]).getTime() > Date.now()) best = Math.max(best, daysLeft(e[1])); });
     if (!best) { if (d) d.remove(); return; }
     if (!d) { d = document.createElement('a'); d.id = 'dl'; d.href = '#/account'; var hb = document.querySelector('.hbtns'); hb.insertBefore(d, hb.firstChild); }
     d.className = 'dl' + (best <= 3 ? ' low' : ''); d.title = 'الأيام المتبقية في اشتراكك'; d.innerHTML = '⏳ <b>' + best + '</b> يوم';
