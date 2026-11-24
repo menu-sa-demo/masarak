@@ -179,7 +179,7 @@
       i = (n + GSTEPS.length) % GSTEPS.length;
       box.className = 'gstage'; void box.offsetWidth; box.className = 'gstage in s' + i;
       box.innerHTML = gStage(i);
-      if (i === 2) { var d = $('#gdemo'); d.style.zoom = .42; demoLoop(d); }
+      if (i === 2) { var d = $('#gdemo'); demoLoop(d); }
       cap.innerHTML = '<span class="gn">' + GSTEPS[i][0] + '</span><h3>' + GSTEPS[i][1] + '</h3><p>' + GSTEPS[i][2] + '</p>';
       document.querySelectorAll('.gdots button').forEach(function (b, k) { b.className = k === i ? 'on' : ''; });
       bar.style.transition = 'none'; bar.style.width = '0'; void bar.offsetWidth;
