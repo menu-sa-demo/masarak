@@ -90,15 +90,16 @@
   function live(p, u) { return p === 'paid' && (!u || new Date(u).getTime() > Date.now()); }
   function isPaid(k) { return !!(USER && USER.name && (k === 'x' ? live(USER.xplan, USER.xuntil) : live(USER.plan, USER.until))); }
   function daysLeft(u) { return Math.max(0, Math.ceil((new Date(u).getTime() - Date.now()) / 86400000)); }
+  function active() { return live(USER.plan, USER.until) || live(USER.xplan, USER.xuntil); }
+  function forceOut() { ACCERR = 'انتهى اشتراكك وتم تسجيل خروجك. جدّد الاشتراك وادخل تاني.'; ACCMODE = 'in'; SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); location.hash = '#/account'; route(); }
   function checkExpiry() {
-    if (!USER || !USER.name) return;
-    var ends = [[USER.plan, USER.until], [USER.xplan, USER.xuntil]].filter(function (e) { return e[0] === 'paid' && e[1]; });
-    if (!ends.length) return;
-    var act = ends.some(function (e) { return new Date(e[1]).getTime() > Date.now(); });
-    if (!act) { ACCERR = 'انتهى اشتراكك وتم تسجيل خروجك. جدّد الاشتراك وادخل تاني.'; ACCMODE = 'in'; SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); location.hash = '#/account'; route(); }
-    else hdr();
+    if (!USER || !USER.name || !SESS) return;
+    var act = active();
+    if (SESS.act && !act) { forceOut(); return; }
+    if (!!SESS.act !== act) { SESS.act = act; localStorage.setItem('masarak_sess', JSON.stringify(SESS)); }
+    hdr();
   }
-  setInterval(checkExpiry, 60000);
+  setInterval(function () { if (SESS && USER.name) loadProfile().then(function () { if (/account/.test(location.hash) || !USER.name) route(); }); }, 60000);
   function paywall(k) {
     var old = document.getElementById('pw'); if (old) old.remove();
     var li = !!(USER && USER.name), d = document.createElement('div'); d.id = 'pw';
@@ -155,18 +156,18 @@
     o = o || {}; var h = { apikey: KEY, 'Content-Type': 'application/json' }; if (tok) h.Authorization = 'Bearer ' + tok; if (o.prefer) h.Prefer = o.prefer;
     return fetch(SB + path, { method: o.method || 'GET', headers: h, body: o.body ? JSON.stringify(o.body) : undefined }).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) {} if (!r.ok) throw new Error((j && (j.msg || j.message || j.error_description || j.error)) || 'error'); return j; }); });
   }
-  function setSess(j) { SESS = { at: j.access_token, rt: j.refresh_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 60000, email: (j.user && j.user.email) || (SESS && SESS.email) }; localStorage.setItem('masarak_sess', JSON.stringify(SESS)); }
+  function setSess(j) { SESS = { at: j.access_token, rt: j.refresh_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 60000, email: (j.user && j.user.email) || (SESS && SESS.email), act: !!(SESS && SESS.act) }; localStorage.setItem('masarak_sess', JSON.stringify(SESS)); }
   function token() {
     if (!SESS) return Promise.reject(new Error('no'));
     if (Date.now() < SESS.exp) return Promise.resolve(SESS.at);
     return sbf('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: SESS.rt } }).then(function (j) { setSess(j); return SESS.at; });
   }
   function loadProfile() {
-    return token().then(function (t) { return sbf('/rest/v1/profiles?select=*&limit=1', {}, t); }).then(function (r) {
+    return token().then(function (t) { return sbf('/rest/v1/my_profile?select=*&limit=1', {}, t); }).then(function (r) {
       var p = r && r[0]; if (!p) throw new Error('noprofile');
       USER = { name: p.name || 'حساب', phone: p.phone || '', email: p.email || SESS.email, plan: p.plan || 'free', xplan: p.exams_plan || 'free', until: p.plan_until, xuntil: p.exams_until, grades: p.grades || [], id: p.id, admin: (p.email || '').toLowerCase() === ADMIN };
       hdr(); checkExpiry();
-    }).catch(function () { SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); });
+    }).catch(function (e) { if (/failed to fetch|network|load failed/i.test(String(e && e.message))) return; SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); });
   }
   function signOut() { SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); route(); }
   function setPlan(plan, k) { return token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + USER.id, { method: 'PATCH', body: k === 'x' ? { exams_plan: plan } : { plan: plan }, prefer: 'return=minimal' }, t); }); }
