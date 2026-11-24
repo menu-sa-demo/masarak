@@ -520,3 +520,9 @@ button,input,select,textarea{font-family:inherit}
 .th-royal:not(.slide) .formula,.th-notebook:not(.slide) .formula,.th-playful:not(.slide) .formula{padding:5px 8px;font-size:20px}
 .th-royal:not(.slide) .ex div,.th-notebook:not(.slide) .ex div,.th-playful:not(.slide) .ex div{font-size:19px}
 .th-royal:not(.slide) .h2,.th-playful:not(.slide) .h2{margin-bottom:16px}
+
+.xsec{background:var(--c);color:#fff;border-radius:10px;padding:6px 16px;font-size:19px;font-weight:700;display:flex;justify-content:space-between;margin-top:4px}
+.xtf{display:flex;gap:40px;margin:8px 48px 0 0;font-size:20px}.xtf span{display:flex;align-items:center;gap:8px}.xtf .xl{width:30px;height:30px;border-radius:6px}
+.xlines{margin:6px 48px 0 0}.xlines i{display:block;border-bottom:1.5px dotted #777;height:36px}
+.xks{margin:12px 0 6px;font-weight:700;color:#14213d}.xke div{border-bottom:1px dashed #bbb;padding:6px 4px;font-size:16px}.xke b{color:var(--c)}
+.xkg{grid-template-columns:repeat(4,1fr)!important}.xkg span{font-size:17px!important}
