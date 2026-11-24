@@ -527,3 +527,7 @@ button,input,select,textarea{font-family:inherit}
 .xks{margin:12px 0 6px;font-weight:700;color:#14213d}.xke div{border-bottom:1px dashed #bbb;padding:6px 4px;font-size:16px}.xke b{color:var(--c)}
 .xkg{grid-template-columns:repeat(4,1fr)!important}.xkg span{font-size:17px!important}
 .xp .m,.page .m{display:inline-block;direction:ltr;unicode-bidi:isolate}.xp sup,.page sup{vertical-align:super;font-size:.62em;line-height:0;margin-inline-start:1px}
+
+.xwarn{background:#fff4d6;color:#7a5200;border:1px solid #f0c75e;border-radius:10px;padding:8px 12px;margin:0 0 10px;font-size:14px;text-align:right}
+.xo .xl{border-radius:7px;width:34px;height:34px;font-size:17px;border-width:2px;margin-inline-end:2px}.xo .xl::after{content:")";font-weight:700;margin-inline-start:1px}
+@media print{.xwarn{display:none}}
