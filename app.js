@@ -2,7 +2,7 @@
   var Q = window.QUESTIONS, L = ['أ', 'ب', 'ج', 'د'];
   var COLORS = [['#1f6fd1', 'أزرق'], ['#14877a', 'أخضر مزرق'], ['#7a3fa0', 'بنفسجي'], ['#c23b3b', 'أحمر'], ['#d9731a', 'برتقالي']];
   var FRAMES = [['dashed', 'منقط'], ['solid', 'خط واحد'], ['double', 'خط مزدوج'], ['none', 'بدون إطار']];
-  var D = { name: '', phone: '', series: '', color: COLORS[0][0], frame: 'dashed', mark: true, shape: 'a4', qbox: 'full', solve: 'lines', round: 14, fcol: '', qbg: '', qtc: '', occ: '', logo: '', font: 'Cairo' };
+  var D = { name: '', phone: '', series: '', color: COLORS[0][0], frame: 'dashed', mark: true, shape: 'a4', qbox: 'full', solve: 'lines', round: 14, fcol: '', qbg: '', qtc: '', occ: '', logo: '', font: 'Cairo', theme: 'classic' };
   try { Object.assign(D, JSON.parse(localStorage.getItem('masarak') || '{}')); } catch (e) {}
   var save = function () { try { localStorage.setItem('masarak', JSON.stringify(D)); } catch (e) {} };
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -55,7 +55,7 @@
   function frame(d) { return 'f-' + d.frame; }
   function cv(n, v) { return v ? ';--' + n + ':' + v : ''; }
   function pageOpen(d, kind) {
-    var cls = 'page' + (kind === 'q' && d.shape === 'slide' ? ' slide' : '') + ' qb-' + (d.qbox || 'full') + ' sv-' + (d.solve || 'lines');
+    var cls = 'page th-' + (d.theme || 'classic') + (kind === 'q' && d.shape === 'slide' ? ' slide' : '') + ' qb-' + (d.qbox || 'full') + ' sv-' + (d.solve || 'lines');
     return '<div class="' + cls + '" style="--c:' + d.color + ';--ff:' + (d.font || 'Cairo') + ';--r:' + (+d.round >= 0 ? +d.round : 14) + 'px' + cv('fc', d.fcol) + cv('qb', d.qbg) + cv('qc', d.qtc) + cv('oc', d.occ) + '">';
   }
 
@@ -106,6 +106,7 @@
       '<label>اسم السلسلة<input data-k="series" value="' + esc(D.series) + '" placeholder="سلسلة المراجعة"></label>' +
       '<div class="lab">اللون</div><div class="pick">' + COLORS.map(function (c) { return '<button type="button" class="sw" data-color="' + c[0] + '" aria-label="' + c[1] + '" aria-pressed="' + (c[0] === D.color) + '" style="background:' + c[0] + '"></button>'; }).join('') + '<label class="custom">لون آخر<input type="color" data-k="color" value="' + D.color + '"></label></div>' +
       '<div class="lab">الإطار</div><div class="pick">' + FRAMES.map(function (f) { return '<button type="button" class="chip" data-frame="' + f[0] + '" aria-pressed="' + (f[0] === D.frame) + '">' + f[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="lab">تصميم الصفحة (١٠ تصميمات)</div><div class="thgrid">' + [['classic','كلاسيك'],['modern','عصري نظيف'],['royal','ملكي'],['playful','مرح'],['minimal','بسيط'],['grid','شبكي'],['night','ليلي'],['gradient','متدرج'],['notebook','كراسة'],['bold','جريء']].map(function (o) { return '<button type="button" class="thc" data-opt="theme" data-v="' + o[0] + '" aria-pressed="' + ((D.theme || 'classic') === o[0]) + '"><span class="thp th-' + o[0] + '"><i class="a"></i><i class="b"></i><i class="b s"></i><i class="c"></i></span><span>' + o[1] + '</span></button>'; }).join('') + '</div>' +
       '<div class="lab">نوع الخط</div><div class="pick">' + ['Cairo', 'Tajawal', 'Almarai', 'Amiri'].map(function (f) { return '<button type="button" class="chip" data-opt="font" data-v="' + f + '" style="font-family:' + f + '" aria-pressed="' + (D.font === f) + '">' + ({ Cairo: 'كايرو', Tajawal: 'تجوال', Almarai: 'المراعي', Amiri: 'أميري' })[f] + '</button>'; }).join('') + '</div>' +
       '<div class="lab">شكل الملف</div><div class="pick"><button type="button" class="chip" data-opt="shape" data-v="a4" aria-pressed="' + (D.shape === 'a4') + '">بوكليت A4</button><button type="button" class="chip" data-opt="shape" data-v="slide" aria-pressed="' + (D.shape === 'slide') + '">سلايد (أسئلة)</button></div>' +
       '<div class="lab">شكل مربع السؤال</div><div class="pick">' + [['full', 'كامل'], ['dashed', 'منقط'], ['none', 'بدون']].map(function (o) { return '<button type="button" class="chip" data-opt="qbox" data-v="' + o[0] + '" aria-pressed="' + (D.qbox === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div>' +
