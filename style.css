@@ -513,3 +513,10 @@ button,input,select,textarea{font-family:inherit}
 .th-bold:not(.slide) .grade{font-size:30px}.th-bold:not(.slide) .top{height:130px}
 .th-royal:not(.slide) .laws{gap:24px 16px}.th-royal:not(.slide) .note{margin-top:12px}.th-royal:not(.slide) .card{padding:6px 10px}.th-royal:not(.slide) .ctext{font-size:13.5px}
 .th-night:not(.slide) .laws{gap:26px 12px}.th-night:not(.slide) .note{margin-top:14px}.th-night:not(.slide) .card:nth-child(1) .formula,.th-night:not(.slide) .card:nth-child(4) .formula{min-width:250px}
+.th-royal:not(.slide) .laws,.th-notebook:not(.slide) .laws,.th-playful:not(.slide) .laws{gap:20px 14px}
+.th-royal:not(.slide) .card,.th-notebook:not(.slide) .card,.th-playful:not(.slide) .card{padding:4px 10px 6px}
+.th-royal:not(.slide) .ctext,.th-notebook:not(.slide) .ctext,.th-playful:not(.slide) .ctext{font-size:13px;margin:5px 0 2px}
+.th-royal:not(.slide) .note,.th-notebook:not(.slide) .note,.th-playful:not(.slide) .note{margin-top:10px;padding:6px 14px;font-size:14px}
+.th-royal:not(.slide) .formula,.th-notebook:not(.slide) .formula,.th-playful:not(.slide) .formula{padding:5px 8px;font-size:20px}
+.th-royal:not(.slide) .ex div,.th-notebook:not(.slide) .ex div,.th-playful:not(.slide) .ex div{font-size:19px}
+.th-royal:not(.slide) .h2,.th-playful:not(.slide) .h2{margin-bottom:16px}
