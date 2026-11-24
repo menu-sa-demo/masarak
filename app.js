@@ -4,6 +4,7 @@
   var FRAMES = [['dashed', 'منقط'], ['solid', 'خط واحد'], ['double', 'خط مزدوج'], ['none', 'بدون إطار']];
   var D = { name: '', phone: '', series: '', color: COLORS[0][0], frame: 'dashed', mark: true, shape: 'a4', qbox: 'full', solve: 'lines', round: 14, fcol: '', qbg: '', qtc: '', occ: '', logo: '', font: 'Cairo', theme: 'classic' };
   try { Object.assign(D, JSON.parse(localStorage.getItem('masarak') || '{}')); } catch (e) {}
+  var tm = /[?&]theme=(\w+)/.exec(location.search); if (tm) D.theme = tm[1];
   var save = function () { try { localStorage.setItem('masarak', JSON.stringify(D)); } catch (e) {} };
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
@@ -106,7 +107,7 @@
       '<label>اسم السلسلة<input data-k="series" value="' + esc(D.series) + '" placeholder="سلسلة المراجعة"></label>' +
       '<div class="lab">اللون</div><div class="pick">' + COLORS.map(function (c) { return '<button type="button" class="sw" data-color="' + c[0] + '" aria-label="' + c[1] + '" aria-pressed="' + (c[0] === D.color) + '" style="background:' + c[0] + '"></button>'; }).join('') + '<label class="custom">لون آخر<input type="color" data-k="color" value="' + D.color + '"></label></div>' +
       '<div class="lab">الإطار</div><div class="pick">' + FRAMES.map(function (f) { return '<button type="button" class="chip" data-frame="' + f[0] + '" aria-pressed="' + (f[0] === D.frame) + '">' + f[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="lab">تصميم الصفحة (١٠ تصميمات)</div><div class="thgrid">' + [['classic','كلاسيك'],['modern','عصري نظيف'],['royal','ملكي'],['playful','مرح'],['minimal','بسيط'],['grid','شبكي'],['night','ليلي'],['gradient','متدرج'],['notebook','كراسة'],['bold','جريء']].map(function (o) { return '<button type="button" class="thc" data-opt="theme" data-v="' + o[0] + '" aria-pressed="' + ((D.theme || 'classic') === o[0]) + '"><span class="thp th-' + o[0] + '"><i class="a"></i><i class="b"></i><i class="b s"></i><i class="c"></i></span><span>' + o[1] + '</span></button>'; }).join('') + '</div>' +
+      '<div class="lab">تصميم الصفحة (١٠ تصميمات)</div><div class="thgrid">' + [['classic','كلاسيك'],['modern','شريط جانبي'],['royal','شهادة ملكية'],['playful','فقاعات مرحة'],['minimal','صفوف منظمة'],['grid','مخطط هندسي'],['night','بنتو ليلي'],['gradient','غلاف متدرج'],['notebook','كراسة بسلك'],['bold','بوستر جريء']].map(function (o) { return '<button type="button" class="thc" data-opt="theme" data-v="' + o[0] + '" aria-pressed="' + ((D.theme || 'classic') === o[0]) + '"><span class="thp th-' + o[0] + '"><i class="a"></i><i class="b"></i><i class="b s"></i><i class="c"></i></span><span>' + o[1] + '</span></button>'; }).join('') + '</div>' +
       '<div class="lab">نوع الخط</div><div class="pick">' + ['Cairo', 'Tajawal', 'Almarai', 'Amiri'].map(function (f) { return '<button type="button" class="chip" data-opt="font" data-v="' + f + '" style="font-family:' + f + '" aria-pressed="' + (D.font === f) + '">' + ({ Cairo: 'كايرو', Tajawal: 'تجوال', Almarai: 'المراعي', Amiri: 'أميري' })[f] + '</button>'; }).join('') + '</div>' +
       '<div class="lab">شكل الملف</div><div class="pick"><button type="button" class="chip" data-opt="shape" data-v="a4" aria-pressed="' + (D.shape === 'a4') + '">بوكليت A4</button><button type="button" class="chip" data-opt="shape" data-v="slide" aria-pressed="' + (D.shape === 'slide') + '">سلايد (أسئلة)</button></div>' +
       '<div class="lab">شكل مربع السؤال</div><div class="pick">' + [['full', 'كامل'], ['dashed', 'منقط'], ['none', 'بدون']].map(function (o) { return '<button type="button" class="chip" data-opt="qbox" data-v="' + o[0] + '" aria-pressed="' + (D.qbox === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div>' +
@@ -296,6 +297,7 @@
       document.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); draw(false); }; });
       $('#pr').onclick = function () { if (tab === 's') printPages(summaryPage(D) + questionPage(D, 0, 2)); else printPages(questionPage(D, 0, 1), D.shape === 'slide'); };
     }
+    if (name === 'exams') examInit();
     if (name === 'bank') $('#prall').onclick = function () { printPages(allPrint(D), D.shape === 'slide'); };
     document.querySelectorAll('[data-add]').forEach(function (b) { b.onclick = function () { var id = b.dataset.add; if (cart.indexOf(id) < 0) cart.push(id); saveCart(); b.textContent = 'في السلة'; }; });
     document.querySelectorAll('[data-bundle]').forEach(function (b) { b.onclick = function () { PRODUCTS.forEach(function (p) { if (cart.indexOf(p.id) < 0) cart.push(p.id); }); saveCart(); location.hash = '#/cart'; }; });
@@ -334,6 +336,115 @@
   hdr(); intro();
   $('#dk').onclick = function () { document.body.classList.toggle('dark'); };
   saveCart();
+
+  /* ===== exams ===== */
+  var TOPICS = [['t1', 'قوانين الأسس (ضرب وقسمة وقوة القوة)', [0, 1, 2, 7, 14, 16]], ['t2', 'القوى الخاصة والإشارات', [3, 4, 6, 8, 9]], ['t3', 'توزيع الأس على الضرب والكسور', [5, 13, 19]], ['t4', 'الجذور التربيعية والتكعيبية', [10, 11, 12, 17]], ['t5', 'المعادلات الأسية والأعداد غير النسبية', [15, 18]]];
+  var MONTHS = ['أكتوبر', 'نوفمبر', 'ديسمبر', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو'];
+  var EXAMS = []; try { EXAMS = JSON.parse(localStorage.getItem('masarak_exams') || '[]'); } catch (e) {}
+  var saveExams = function () { try { localStorage.setItem('masarak_exams', JSON.stringify(EXAMS)); } catch (e) {} };
+  var X = null, XV = 'A';
+  function rng(s) { return function () { s |= 0; s = s + 0x6D2B79F5 | 0; var t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function shuf(arr, r) { for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+  function newExam() { return { id: 'x' + Date.now(), type: 'monthly', month: 'نوفمبر', title: '', topics: ['t1', 't2'], n: 10, time: 30, per: 1, models: 2, key: true, custom: [], qs: [], seed: Date.now() % 100000 }; }
+  function xpool(x) { var ids = []; TOPICS.forEach(function (t) { if (x.topics.indexOf(t[0]) >= 0) ids = ids.concat(t[2]); }); return ids; }
+  function xgen(x) { var ids = xpool(x); shuf(ids, rng(x.seed)); x.qs = ids.slice(0, Math.min(x.n, ids.length)).sort(function (p, q) { return p - q; }); }
+  function xtitle(x) { return x.title.trim() || (x.type === 'monthly' ? 'اختبار شهر ' + x.month : 'اختبار شامل على المنهج'); }
+  function xitems(x, model) {
+    var items = x.qs.map(function (i) { return { t: Q[i].t, o: Q[i].o.slice(), a: Q[i].a, s: Q[i].s }; }).concat(x.custom.map(function (c) { return { t: c.t, o: c.o.slice(), a: c.a, s: '' }; }));
+    if (model === 'B') {
+      var r = rng(x.seed + 77); shuf(items, r);
+      items.forEach(function (it) { var idx = [0, 1, 2, 3]; shuf(idx, r); var no = idx.map(function (k) { return it.o[k]; }); it.a = idx.indexOf(it.a); it.o = no; });
+    }
+    return items;
+  }
+  function xhead(x, d, model, sub) {
+    return '<div class="xh"><div class="xh1"><b>' + esc(d.name.trim() || 'اسم المدرس') + '</b><span>' + esc(d.series.trim() || 'سلسلة المراجعة') + '</span></div><div class="xh2"><div class="xt">' + esc(xtitle(x)) + '</div><div class="xs">الصف الثالث الإعدادي، الفصل الدراسي الأول' + (sub ? '، ' + sub : (x.models > 1 ? '، نموذج (' + (model === 'B' ? 'ب' : 'أ') + ')' : '')) + '</div></div><div class="xh3">' + (d.logo ? '<img alt="" src="' + d.logo + '">' : '<span dir="ltr">' + esc(d.phone.trim() || '01000000000') + '</span>') + '</div></div>';
+  }
+  function xfoot(d, n, m) { return '<div class="xf"><span>' + esc(d.name.trim() || 'اسم المدرس') + '</span><span dir="ltr">' + esc(d.phone.trim() || '01000000000') + '</span><span>صفحة ' + n + ' من ' + m + '</span></div>'; }
+  function xopen(d) { return '<div class="xp" style="--c:' + d.color + ';--ff:' + (d.font || 'Cairo') + '">'; }
+  function examPages(x, d, model) {
+    var items = xitems(x, model), pages = [], i = 0, first = 7, per = 9;
+    while (i < items.length || !pages.length) { var cnt = pages.length ? per : first; pages.push(items.slice(i, i + cnt)); i += cnt; if (!items.length) break; }
+    var total = items.length * x.per, out = '', n = 0;
+    pages.forEach(function (pg, pi) {
+      out += xopen(d) + xhead(x, d, model);
+      if (pi === 0) out += '<div class="xinfo"><span>اسم الطالب: ................................</span><span>الفصل: ..........</span><span>التاريخ: ....../....../......</span></div><div class="xmeta"><span>الزمن: ' + (+x.time || 30) + ' دقيقة</span><span>عدد الأسئلة: ' + items.length + '</span><span>الدرجة الكلية: ' + total + '</span></div><div class="xins">اختر الإجابة الصحيحة في كل سؤال، وظلّل دائرة واحدة فقط.</div>';
+      out += '<div class="xqs">';
+      pg.forEach(function (it) {
+        n++;
+        out += '<div class="xq"><div class="xqh"><span class="xn">' + n + '</span><div class="xqt">' + txt(it.t) + '</div><span class="xm">(' + x.per + ' درجة)</span></div><div class="xo">' + it.o.map(function (o, k) { return '<span><i class="xl">' + L[k] + '</i>' + txt(o) + '</span>'; }).join('') + '</div></div>';
+      });
+      out += '</div>' + xfoot(d, pi + 1, pages.length) + '</div>';
+    });
+    return out;
+  }
+  function examKey(x, d) {
+    var out = xopen(d) + xhead(x, d, 'A', 'نموذج الإجابة (للمدرس)') + '<div class="xkey">';
+    ['A', 'B'].slice(0, x.models > 1 ? 2 : 1).forEach(function (m) {
+      var items = xitems(x, m);
+      out += '<div class="xkb"><h4>' + (x.models > 1 ? 'نموذج (' + (m === 'B' ? 'ب' : 'أ') + ')' : 'الإجابات') + '</h4><div class="xkg">' + items.map(function (it, i) { return '<span><b>' + (i + 1) + '</b> ' + L[it.a] + '</span>'; }).join('') + '</div></div>';
+    });
+    return out + '</div>' + xfoot(d, 1, 1) + '</div>';
+  }
+  function xall(x, d) { var h = examPages(x, d, 'A'); if (x.models > 1) h += examPages(x, d, 'B'); if (x.key) h += examKey(x, d); return h; }
+  function chip(attr, v, on, label) { return '<button type="button" class="chip" ' + attr + '="' + v + '" aria-pressed="' + on + '">' + label + '</button>'; }
+  function xcontrols() {
+    var x = X, mx2 = xpool(x).length;
+    return '<div class="panel"><h3>إعدادات الاختبار</h3>' +
+      '<label>اسم الاختبار (اختياري)<input data-xk="title" value="' + esc(x.title) + '" placeholder="' + esc(xtitle({ title: '', type: x.type, month: x.month })) + '"></label>' +
+      '<div class="lab">نوع الاختبار</div><div class="pick">' + chip('data-xt', 'monthly', x.type === 'monthly', 'اختبار شهري') + chip('data-xt', 'full', x.type === 'full', 'شامل على المنهج كله') + '</div>' +
+      (x.type === 'monthly' ? '<div class="lab">الشهر</div><div class="pick">' + MONTHS.map(function (m) { return chip('data-xm', m, x.month === m, m); }).join('') + '</div>' : '') +
+      '<div class="lab">الدروس اللي اتشرحت (اختار اللي يدخل في الاختبار)</div><div class="pick">' + TOPICS.map(function (t) { return chip('data-xtp', t[0], x.topics.indexOf(t[0]) >= 0, t[1]); }).join('') + '</div>' +
+      '<label>عدد الأسئلة من البنك (متاح ' + mx2 + ')<input data-xk="n" type="number" min="1" max="' + Math.max(1, mx2) + '" value="' + Math.min(x.n, Math.max(1, mx2)) + '"></label>' +
+      '<label>الدرجة لكل سؤال<input data-xk="per" type="number" min="1" max="10" value="' + x.per + '"></label>' +
+      '<label>الزمن بالدقائق<input data-xk="time" type="number" min="5" max="180" value="' + x.time + '"></label>' +
+      '<div class="lab">النماذج</div><div class="pick">' + chip('data-xmd', '1', x.models === 1, 'نموذج واحد') + chip('data-xmd', '2', x.models === 2, 'نموذجين (أ و ب) بترتيب مختلف') + '</div>' +
+      '<div class="lab">نموذج الإجابة</div><div class="pick">' + chip('data-xkey', '1', x.key, 'اطبعه مع الاختبار') + chip('data-xkey', '0', !x.key, 'من غير') + '</div>' +
+      '<button type="button" class="chip" id="xre" style="margin-top:12px;width:100%">🔀 أسئلة مختلفة من نفس الدروس</button>' +
+      '<details class="xcus"><summary>+ أضف سؤال من عندك</summary><label>نص السؤال<input id="cq" placeholder="مثلا: ناتج {{2^3 × 2^2}} يساوي:"></label>' + ['أ', 'ب', 'ج', 'د'].map(function (l, k) { return '<label>الاختيار ' + l + '<input class="co" data-co="' + k + '"></label>'; }).join('') + '<label>الإجابة الصحيحة<select id="ca"><option value="0">أ</option><option value="1">ب</option><option value="2">ج</option><option value="3">د</option></select></label><button type="button" class="chip" id="cadd" style="margin-top:8px">إضافة السؤال</button>' + (x.custom.length ? '<div class="lab">أسئلتك (' + x.custom.length + ')</div>' + x.custom.map(function (c, i) { return '<div class="xcl"><span>' + txt(c.t) + '</span><button type="button" class="chip" data-cdel="' + i + '" aria-label="حذف">×</button></div>'; }).join('') : '') + '</details></div>';
+  }
+  function xlist() {
+    return '<div class="xlist"><b>اختباراتك:</b> ' + (EXAMS.length ? EXAMS.map(function (e) { return '<span class="xli' + (X && e.id === X.id ? ' on' : '') + '"><button type="button" class="chip" data-xo="' + e.id + '">' + esc(xtitle(e)) + '</button><button type="button" class="chip" data-xd="' + e.id + '" aria-label="حذف">×</button></span>'; }).join('') : '<span class="muted">لسه مفيش اختبار محفوظ</span>') + ' <button type="button" class="chip" id="xnew">+ اختبار جديد</button></div>';
+  }
+  views.exams = function () {
+    return '<section class="page-s"><h2>الاختبارات</h2><p class="sub">اعمل اختبار شهري على اللي اتشرح في الشهر، أو اختبار شامل على المنهج كله، وكرر العملية وانت عايز. كل اختبار بيطلع باسمك وبرقمك وجاهز للطباعة، بنموذجين ونموذج إجابة.</p><div id="xl"></div><div class="ed"><div id="xc"></div><div class="prev"><div class="tabs" id="xtabs"></div><div id="xv"></div><button class="btn" id="xpr" style="margin-top:14px">اطبع الاختبار أو احفظ PDF</button> <button class="chip" id="xsv" style="margin-top:14px">💾 احفظ الاختبار</button><p class="muted" id="xmsg"></p></div></div></section>';
+  };
+  function examInit() {
+    if (!X) { X = newExam(); xgen(X); }
+    var draw = function (full) {
+      if (full !== false) { $('#xc').innerHTML = xcontrols(); xbind(); }
+      $('#xl').innerHTML = xlist(); xbindList();
+      var tabs = [['A', x_label('A')]]; if (X.models > 1) tabs.push(['B', x_label('B')]); if (X.key) tabs.push(['K', 'نموذج الإجابة']);
+      if (!tabs.some(function (t) { return t[0] === XV; })) XV = 'A';
+      $('#xtabs').innerHTML = tabs.map(function (t) { return '<button class="chip" data-xv="' + t[0] + '" aria-pressed="' + (XV === t[0]) + '">' + t[1] + '</button>'; }).join('');
+      document.querySelectorAll('[data-xv]').forEach(function (b) { b.onclick = function () { XV = b.dataset.xv; draw(false); }; });
+      var html = XV === 'K' ? examKey(X, D) : examPages(X, D, XV);
+      var pgs = html.split('<div class="xp" ').filter(Boolean).map(function (p) { return '<div class="xp" ' + p; });
+      $('#xv').innerHTML = pgs.map(function (p) { return '<div style="margin-bottom:16px">' + fitBox(p, 's') + '</div>'; }).join(''); fitAll();
+    };
+    function x_label(m) { return X.models > 1 ? 'نموذج ' + (m === 'A' ? 'أ' : 'ب') : 'الاختبار'; }
+    function xbind() {
+      var c = $('#xc');
+      c.querySelectorAll('[data-xk]').forEach(function (i) { i.oninput = function () { var k = i.dataset.xk; X[k] = (k === 'title') ? i.value : Math.max(1, parseInt(i.value, 10) || 1); if (k === 'n') xgen(X); draw(false); }; });
+      c.querySelectorAll('[data-xt]').forEach(function (b) { b.onclick = function () { X.type = b.dataset.xt; if (X.type === 'full') { X.topics = TOPICS.map(function (t) { return t[0]; }); X.n = xpool(X).length; xgen(X); } draw(); }; });
+      c.querySelectorAll('[data-xm]').forEach(function (b) { b.onclick = function () { X.month = b.dataset.xm; draw(); }; });
+      c.querySelectorAll('[data-xtp]').forEach(function (b) { b.onclick = function () { var t = b.dataset.xtp, i = X.topics.indexOf(t); if (i >= 0) { if (X.topics.length > 1) X.topics.splice(i, 1); } else X.topics.push(t); X.n = Math.min(X.n, xpool(X).length); xgen(X); draw(); }; });
+      c.querySelectorAll('[data-xmd]').forEach(function (b) { b.onclick = function () { X.models = +b.dataset.xmd; draw(); }; });
+      c.querySelectorAll('[data-xkey]').forEach(function (b) { b.onclick = function () { X.key = b.dataset.xkey === '1'; draw(); }; });
+      $('#xre').onclick = function () { X.seed += 13; xgen(X); draw(false); };
+      $('#cadd').onclick = function () { var t = $('#cq').value.trim(), o = [].map.call(c.querySelectorAll('.co'), function (i) { return i.value.trim(); }); if (!t || o.some(function (v) { return !v; })) { $('#xmsg').textContent = 'اكتب السؤال والأربع اختيارات الأول.'; return; } X.custom.push({ t: t, o: o, a: +$('#ca').value }); $('#xmsg').textContent = ''; draw(); };
+      c.querySelectorAll('[data-cdel]').forEach(function (b) { b.onclick = function () { X.custom.splice(+b.dataset.cdel, 1); draw(); }; });
+    }
+    function xbindList() {
+      $('#xnew').onclick = function () { X = newExam(); xgen(X); draw(); };
+      document.querySelectorAll('[data-xo]').forEach(function (b) { b.onclick = function () { var e = EXAMS.filter(function (z) { return z.id === b.dataset.xo; })[0]; if (e) { X = JSON.parse(JSON.stringify(e)); draw(); } }; });
+      document.querySelectorAll('[data-xd]').forEach(function (b) { b.onclick = function () { EXAMS = EXAMS.filter(function (z) { return z.id !== b.dataset.xd; }); saveExams(); if (X && X.id === b.dataset.xd) { X = newExam(); xgen(X); } draw(); }; });
+    }
+    $('#xsv').onclick = function () { var i = EXAMS.map(function (z) { return z.id; }).indexOf(X.id); var cp = JSON.parse(JSON.stringify(X)); if (i >= 0) EXAMS[i] = cp; else EXAMS.push(cp); saveExams(); $('#xmsg').textContent = 'اتحفظ. تقدر تعمل اختبار تاني من "+ اختبار جديد".'; draw(false); };
+    $('#xpr').onclick = function () { printPages(xall(X, D)); };
+    draw();
+  }
+
   window.addEventListener('hashchange', route);
   route();
 })();
