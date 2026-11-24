@@ -87,7 +87,16 @@
   window.addEventListener('resize', fitAll);
   function fitBox(html, kind, d) { var w = dims(kind || 's', d || D); return '<div class="fit" data-w="' + w[0] + '" data-h="' + w[1] + '"><div class="scale" style="width:' + w[0] + 'px">' + html + '</div></div>'; }
 
-  function printPages(html, slide) {
+  function isPaid() { return !!(USER && USER.name && USER.plan === 'paid'); }
+  function paywall() {
+    var old = document.getElementById('pw'); if (old) old.remove();
+    var li = !!(USER && USER.name), d = document.createElement('div'); d.id = 'pw';
+    d.innerHTML = '<div class="pwb" role="dialog" aria-modal="true"><div class="pwi">🔒</div><h3>الميزة دي للمشتركين</h3><p>' + (li ? 'التحميل والطباعة وكل بنك الأسئلة بيتفتحوا بعد تفعيل الاشتراك. اطلب الاشتراك من حسابك وبعد تأكيد التحويل بيتفعّل.' : 'سجّل حساب الأول، وبعدها اطلب الاشتراك عشان تفتح التحميل والطباعة وكل بنك الأسئلة.') + '</p><div class="pwr"><a class="btn y" href="#/account" id="pwgo">' + (li ? 'شوف الاشتراك' : 'إنشاء حساب') + '</a><button class="btn" id="pwx">مش دلوقتي</button></div></div>';
+    document.body.appendChild(d);
+    d.onclick = function (e) { if (e.target === d || e.target.id === 'pwx' || e.target.id === 'pwgo') d.remove(); };
+  }
+  function printPages(html, slide, free) {
+    if (!free && !isPaid()) { paywall(); return; }
     var st = $('#pgsty'); if (!st) { st = document.createElement('style'); st.id = 'pgsty'; document.head.appendChild(st); }
     st.textContent = slide ? '@page{size:1120px 630px;margin:0}' : '@page{size:A4;margin:0}';
     $('#print-area').innerHTML = html;
@@ -246,7 +255,7 @@
       }).join('') + '<p class="sub">في النموذج التجريبي حالة الطلب بتتغير بزر التجربة. في النسخة الحقيقية بتتغير بعد تأكيد التحويل.</p></section>';
     },
     account: function () {
-      if (USER.name) return '<section class="page-s"><h2>حسابك</h2><div class="panelw"><p>أهلًا <b>' + esc(USER.name) + '</b></p><p class="sub">' + esc(USER.phone || '') + ' ' + esc(USER.email || '') + '</p><a class="btn y" href="#/orders">طلباتك وملفاتك</a> <button class="btn" id="lo">تسجيل خروج</button></div></section>';
+      if (USER.name) return '<section class="page-s"><h2>حسابك</h2><div class="panelw"><p>أهلًا <b>' + esc(USER.name) + '</b></p><p class="sub">' + esc(USER.phone || '') + ' ' + esc(USER.email || '') + '</p><a class="btn y" href="#/orders">طلباتك وملفاتك</a> <button class="btn" id="lo">تسجيل خروج</button></div>' + planPanel() + '</section>';
       return '<section class="page-s"><h2>إنشاء حساب</h2><form id="acf" class="panelw"><p class="sub">النموذج التجريبي بيحفظ بياناتك على جهازك بس. مفيش كلمة سر ولا سيرفر.</p><label>الاسم الكامل<input name="n" required></label><label>رقم الموبايل<input name="p" required dir="ltr" inputmode="tel"></label><label>الإيميل<input name="e" type="email" dir="ltr"></label><button class="btn y" type="submit">إنشاء الحساب</button></form></section>';
     },
     editor: function () {
@@ -255,13 +264,20 @@
     bank: function () {
       return '<section class="page-s"><h2>بنك الأسئلة</h2><p class="sub">أسئلة الأسس والجذور، الصف الثالث الإعدادي. سؤال في كل صفحة، مع تلميح ومساحة للحل.</p><div class="grid g2">' +
         '<a class="prod" href="#/s/1"><span class="badge g">مجاني</span><h4>عينة ١٠ أسئلة</h4><p>أول ١٠ أسئلة.</p><span class="go">ابدأ</span></a>' +
-        '<a class="prod" href="#/q/1"><span class="badge">كامل</span><h4>كل الأسئلة (' + Q.length + ')</h4><p>مع نموذج الإجابة.</p><span class="go">ابدأ</span></a></div>' +
+        '<a class="prod" href="#/q/1"><span class="badge">' + (isPaid() ? 'كامل' : '🔒 للمشتركين') + '</span><h4>كل الأسئلة (' + Q.length + ')</h4><p>' + (isPaid() ? 'مع نموذج الإجابة.' : 'أول ١٠ مفتوحة، والباقي بعد الاشتراك.') + '</p><span class="go">ابدأ</span></a></div>' +
         '<div class="panelw"><h3>طباعة باسمك</h3><p class="sub">اكتب بياناتك في صفحة التصميم، ثم اطبع كل الأسئلة صفحة صفحة، تليها صفحات الإجابة.</p><div class="row"><a class="btn" href="#/editor">عدّل بياناتك</a><button class="btn y" id="prall">اطبع كل الأسئلة PDF</button></div></div></section>';
     }
   };
 
+  function planPanel() {
+    var p = USER.plan || 'free', t = '<div class="panelw plan"><h3>اشتراكك</h3>';
+    if (p === 'paid') return t + '<p><span class="badge g">مفعّل</span> التحميل والطباعة وكل بنك الأسئلة مفتوحين.</p></div>';
+    t += '<p class="sub">حاليًا: <b>مجاني</b>. المفتوح: التصميم والمعاينة، وعينة ١٠ أسئلة. المقفول لحد الاشتراك: تحميل وطباعة PDF، وباقي بنك الأسئلة، وطباعة الاختبارات.</p>';
+    if (p === 'pending') return t + '<p><span class="badge">في الانتظار</span> بنأكد التحويل وبعدها بيتفعّل اشتراكك.</p><button class="btn" id="plact">زر التجربة: فعّل الاشتراك</button><p class="sub">في النسخة الحقيقية التفعيل بيتم من عندنا بعد تأكيد الدفع، مش من هنا.</p></div>';
+    return t + '<p>الاشتراك: <b>سعر تجريبي</b> (رقم التحويل لسه فاضي).</p><button class="btn y" id="plreq">اطلب الاشتراك</button></div>';
+  }
   function viewer(mode, n) {
-    var max = mode === 's' ? 10 : Q.length;
+    var max = (mode === 's' || !isPaid()) ? 10 : Q.length;
     n = Math.max(1, Math.min(max, n));
     var p = n - 1, state = { shown: false };
     var html = '<section class="page-s"><div class="vh"><a href="#/bank">رجوع</a><span>' + (mode === 's' ? 'العينة المجانية' : 'بنك الأسئلة') + '</span></div><div id="vp"></div><div class="nav"><a class="btn' + (n <= 1 ? ' dis' : '') + '" href="#/' + mode + '/' + (n - 1) + '">السابق</a><button class="btn y" id="rv">أظهر الحل</button><a class="btn' + (n >= max ? ' dis' : '') + '" href="#/' + mode + '/' + (n + 1) + '">التالي</a></div><div id="sol" class="sol" hidden><b>الإجابة: ' + L[Q[p].a] + '</b><div>' + txt(Q[p].s) + '</div></div><div class="dots">' + Array.from({ length: max }, function (_, i) { return '<a class="' + (i === p ? 'on' : '') + '" href="#/' + mode + '/' + (i + 1) + '">' + (i + 1) + '</a>'; }).join('') + '</div></section>';
@@ -310,10 +326,12 @@
       var o = { id: 'MS-' + (1000 + ORDERS.length + 1), date: new Date().toLocaleDateString('ar-EG'), st: 1, pay: f.get('m'), total: cartSum(items), items: items.map(function (p) { return { id: p.id, t: p.title }; }), design: JSON.parse(JSON.stringify(D)) };
       ORDERS.unshift(o); localStorage.setItem('masarak_orders', JSON.stringify(ORDERS)); cart = []; saveCart(); location.hash = '#/orders';
     };
-    var af = $('#acf'); if (af) af.onsubmit = function (e) { e.preventDefault(); var f = new FormData(af); USER = { name: f.get('n'), phone: f.get('p'), email: f.get('e') }; localStorage.setItem('masarak_user', JSON.stringify(USER)); if (!D.name) { D.name = USER.name; D.phone = USER.phone; save(); } hdr(); route(); };
+    var af = $('#acf'); if (af) af.onsubmit = function (e) { e.preventDefault(); var f = new FormData(af); USER = { name: f.get('n'), phone: f.get('p'), email: f.get('e'), plan: 'free' }; localStorage.setItem('masarak_user', JSON.stringify(USER)); if (!D.name) { D.name = USER.name; D.phone = USER.phone; save(); } hdr(); route(); };
+    var pq = $('#plreq'); if (pq) pq.onclick = function () { USER.plan = 'pending'; localStorage.setItem('masarak_user', JSON.stringify(USER)); route(); };
+    var pa = $('#plact'); if (pa) pa.onclick = function () { USER.plan = 'paid'; localStorage.setItem('masarak_user', JSON.stringify(USER)); route(); };
     var lo = $('#lo'); if (lo) lo.onclick = function () { USER = {}; localStorage.removeItem('masarak_user'); hdr(); route(); };
     document.querySelectorAll('[data-adv]').forEach(function (b) { b.onclick = function () { ORDERS.forEach(function (o) { if (o.id === b.dataset.adv) o.st = Math.min(2, o.st + 1); }); localStorage.setItem('masarak_orders', JSON.stringify(ORDERS)); route(); }; });
-    document.querySelectorAll('[data-dl]').forEach(function (b) { b.onclick = function () { var a = b.dataset.dl.split('|'), o = ORDERS.filter(function (x) { return x.id === a[0]; })[0], d = o.design; if (a[1] === 'sum') printPages(summaryPage(d) + questionPage(d, 0, 2), false); else printPages(allPrint(d), d.shape === 'slide'); }; });
+    document.querySelectorAll('[data-dl]').forEach(function (b) { b.onclick = function () { var a = b.dataset.dl.split('|'), o = ORDERS.filter(function (x) { return x.id === a[0]; })[0], d = o.design; if (a[1] === 'sum') printPages(summaryPage(d) + questionPage(d, 0, 2), false, true); else printPages(allPrint(d), d.shape === 'slide', true); }; });
     fitAll();
   }
   function revealInit() {
