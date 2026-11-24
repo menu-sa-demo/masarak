@@ -91,7 +91,7 @@
   function paywall() {
     var old = document.getElementById('pw'); if (old) old.remove();
     var li = !!(USER && USER.name), d = document.createElement('div'); d.id = 'pw';
-    d.innerHTML = '<div class="pwb" role="dialog" aria-modal="true"><div class="pwi">🔒</div><h3>الميزة دي للمشتركين</h3><p>' + (li ? 'التحميل والطباعة وكل بنك الأسئلة بيتفتحوا بعد تفعيل الاشتراك. اطلب الاشتراك من حسابك وبعد تأكيد التحويل بيتفعّل.' : 'سجّل حساب الأول، وبعدها اطلب الاشتراك عشان تفتح التحميل والطباعة وكل بنك الأسئلة.') + '</p><div class="pwr"><a class="btn y" href="#/account" id="pwgo">' + (li ? 'شوف الاشتراك' : 'إنشاء حساب') + '</a><button class="btn" id="pwx">مش دلوقتي</button></div></div>';
+    d.innerHTML = '<div class="pwb" role="dialog" aria-modal="true"><div class="pwi">🔒</div><h3>الميزة دي للمشتركين</h3><p>' + (li ? 'تصفّح واعمل اللي تحبه، لكن التحميل والطباعة بيتفتحوا بعد الاشتراك. اطلب الاشتراك من حسابك وبعد تأكيد التحويل بيتفعّل.' : 'تصفّح واعمل اللي تحبه، لكن التحميل والطباعة للمشتركين بس. سجّل حساب واطلب الاشتراك عشان تفتحهم.') + '</p><div class="pwr"><a class="btn y" href="#/account" id="pwgo">' + (li ? 'شوف الاشتراك' : 'إنشاء حساب') + '</a><button class="btn" id="pwx">مش دلوقتي</button></div></div>';
     document.body.appendChild(d);
     d.onclick = function (e) { if (e.target === d || e.target.id === 'pwx' || e.target.id === 'pwgo') d.remove(); };
   }
@@ -264,20 +264,20 @@
     bank: function () {
       return '<section class="page-s"><h2>بنك الأسئلة</h2><p class="sub">أسئلة الأسس والجذور، الصف الثالث الإعدادي. سؤال في كل صفحة، مع تلميح ومساحة للحل.</p><div class="grid g2">' +
         '<a class="prod" href="#/s/1"><span class="badge g">مجاني</span><h4>عينة ١٠ أسئلة</h4><p>أول ١٠ أسئلة.</p><span class="go">ابدأ</span></a>' +
-        '<a class="prod" href="#/q/1"><span class="badge">' + (isPaid() ? 'كامل' : '🔒 للمشتركين') + '</span><h4>كل الأسئلة (' + Q.length + ')</h4><p>' + (isPaid() ? 'مع نموذج الإجابة.' : 'أول ١٠ مفتوحة، والباقي بعد الاشتراك.') + '</p><span class="go">ابدأ</span></a></div>' +
+        '<a class="prod" href="#/q/1"><span class="badge">كامل</span><h4>كل الأسئلة (' + Q.length + ')</h4><p>' + 'تصفّح كل الأسئلة مع نموذج الإجابة.' + '</p><span class="go">ابدأ</span></a></div>' +
         '<div class="panelw"><h3>طباعة باسمك</h3><p class="sub">اكتب بياناتك في صفحة التصميم، ثم اطبع كل الأسئلة صفحة صفحة، تليها صفحات الإجابة.</p><div class="row"><a class="btn" href="#/editor">عدّل بياناتك</a><button class="btn y" id="prall">اطبع كل الأسئلة PDF</button></div></div></section>';
     }
   };
 
   function planPanel() {
     var p = USER.plan || 'free', t = '<div class="panelw plan"><h3>اشتراكك</h3>';
-    if (p === 'paid') return t + '<p><span class="badge g">مفعّل</span> التحميل والطباعة وكل بنك الأسئلة مفتوحين.</p></div>';
-    t += '<p class="sub">حاليًا: <b>مجاني</b>. المفتوح: التصميم والمعاينة، وعينة ١٠ أسئلة. المقفول لحد الاشتراك: تحميل وطباعة PDF، وباقي بنك الأسئلة، وطباعة الاختبارات.</p>';
+    if (p === 'paid') return t + '<p><span class="badge g">مفعّل</span> التحميل والطباعة مفتوحين.</p></div>';
+    t += '<p class="sub">حاليًا: <b>مجاني</b>. المفتوح: التصفح والتصميم والمعاينة وكل بنك الأسئلة. المقفول لحد الاشتراك: تحميل وطباعة PDF (المذكرات وبنك الأسئلة والاختبارات).</p>';
     if (p === 'pending') return t + '<p><span class="badge">في الانتظار</span> بنأكد التحويل وبعدها بيتفعّل اشتراكك.</p><button class="btn" id="plact">زر التجربة: فعّل الاشتراك</button><p class="sub">في النسخة الحقيقية التفعيل بيتم من عندنا بعد تأكيد الدفع، مش من هنا.</p></div>';
     return t + '<p>الاشتراك: <b>سعر تجريبي</b> (رقم التحويل لسه فاضي).</p><button class="btn y" id="plreq">اطلب الاشتراك</button></div>';
   }
   function viewer(mode, n) {
-    var max = (mode === 's' || !isPaid()) ? 10 : Q.length;
+    var max = mode === 's' ? 10 : Q.length;
     n = Math.max(1, Math.min(max, n));
     var p = n - 1, state = { shown: false };
     var html = '<section class="page-s"><div class="vh"><a href="#/bank">رجوع</a><span>' + (mode === 's' ? 'العينة المجانية' : 'بنك الأسئلة') + '</span></div><div id="vp"></div><div class="nav"><a class="btn' + (n <= 1 ? ' dis' : '') + '" href="#/' + mode + '/' + (n - 1) + '">السابق</a><button class="btn y" id="rv">أظهر الحل</button><a class="btn' + (n >= max ? ' dis' : '') + '" href="#/' + mode + '/' + (n + 1) + '">التالي</a></div><div id="sol" class="sol" hidden><b>الإجابة: ' + L[Q[p].a] + '</b><div>' + txt(Q[p].s) + '</div></div><div class="dots">' + Array.from({ length: max }, function (_, i) { return '<a class="' + (i === p ? 'on' : '') + '" href="#/' + mode + '/' + (i + 1) + '">' + (i + 1) + '</a>'; }).join('') + '</div></section>';
