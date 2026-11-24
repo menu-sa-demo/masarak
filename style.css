@@ -543,3 +543,4 @@ button,input,select,textarea{font-family:inherit}
 .wlb h3{margin:0 0 6px;font-size:1.3rem}.wlb p{margin:0 0 14px}.wlr{display:flex;gap:10px;justify-content:flex-start}.wlt{display:flex;justify-content:space-between;align-items:center}.wli{font-size:1.6rem}
 @keyframes wlu{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 .gb{display:inline-block;background:#e8eefc;color:#12307a;border-radius:999px;padding:2px 10px;margin:2px;font-size:.9rem}
+.dl{background:#ffcd2b;color:#12307a;border-radius:999px;padding:6px 12px;font-weight:700;text-decoration:none;white-space:nowrap}.dl.low{background:#e74c3c;color:#fff}
