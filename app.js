@@ -130,9 +130,77 @@
   var ORDERS = []; try { ORDERS = JSON.parse(localStorage.getItem('masarak_orders') || '[]'); } catch (e) {}
   function cartItems() { return cart.map(function (id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean); }
   function cartSum(items) { var t = items.reduce(function (a, p) { return a + p.price; }, 0); return items.length === PRODUCTS.length ? BUNDLE : t; }
+  var DEMO = Object.assign({}, D, { name: 'م/ أحمد علي', phone: '01012345678', series: 'سلسلة النخبة', shape: 'a4', logo: '' });
+  var timers = [];
+  function later(fn, ms) { var t = setTimeout(fn, ms); timers.push(t); return t; }
+  function every(fn, ms) { var t = setInterval(fn, ms); timers.push(t); return t; }
+  function clearTimers() { timers.forEach(function (t) { clearTimeout(t); clearInterval(t); }); timers = []; }
+  var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var NAMES = ['م/ أحمد علي', 'أ/ سارة محمود', 'د/ كريم حسن', 'م/ منى عادل'];
+  var PAL = [['#1f6fd1', 'dashed'], ['#14877a', 'solid'], ['#7a3fa0', 'double'], ['#c23b3b', 'dashed'], ['#d9731a', 'solid']];
+  function demoLoop(root) {
+    var i = 0;
+    function setName(v) { root.querySelectorAll('.nm').forEach(function (e) { e.textContent = v; }); root.querySelectorAll('.wm span').forEach(function (e) { e.textContent = v; }); }
+    function run() {
+      var nm = NAMES[i % NAMES.length], pal = PAL[i % PAL.length], pg = root.querySelector('.page'), k = 0;
+      if (!pg) return;
+      pg.style.setProperty('--c', pal[0]);
+      var w = pg.querySelector('.wrap'); if (w) w.className = 'wrap f-' + pal[1];
+      setName('');
+      var t = every(function () { k++; setName(nm.slice(0, k)); if (k >= nm.length) clearInterval(t); }, 90);
+      i++;
+    }
+    run(); every(run, 4200);
+  }
+  function tiltInit() {
+    var t = $('#tilt'), h = $('.hero'); if (!t || !h) return;
+    h.addEventListener('mousemove', function (e) { var r = h.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; t.style.animation = 'none'; t.style.transform = 'rotateY(' + (-x * 24) + 'deg) rotateX(' + (y * 18) + 'deg)'; });
+    h.addEventListener('mouseleave', function () { t.style.transform = ''; t.style.animation = ''; });
+  }
+  var GSTEPS = [
+    ['١', 'اختار ملفك من المتجر', 'ادخل على «المذكرات» وشوف الملخصات وبنك الأسئلة. كل ملف عليه معاينة وسعره.'],
+    ['٢', 'جرّب عينة مجانية', 'افتح ١٠ أسئلة مجانًا وشوف الشكل والحل قبل ما تدفع حاجة.'],
+    ['٣', 'صمّم نسختك', 'اكتب اسمك ورقمك، واختار اللون والإطار وشكل الملف وألوان السؤال، والمعاينة بتتغير قدامك.'],
+    ['٤', 'كمّل الطلب', 'ضيف الملفات للسلة، واكتب بياناتك وطريقة الدفع والرقم اللي هتحوّل منه.'],
+    ['٥', 'تابع حالة الطلب', 'من «الطلبات والملفات» هتشوف الطلب: تم الاستلام، مراجعة التحويل، الملف جاهز.'],
+    ['٦', 'حمّل ملفك واطبعه', 'لما الملف يجهز دوس «حمّل PDF» واطبع نسخك باسمك وعلامتك.']
+  ];
+  function gStage(i) {
+    if (i === 0) return '<div class="gs g0"><div class="gc"><span>ملخص قوانين الأسس</span><b>٤٠ ج</b><button class="gbtn">أضف إلى السلة</button></div><div class="gc"><span>بنك أسئلة الأسس</span><b>١٢٠ ج</b><button class="gbtn">أضف إلى السلة</button></div><div class="cur"></div></div>';
+    if (i === 1) return '<div class="gs g1"><div class="gq">ناتج <span dir="ltr">5<sup>6</sup> ÷ 5<sup>2</sup></span> يساوي:</div><div class="go"><div>أ  5<sup>8</sup></div><div>ب  5<sup>3</sup></div><div class="rt">ج  5<sup>4</sup></div><div>د  5<sup>12</sup></div></div><div class="gsol">✔ نطرح الأسس: 6 − 2 = 4</div></div>';
+    if (i === 2) return '<div class="gs g2" id="gdemo">' + summaryPage(DEMO) + '</div>';
+    if (i === 3) return '<div class="gs g3"><div class="gf"><i></i><i class="t1"></i><i class="t2"></i></div><div class="gbtn big">ابعت الطلب</div></div>';
+    if (i === 4) return '<div class="gs g4"><div class="steps3"><span class="on">تم استلام الطلب</span><span class="s2">مراجعة التحويل</span><span class="s3">الملف جاهز</span></div></div>';
+    return '<div class="gs g5"><div class="file">PDF</div><div class="gbtn big pulse">حمّل PDF</div><div class="done">✔ ملفك جاهز</div></div>';
+  }
+  function startGuide() {
+    var i = 0, play = true, bar = $('#gbar'), box = $('#gst'), cap = $('#gcap'), voice = false;
+    function show(n) {
+      i = (n + GSTEPS.length) % GSTEPS.length;
+      box.className = 'gstage'; void box.offsetWidth; box.className = 'gstage in s' + i;
+      box.innerHTML = gStage(i);
+      if (i === 2) { var d = $('#gdemo'); d.style.zoom = .42; demoLoop(d); }
+      cap.innerHTML = '<span class="gn">' + GSTEPS[i][0] + '</span><h3>' + GSTEPS[i][1] + '</h3><p>' + GSTEPS[i][2] + '</p>';
+      document.querySelectorAll('.gdots button').forEach(function (b, k) { b.className = k === i ? 'on' : ''; });
+      bar.style.transition = 'none'; bar.style.width = '0'; void bar.offsetWidth;
+      if (play) { bar.style.transition = 'width 6s linear'; bar.style.width = '100%'; }
+      if (voice && window.speechSynthesis) { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(GSTEPS[i][1] + '. ' + GSTEPS[i][2]); u.lang = 'ar-EG'; speechSynthesis.speak(u); }
+    }
+    function tick() { if (play) { clearTimers(); show(i + 1); arm(); } }
+    function arm() { later(tick, 6000); }
+    $('#gprev').onclick = function () { clearTimers(); show(i - 1); if (play) arm(); };
+    $('#gnext').onclick = function () { clearTimers(); show(i + 1); if (play) arm(); };
+    $('#gplay').onclick = function () { play = !play; this.textContent = play ? '❚❚ إيقاف' : '▶ تشغيل'; clearTimers(); show(i); if (play) arm(); };
+    $('#gvoice').onclick = function () { voice = !voice; this.setAttribute('aria-pressed', voice); if (voice) show(i); else if (window.speechSynthesis) speechSynthesis.cancel(); };
+    document.querySelectorAll('.gdots button').forEach(function (b, k) { b.onclick = function () { clearTimers(); show(k); if (play) arm(); }; });
+    show(0); arm();
+  }
   var views = {
+    guide: function () {
+      return '<section class="page-s guide"><h2>شرح استخدام المنصة</h2><p class="sub">فيديو تفاعلي قصير بيوريك الخطوات من الاختيار لحد استلام الملف.</p><div class="gwrap"><div class="gstage" id="gst"></div><div class="gcap" id="gcap"></div></div><div class="gbar"><div id="gbar"></div></div><div class="gctl"><button class="btn" id="gprev">السابق</button><button class="btn y" id="gplay">❚❚ إيقاف</button><button class="btn" id="gnext">التالي</button><button class="btn" id="gvoice" aria-pressed="false">🔊 قراءة صوتية</button></div><div class="gdots">' + GSTEPS.map(function (g, k) { return '<button type="button" aria-label="' + g[1] + '">' + g[0] + '</button>'; }).join('') + '</div><div class="row"><a class="btn y" href="#/editor">ابدأ صمّم مذكرتك</a></div></section>';
+    },
     home: function () {
-      return '<section class="hero"><div class="hero-t"><h1>مذكرتك <em>باسمك</em> وعلامتك</h1><p>أسئلة وملخصات جاهزة لكل مرحلة. اكتب اسمك ورقمك، اختار اللون والإطار، وشوف الصفحة بتتغير قدامك. بعدها اطبعها بالـ PDF جاهزة للطلاب.</p><div class="cta"><a class="btn y" href="#/editor">صمّم مذكرتك</a><a class="btn" href="#/s/1">جرّب ١٠ أسئلة مجانًا</a></div><div class="ver">النموذج الحالي: الصف الثالث الإعدادي، الترم الأول</div></div><div class="hero-p">' + fitBox(summaryPage(D)) + '</div></section>' +
+      return '<section class="hero"><div class="syms" aria-hidden="true"><i>x²</i><i>√</i><i>÷</i><i>π</i><i>∑</i><i>%</i><i>a⁵</i></div><div class="hero-t"><h1>مذكرتك <em>باسمك</em> وعلامتك</h1><p>أسئلة وملخصات جاهزة لكل مرحلة. اكتب اسمك ورقمك، اختار اللون والإطار، وشوف الصفحة بتتغير قدامك. بعدها اطبعها بالـ PDF جاهزة للطلاب.</p><div class="cta"><a class="btn y" href="#/editor">صمّم مذكرتك</a><a class="btn" href="#/s/1">جرّب ١٠ أسئلة مجانًا</a><a class="btn ghost" href="#/guide">▶ شاهد الشرح</a></div><div class="ver">النموذج الحالي: الصف الثالث الإعدادي، الترم الأول</div></div><div class="hero-p"><div class="tilt" id="tilt">' + fitBox(summaryPage(DEMO)) + '</div></div></section>' +
         '<section class="steps"><div><b>١</b><h4>اكتب بياناتك</h4><p>الاسم والرقم واسم السلسلة.</p></div><div><b>٢</b><h4>اختار الشكل</h4><p>لون وإطار وعلامة اسم.</p></div><div><b>٣</b><h4>اطبع واستلم</h4><p>صفحات PDF باسمك.</p></div></section>' +
         '<section class="feat"><div class="fc"><h4>ملخصات منظمة</h4><p>قوانين وأمثلة في كروت ملونة مرتبة.</p></div><div class="fc"><h4>بنك أسئلة</h4><p>سؤال في كل صفحة، معه تلميح ومساحة للحل.</p></div><div class="fc"><h4>نموذج إجابة</h4><p>صفحة حل مرتبة لكل مجموعة أسئلة.</p></div><div class="fc"><h4>محتوى أصلي</h4><p>كل الأسئلة والشرح من تأليفنا.</p></div></section>';
     },
@@ -212,7 +280,7 @@
   function route() {
     var h = location.hash.replace(/^#\/?/, '') || '', parts = h.split('/'), app = $('#app'), name = parts[0] || 'home';
     document.querySelectorAll('[data-nav]').forEach(function (a) { a.classList.toggle('on', a.dataset.nav === name || (name === 's' || name === 'q') && a.dataset.nav === 'bank'); });
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); clearTimers(); if (window.speechSynthesis) speechSynthesis.cancel();
     if (name === 'print') { var st = $('#pgsty') || document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pgsty' })); st.textContent = D.shape === 'slide' ? '@page{size:1120px 630px;margin:0}' : '@page{size:A4;margin:0}'; $('#print-area').innerHTML = allPrint(D); document.body.classList.add('printing'); return; }
     if (name === 'q' || name === 's') { var v = viewer(name, parseInt(parts[1], 10) || 1); app.innerHTML = v.html; v.after(); return; }
     if (!views[name]) name = 'home';
@@ -231,6 +299,9 @@
     document.querySelectorAll('[data-add]').forEach(function (b) { b.onclick = function () { var id = b.dataset.add; if (cart.indexOf(id) < 0) cart.push(id); saveCart(); b.textContent = 'في السلة'; }; });
     document.querySelectorAll('[data-bundle]').forEach(function (b) { b.onclick = function () { PRODUCTS.forEach(function (p) { if (cart.indexOf(p.id) < 0) cart.push(p.id); }); saveCart(); location.hash = '#/cart'; }; });
     document.querySelectorAll('[data-rm]').forEach(function (b) { b.onclick = function () { cart = cart.filter(function (x) { return x !== b.dataset.rm; }); saveCart(); route(); }; });
+    if (name === 'home') { demoLoop($('.hero-p')); tiltInit(); }
+    if (name === 'guide') startGuide();
+    revealInit();
     var cf = $('#cof'); if (cf) cf.onsubmit = function (e) {
       e.preventDefault(); var f = new FormData(cf), items = cartItems();
       var o = { id: 'MS-' + (1000 + ORDERS.length + 1), date: new Date().toLocaleDateString('ar-EG'), st: 1, pay: f.get('m'), total: cartSum(items), items: items.map(function (p) { return { id: p.id, t: p.title }; }), design: JSON.parse(JSON.stringify(D)) };
@@ -242,8 +313,24 @@
     document.querySelectorAll('[data-dl]').forEach(function (b) { b.onclick = function () { var a = b.dataset.dl.split('|'), o = ORDERS.filter(function (x) { return x.id === a[0]; })[0], d = o.design; if (a[1] === 'sum') printPages(summaryPage(d) + questionPage(d, 0, 2), false); else printPages(allPrint(d), d.shape === 'slide'); }; });
     fitAll();
   }
+  function revealInit() {
+    var els = document.querySelectorAll('.steps > div, .feat .fc, .pc, .bundle, .panelw'); if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('rv-in'); io.unobserve(e.target); } }); }, { threshold: .12 });
+    els.forEach(function (e, k) { e.classList.add('rv'); e.style.transitionDelay = (k % 4) * 80 + 'ms'; io.observe(e); });
+  }
+  function intro() {
+    if (REDUCE || sessionStorage.getItem('ms_intro') || location.hash.length > 2 && location.hash !== '#/') return;
+    try { sessionStorage.setItem('ms_intro', '1'); } catch (e) {}
+    var d = document.createElement('div'); d.id = 'intro';
+    d.innerHTML = '<div class="isy"><i>x²</i><i>√</i><i>÷</i><i>π</i><i>∑</i><i>%</i><i>a⁵</i><i>∞</i></div><div class="scene"><div class="book"><div class="bk back"></div><div class="bk pl p3"></div><div class="bk pl p2"></div><div class="bk pl p1"><div class="mini"><b>الوحدة الأولى</b><u></u><u></u><u></u><span id="itype"></span></div></div><div class="bk cover"><div class="cf"><div class="cb1">مسارك</div><div class="cb2">مذكرات باسمك</div><div class="cb3"></div></div><div class="cr"></div></div></div></div><div class="itag">مذكرتك <em>باسمك</em> وعلامتك</div><button id="iskip" type="button">تخطي</button>';
+    document.body.appendChild(d);
+    var nm = 'م/ أحمد علي', k = 0, ty = setInterval(function () { k++; var e = $('#itype'); if (e) e.textContent = nm.slice(0, k); if (k >= nm.length) clearInterval(ty); }, 120);
+    var done = false;
+    function end() { if (done) return; done = true; clearInterval(ty); d.classList.add('out'); setTimeout(function () { d.remove(); }, 900); }
+    $('#iskip').onclick = end; d.onclick = end; setTimeout(end, 4600);
+  }
   function hdr() { var a = document.querySelector('.hbtns .acc'); if (a) a.textContent = USER.name ? USER.name.split(' ')[0] : 'إنشاء حساب'; }
-  hdr();
+  hdr(); intro();
   $('#dk').onclick = function () { document.body.classList.toggle('dark'); };
   saveCart();
   window.addEventListener('hashchange', route);
