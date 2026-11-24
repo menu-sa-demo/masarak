@@ -137,7 +137,29 @@
     root.querySelectorAll('[data-mark]').forEach(function (b) { b.onclick = function () { D.mark = b.dataset.mark === '1'; save(); redraw(true); }; });
   }
 
-  var USER = {}; try { USER = JSON.parse(localStorage.getItem('masarak_user') || '{}'); } catch (e) {}
+  var USER = {};
+  var SB = 'https://htkwymimktphqmpbqffq.supabase.co', KEY = 'sb_publishable_5_2_u26FlS42PuADpaoF4Q_ImVst9P1', ADMIN = 'elkazazmahmoud304@gmail.com';
+  var SESS = null; try { SESS = JSON.parse(localStorage.getItem('masarak_sess') || 'null'); } catch (e) {}
+  function sbf(path, o, tok) {
+    o = o || {}; var h = { apikey: KEY, 'Content-Type': 'application/json' }; if (tok) h.Authorization = 'Bearer ' + tok; if (o.prefer) h.Prefer = o.prefer;
+    return fetch(SB + path, { method: o.method || 'GET', headers: h, body: o.body ? JSON.stringify(o.body) : undefined }).then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) {} if (!r.ok) throw new Error((j && (j.msg || j.message || j.error_description || j.error)) || 'error'); return j; }); });
+  }
+  function setSess(j) { SESS = { at: j.access_token, rt: j.refresh_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 60000, email: (j.user && j.user.email) || (SESS && SESS.email) }; localStorage.setItem('masarak_sess', JSON.stringify(SESS)); }
+  function token() {
+    if (!SESS) return Promise.reject(new Error('no'));
+    if (Date.now() < SESS.exp) return Promise.resolve(SESS.at);
+    return sbf('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: SESS.rt } }).then(function (j) { setSess(j); return SESS.at; });
+  }
+  function loadProfile() {
+    return token().then(function (t) { return sbf('/rest/v1/profiles?select=*&limit=1', {}, t); }).then(function (r) {
+      var p = r && r[0]; if (!p) throw new Error('noprofile');
+      USER = { name: p.name || 'حساب', phone: p.phone || '', email: p.email || SESS.email, plan: p.plan || 'free', id: p.id, admin: (p.email || '').toLowerCase() === ADMIN };
+      hdr();
+    }).catch(function () { SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); });
+  }
+  function signOut() { SESS = null; localStorage.removeItem('masarak_sess'); USER = {}; hdr(); route(); }
+  function setPlan(plan) { return token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + USER.id, { method: 'PATCH', body: { plan: plan }, prefer: 'return=minimal' }, t); }); }
+  var ACCMODE = 'up', ACCERR = '';
   var ORDERS = []; try { ORDERS = JSON.parse(localStorage.getItem('masarak_orders') || '[]'); } catch (e) {}
   function cartItems() { return cart.map(function (id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean); }
   function cartSum(items) { var t = items.reduce(function (a, p) { return a + p.price; }, 0); return items.length === PRODUCTS.length ? BUNDLE : t; }
@@ -255,8 +277,16 @@
       }).join('') + '<p class="sub">في النموذج التجريبي حالة الطلب بتتغير بزر التجربة. في النسخة الحقيقية بتتغير بعد تأكيد التحويل.</p></section>';
     },
     account: function () {
-      if (USER.name) return '<section class="page-s"><h2>حسابك</h2><div class="panelw"><p>أهلًا <b>' + esc(USER.name) + '</b></p><p class="sub">' + esc(USER.phone || '') + ' ' + esc(USER.email || '') + '</p><a class="btn y" href="#/orders">طلباتك وملفاتك</a> <button class="btn" id="lo">تسجيل خروج</button></div>' + planPanel() + '</section>';
-      return '<section class="page-s"><h2>إنشاء حساب</h2><form id="acf" class="panelw"><p class="sub">النموذج التجريبي بيحفظ بياناتك على جهازك بس. مفيش كلمة سر ولا سيرفر.</p><label>الاسم الكامل<input name="n" required></label><label>رقم الموبايل<input name="p" required dir="ltr" inputmode="tel"></label><label>الإيميل<input name="e" type="email" dir="ltr"></label><button class="btn y" type="submit">إنشاء الحساب</button></form></section>';
+      if (USER.name) return '<section class="page-s"><h2>حسابك</h2><div class="panelw"><p>أهلًا <b>' + esc(USER.name) + '</b></p><p class="sub">' + esc(USER.phone || '') + ' ' + esc(USER.email || '') + '</p><a class="btn y" href="#/orders">طلباتك وملفاتك</a> ' + (USER.admin ? '<a class="btn" href="#/admin">صفحة الإدارة</a> ' : '') + '<button class="btn" id="lo">تسجيل خروج</button></div>' + planPanel() + '</section>';
+      var up = ACCMODE === 'up';
+      return '<section class="page-s"><h2>' + (up ? 'إنشاء حساب' : 'تسجيل الدخول') + '</h2><form id="acf" class="panelw"><div class="tabs"><button type="button" class="chip" data-am="up" aria-pressed="' + up + '">حساب جديد</button><button type="button" class="chip" data-am="in" aria-pressed="' + !up + '">عندي حساب</button></div>' +
+        (up ? '<label>الاسم الكامل<input name="n" required></label><label>رقم الموبايل<input name="p" required dir="ltr" inputmode="tel"></label>' : '') +
+        '<label>الإيميل<input name="e" type="email" dir="ltr" required autocomplete="email"></label><label>كلمة السر<input name="w" type="password" dir="ltr" required minlength="6" autocomplete="' + (up ? 'new-password' : 'current-password') + '"></label>' +
+        '<p class="sub" id="acerr" style="color:#c0392b">' + esc(ACCERR) + '</p><button class="btn y" type="submit">' + (up ? 'إنشاء الحساب' : 'دخول') + '</button></form></section>';
+    },
+    admin: function () {
+      if (!USER.admin) return '<section class="page-s"><h2>صفحة الإدارة</h2><div class="panelw"><p>الصفحة دي لصاحب الموقع بس.</p></div></section>';
+      return '<section class="page-s"><h2>صفحة الإدارة</h2><div class="panelw"><p class="sub">المشتركين وطلبات الاشتراك. فعّل بعد ما تتأكد من التحويل.</p><div id="adl">جاري التحميل...</div></div></section>';
     },
     editor: function () {
       return '<section class="page-s"><h2>صمّم مذكرتك</h2><div class="ed"><div id="ctl"></div><div class="prev"><div class="tabs"><button class="chip" data-tab="s" aria-pressed="true">صفحة الملخص</button><button class="chip" data-tab="q" aria-pressed="false">صفحة سؤال</button></div><div id="pv"></div><div class="row"><button class="btn y" id="pr">اطبع أو احفظ PDF</button></div><p class="sub">الطباعة تفتح نافذة المتصفح. اختار "حفظ بصيغة PDF".</p></div></div></section>';
@@ -271,10 +301,11 @@
 
   function planPanel() {
     var p = USER.plan || 'free', t = '<div class="panelw plan"><h3>اشتراكك</h3>';
-    if (p === 'paid') return t + '<p><span class="badge g">مفعّل</span> التحميل والطباعة مفتوحين.</p></div>';
-    t += '<p class="sub">حاليًا: <b>مجاني</b>. المفتوح: التصفح والتصميم والمعاينة وكل بنك الأسئلة. المقفول لحد الاشتراك: تحميل وطباعة PDF (المذكرات وبنك الأسئلة والاختبارات).</p>';
-    if (p === 'pending') return t + '<p><span class="badge">في الانتظار</span> بنأكد التحويل وبعدها بيتفعّل اشتراكك.</p><button class="btn" id="plact">زر التجربة: فعّل الاشتراك</button><p class="sub">في النسخة الحقيقية التفعيل بيتم من عندنا بعد تأكيد الدفع، مش من هنا.</p></div>';
-    return t + '<p>الاشتراك: <b>سعر تجريبي</b> (رقم التحويل لسه فاضي).</p><button class="btn y" id="plreq">اطلب الاشتراك</button></div>';
+    if (p === 'paid') return t + '<p><span class="badge g">مفعّل</span> التحميل والطباعة مفتوحين لكل حاجة في الموقع.</p></div>';
+    t += '<p class="sub">حاليًا: <b>مجاني</b>. المفتوح: التصفح والتصميم والمعاينة وكل بنك الأسئلة. المقفول لحد الاشتراك: تحميل وطباعة PDF.</p>';
+    var pay = '<div class="payl"><b>طرق الدفع</b><ul><li>إنستا باي: <b dir="ltr">01147795940</b></li><li>تحويل بنكي: هيتضاف قريبًا</li><li>فودافون كاش: هيتضاف قريبًا</li></ul><p class="sub">السعر: <b>سعر تجريبي</b>. حوّل، وبعدها ابعت الإيصال واضغط الزر. بيتفعّل اشتراكك بعد التأكيد.</p></div>';
+    if (p === 'pending') return t + '<p><span class="badge">في الانتظار</span> بنأكد التحويل وبعدها بيتفعّل اشتراكك.</p>' + pay + '</div>';
+    return t + pay + '<button class="btn y" id="plreq">اطلب الاشتراك</button></div>';
   }
   function viewer(mode, n) {
     var max = mode === 's' ? 10 : Q.length;
@@ -295,6 +326,15 @@
     return h;
   }
 
+  function loadAdmin() {
+    var box = $('#adl'); if (!box) return;
+    token().then(function (t) { return sbf('/rest/v1/profiles?select=id,name,phone,email,plan,created_at&order=created_at.desc', {}, t); }).then(function (r) {
+      var lb = { free: 'مجاني', pending: 'طلب اشتراك', paid: 'مشترك' };
+      r.sort(function (a, b) { return (a.plan === 'pending' ? 0 : 1) - (b.plan === 'pending' ? 0 : 1); });
+      box.innerHTML = '<p class="sub">' + r.length + ' حساب</p>' + r.map(function (u) { return '<div class="ci"><span><b>' + esc(u.name) + '</b> <span class="sub" dir="ltr">' + esc(u.phone) + ' ' + esc(u.email) + '</span> <span class="badge' + (u.plan === 'paid' ? ' g' : '') + '">' + lb[u.plan] + '</span></span>' + (u.plan === 'paid' ? '<button class="btn" data-ap="' + u.id + '|free">إلغاء التفعيل</button>' : '<button class="btn y" data-ap="' + u.id + '|paid">فعّل</button>') + '</div>'; }).join('');
+      box.querySelectorAll('[data-ap]').forEach(function (b) { b.onclick = function () { var x = b.dataset.ap.split('|'); b.disabled = true; token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + x[0], { method: 'PATCH', body: { plan: x[1] }, prefer: 'return=minimal' }, t); }).then(loadAdmin).catch(function () { b.textContent = 'فشل'; }); }; });
+    }).catch(function () { box.textContent = 'مشكلة في التحميل.'; });
+  }
   function route() {
     var h = location.hash.replace(/^#\/?/, '') || '', parts = h.split('/'), app = $('#app'), name = parts[0] || 'home';
     document.querySelectorAll('[data-nav]').forEach(function (a) { a.classList.toggle('on', a.dataset.nav === name || (name === 's' || name === 'q') && a.dataset.nav === 'bank'); });
@@ -326,10 +366,18 @@
       var o = { id: 'MS-' + (1000 + ORDERS.length + 1), date: new Date().toLocaleDateString('ar-EG'), st: 1, pay: f.get('m'), total: cartSum(items), items: items.map(function (p) { return { id: p.id, t: p.title }; }), design: JSON.parse(JSON.stringify(D)) };
       ORDERS.unshift(o); localStorage.setItem('masarak_orders', JSON.stringify(ORDERS)); cart = []; saveCart(); location.hash = '#/orders';
     };
-    var af = $('#acf'); if (af) af.onsubmit = function (e) { e.preventDefault(); var f = new FormData(af); USER = { name: f.get('n'), phone: f.get('p'), email: f.get('e'), plan: 'free' }; localStorage.setItem('masarak_user', JSON.stringify(USER)); if (!D.name) { D.name = USER.name; D.phone = USER.phone; save(); } hdr(); route(); };
-    var pq = $('#plreq'); if (pq) pq.onclick = function () { USER.plan = 'pending'; localStorage.setItem('masarak_user', JSON.stringify(USER)); route(); };
-    var pa = $('#plact'); if (pa) pa.onclick = function () { USER.plan = 'paid'; localStorage.setItem('masarak_user', JSON.stringify(USER)); route(); };
-    var lo = $('#lo'); if (lo) lo.onclick = function () { USER = {}; localStorage.removeItem('masarak_user'); hdr(); route(); };
+    document.querySelectorAll('[data-am]').forEach(function (b) { b.onclick = function () { ACCMODE = b.dataset.am; ACCERR = ''; route(); }; });
+    var af = $('#acf'); if (af) af.onsubmit = function (e) {
+      e.preventDefault(); var f = new FormData(af), em = String(f.get('e')).trim().toLowerCase(), pw = f.get('w'), btn = af.querySelector('button[type=submit]'), er = $('#acerr'); btn.disabled = true; er.textContent = '';
+      var go = ACCMODE === 'up' ? sbf('/auth/v1/signup', { method: 'POST', body: { email: em, password: pw, data: { name: String(f.get('n')).trim(), phone: String(f.get('p')).trim() } } }).then(function (j) { if (!j.access_token) throw new Error('confirm'); setSess(j); }) : sbf('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: em, password: pw } }).then(setSess);
+      go.then(loadProfile).then(function () { if (USER.name && !D.name) { D.name = USER.name; D.phone = USER.phone; save(); } route(); }).catch(function (x) {
+        var m = String(x.message); btn.disabled = false;
+        er.textContent = /already|registered/i.test(m) ? 'الإيميل ده متسجل قبل كده. جرّب "عندي حساب".' : /invalid login/i.test(m) ? 'الإيميل أو كلمة السر غلط.' : /password/i.test(m) ? 'كلمة السر لازم ٦ حروف على الأقل.' : /rate|limit/i.test(m) ? 'محاولات كتير، جرّب بعد شوية.' : 'حصلت مشكلة، جرّب تاني.';
+      });
+    };
+    var pq = $('#plreq'); if (pq) pq.onclick = function () { pq.disabled = true; setPlan('pending').then(function () { USER.plan = 'pending'; route(); }).catch(function () { pq.disabled = false; pq.textContent = 'حصلت مشكلة، جرّب تاني'; }); };
+    if (name === 'admin' && USER.admin) loadAdmin();
+    var lo = $('#lo'); if (lo) lo.onclick = signOut;
     document.querySelectorAll('[data-adv]').forEach(function (b) { b.onclick = function () { ORDERS.forEach(function (o) { if (o.id === b.dataset.adv) o.st = Math.min(2, o.st + 1); }); localStorage.setItem('masarak_orders', JSON.stringify(ORDERS)); route(); }; });
     document.querySelectorAll('[data-dl]').forEach(function (b) { b.onclick = function () { var a = b.dataset.dl.split('|'), o = ORDERS.filter(function (x) { return x.id === a[0]; })[0], d = o.design; if (a[1] === 'sum') printPages(summaryPage(d) + questionPage(d, 0, 2), false, true); else printPages(allPrint(d), d.shape === 'slide', true); }; });
     fitAll();
@@ -526,4 +574,5 @@
 
   window.addEventListener('hashchange', route);
   route();
+  if (SESS) loadProfile().then(route);
 })();
