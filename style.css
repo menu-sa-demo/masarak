@@ -536,3 +536,4 @@ button,input,select,textarea{font-family:inherit}
 .pwb{background:#fff;color:#14213d;border-radius:18px;max-width:420px;width:100%;padding:24px;text-align:center;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .pwi{font-size:42px}.pwb h3{margin:6px 0}.pwb p{color:#445;line-height:1.7}.pwr{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
 .plan{margin-top:16px}
+.payl{margin:12px 0;padding:12px 14px;border:1px dashed var(--line,#bbb);border-radius:12px}.payl ul{margin:6px 0;padding-inline-start:20px}.panelw .tabs{margin-bottom:10px}.panelw input{width:100%}
