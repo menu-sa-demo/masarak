@@ -609,7 +609,7 @@
           function sample() { var ks = seq, T0 = ks[ks.length - 1].t, t = loop ? tt % T0 : Math.min(tt, T0), j = 0; while (j < ks.length - 2 && ks[j + 1].t <= t) j++; var a = ks[j], b = ks[j + 1], f = b.t > a.t ? Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t))) : 1; f = f * f * (3 - 2 * f); return lerpSt(a, b, f); }
           function step(dt) { tt += dt; var tg = sample(); if (bl < 1) { bl = Math.min(1, bl + dt / 0.16); tg = lerpSt(from, tg, bl); } cur = tg; apply(cur.p); o.rotation.x = cur.lean; o.position.y = cur.y; }
           var act = { obj: g, cur: null, play: function (name, once) { var nm = name === 'idle' ? (idleSeq || 'idle') : name; var ns = SEQ[nm] || SEQ.idle; if (ns === seq && loop && !once) return; seq = ns; tt = 0; loop = !once || nm === 'emote-yes'; from = cur; bl = 0; } };
-          S.ups.push(step); step(0.001); return act;
+          sc.add(g); S.ups.push(step); step(0.001); return act;
         } catch (e) { return null; }
       };
       (function lp() { if (!r.domElement.isConnected && S.seen) { r.dispose(); return; } if (r.domElement.isConnected) S.seen = true; var dt = Math.min(clock.getDelta(), 0.05); mixers.forEach(function (x) { x.update(dt); }); S.ups.forEach(function (f) { f(dt); }); r.render(sc, cam); requestAnimationFrame(lp); })();
