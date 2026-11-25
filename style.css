@@ -622,11 +622,11 @@ button,input,select,textarea{font-family:inherit}
 .scn.tug3{height:auto;background:#cfe8ff;line-height:0}
 .tug{justify-content:space-between}
 /* v52 exam marking */
-.xmk{position:absolute;width:34px;height:34px;background:#fff;z-index:6}.xmk::after{content:"";position:absolute;inset:4px;background:#000}
-.xmk[data-m=tl]{left:3px;top:3px}.xmk[data-m=tr]{right:3px;top:3px}.xmk[data-m=bl]{left:3px;bottom:3px}
-.xmk.big{width:48px;height:48px;right:3px;bottom:3px}.xmk.big::after{inset:4px}
+.xmk{position:absolute;width:36px;height:36px;z-index:6;background:linear-gradient(#000,#000) center/10px 10px no-repeat,linear-gradient(#fff,#fff) center/18px 18px no-repeat,linear-gradient(#000,#000) center/30px 30px no-repeat,#fff}
+.xmk[data-m=tl]{left:2px;top:2px}.xmk[data-m=tr]{right:2px;top:2px}.xmk[data-m=bl]{left:2px;bottom:2px}
+.xmk.big{width:54px;height:54px;right:2px;bottom:2px;background:linear-gradient(#000,#000) center/15px 15px no-repeat,linear-gradient(#fff,#fff) center/27px 27px no-repeat,linear-gradient(#000,#000) center/45px 45px no-repeat,#fff}
 .xcd{position:absolute;left:50%;top:3px;transform:translateX(-50%);background:#fff;padding:2px 5px;display:flex;gap:9px;direction:ltr;z-index:6}
-.xcd u{display:block;position:relative;width:22px;height:22px;border:3px solid #000;box-sizing:border-box;text-decoration:none}.xcd u.on::after{content:"";position:absolute;inset:3px;background:#000}
+.xcd u{display:block;width:22px;height:22px;border:3px solid #000;box-sizing:border-box;text-decoration:none}.xcd u.on{background:#000}
 .xo .xl{width:30px;height:30px;border-radius:50%;font-size:0;margin-inline-end:0}.xo .xl::after{content:none}
 .xtf .xl{width:30px;height:30px;border-radius:50%}
 .xlt{font-style:normal;font-weight:700;color:var(--c);font-size:18px;margin-inline:2px 4px}
