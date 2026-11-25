@@ -32,9 +32,10 @@
     var cx = c.minx + c.bw / 2, cy = c.miny + c.bh / 2, s = (c.bw + c.bh) / 2, n = 0, i, j;
     for (i = -1; i <= 1; i++) for (j = -1; j <= 1; j++) n += dk(b, w, h, cx + i * 0.06 * s, cy + j * 0.06 * s);
     if (n < 7) return false;
-    var gap = 0; for (i = 0; i < 8; i++) { var a = i * Math.PI / 4; gap += dk(b, w, h, cx + Math.cos(a) * 0.235 * s, cy + Math.sin(a) * 0.235 * s); }
+    var gap = 0; for (i = 0; i < 8; i++) { var a = i * Math.PI / 4; gap += dk(b, w, h, cx + Math.cos(a) * 0.265 * s, cy + Math.sin(a) * 0.265 * s); }
     return gap <= 2;
   }
+  function finders(b, w, h) { var M = Math.max(w, h); return comps(b, w, h, 30, M * 0.16).filter(function (c) { return c.fill > 0.3 && c.bw > M * 0.008 && c.bw / c.bh > 0.6 && c.bw / c.bh < 1.6; }).map(function (c) { return [Math.round(c.minx + c.bw / 2), Math.round(c.miny + c.bh / 2), c.bw, c.bh, +c.fill.toFixed(2), isFinder(b, w, h, c)]; }); }
   /* find the 4 corner finder markers: three small and one big (bottom-right on the page) */
   function findMarkers(b, w, h, ratio) {
     var M = Math.max(w, h), cs = comps(b, w, h, 30, M * 0.16).filter(function (c) { return c.fill > 0.4 && c.fill < 0.85 && c.bw / c.bh > 0.75 && c.bw / c.bh < 1.33 && c.bw > M * 0.008 && isFinder(b, w, h, c); });
@@ -103,6 +104,6 @@
     if (sec >= T0 && sec > top * 0.45) return { v: idx[0], st: 'multi', f: f };
     return { v: idx[0], st: 'ok', f: f };
   }
-  var API = { readPage: readPage, decide: decide, homog: homog, map: map, findMarkers: findMarkers, binarize: binarize, gray: gray, blur3: blur3 };
+  var API = { isFinder: isFinder, comps: comps, finders: finders, readPage: readPage, decide: decide, homog: homog, map: map, findMarkers: findMarkers, binarize: binarize, gray: gray, blur3: blur3 };
   if (typeof module !== 'undefined') module.exports = API; else root.OMR = API;
 })(typeof window !== 'undefined' ? window : this);
