@@ -471,11 +471,11 @@
       loadSB(function () {
         var uid = Math.random().toString(36).slice(2, 8), cl = window.supabase.createClient(SB, KEY, { realtime: { params: { eventsPerSecond: 10 } } });
         var ch = cl.channel('race:' + code, { config: { broadcast: { self: true }, presence: { key: uid } } }); window.__rc = ch;
-        var qs = null, i = 0, score = 0, streak = 0, left = 20, scores = {}, started = false, over = false, joinedAt = Date.now(), tm;
+        var sidx = null, qs = null, i = 0, score = 0, streak = 0, left = 20, scores = {}, started = false, over = false, joinedAt = Date.now(), tm;
         function players() { var st = ch.presenceState(), a = []; Object.keys(st).forEach(function (k) { var m = st[k][0]; a.push({ id: k, name: m.name, host: m.host, at: m.at }); }); a.sort(function (x, y) { return x.at - y.at; }); return a; }
-        function board() { var a = Object.keys(scores).map(function (k) { return scores[k]; }); a.sort(function (x, y) { return y.score - x.score; }); return '<ol class="rb">' + a.map(function (p) { return '<li class="lane' + (p.id === uid ? ' me' : '') + '"><span class="ln">' + esc(p.name) + '</span><span class="trk"><i style="inset-inline-start:' + Math.round(p.n * 9) + '%">🏎️</i><em>🏁</em></span><span>' + (p.done ? '✔ ' : '') + '<b>' + p.score + '</b></span></li>'; }).join('') + '</ol>'; }
+        function board() { var pres = ch.presenceState(), a = Object.keys(scores).map(function (k) { return scores[k]; }).filter(function (p) { return p.done || pres[p.id]; }); a.sort(function (x, y) { return y.score - x.score; }); return '<ol class="rb">' + a.map(function (p) { return '<li class="lane' + (p.id === uid ? ' me' : '') + '"><span class="ln">' + esc(p.name) + '</span><span class="trk"><i style="inset-inline-start:' + Math.round(p.n * 9) + '%">🏎️</i><em>🏁</em></span><span>' + (p.done ? '✔ ' : '') + '<b>' + p.score + '</b></span></li>'; }).join('') + '</ol>'; }
         function lobby() {
-          if (started) return; var pl = players();
+          if (started) { if (qs && i >= qs.length && !over) finish(); return; } var pl = players();
           if (!host && pl.length && pl.length > 8 && pl.findIndex(function (p) { return p.id === uid; }) >= 8) { box.innerHTML = '<p class="gn">الغرفة مليانة (٨ لاعبين).</p><button class="btn" id="rb">رجوع</button>'; $('#rb').onclick = race; raceLeave(); return; }
           var hasHost = pl.some(function (p) { return p.host; });
           box.innerHTML = '<div class="gh"><span>كود الغرفة: <b class="rcode">' + code + '</b></span><span>' + pl.length + ' / 8 لاعبين</span></div><ol class="rb">' + pl.map(function (p) { return '<li><span>' + esc(p.name) + (p.host ? ' 👑' : '') + '</span></li>'; }).join('') + '</ol>' + (host ? '<button class="btn y" id="rgo"' + (pl.length < 2 ? ' disabled' : '') + '>ابدأ السباق</button><p class="sub">ابعت الكود لزمايلك. تقدر تبدأ لما يبقوا لاعبين على الأقل.</p>' : (hasHost ? '<p class="sub">مستني صاحب الغرفة يبدأ السباق...</p>' : '<p class="gn">الغرفة غير موجودة. اتأكد من الكود.</p>')) + '<button class="btn" id="rlv">خروج</button>';
@@ -483,7 +483,7 @@
           if (host && pl.length >= 2) $('#rgo').onclick = function () { var idx = shuffle(Q.map(function (_, k) { return k; })).slice(0, 10); ch.send({ type: 'broadcast', event: 'start', payload: { idx: idx } }); };
         }
         function begin(idx) {
-          if (started) return; started = true; qs = idx.map(function (k) { return Q[k]; }); scores = {}; players().forEach(function (p) { scores[p.id] = { id: p.id, name: p.name, score: 0, n: 0, done: false }; }); show();
+          if (started) return; started = true; sidx = idx; qs = idx.map(function (k) { return Q[k]; }); scores = {}; players().forEach(function (p) { scores[p.id] = { id: p.id, name: p.name, score: 0, n: 0, done: false }; }); show();
         }
         function push(done) { ch.send({ type: 'broadcast', event: 'score', payload: { id: uid, name: name, score: score, n: i, done: !!done } }); }
         function show() {
@@ -500,11 +500,12 @@
           }
         }
         function finish() {
-          var a = Object.keys(scores).map(function (k) { return scores[k]; }), all = a.every(function (p) { return p.done; });
+          var a = Object.keys(scores).map(function (k) { return scores[k]; }), pres = ch.presenceState(), all = a.every(function (p) { return p.done || !pres[p.id]; });
           box.innerHTML = '<div class="gres"><h3>' + (all ? 'النتيجة النهائية' : 'خلصت أسئلتك. مستني الباقي...') + '</h3>' + board() + '<button class="btn y" id="rend">سباق جديد</button></div>';
           $('#rend').onclick = function () { raceLeave(); race(); };
         }
-        ch.on('presence', { event: 'sync' }, lobby)
+        ch.on('presence', { event: 'join' }, function () { if (started && sidx) { var pl = players(); if (pl[0] && pl[0].id === uid) ch.send({ type: 'broadcast', event: 'start', payload: { idx: sidx } }); } })
+          .on('presence', { event: 'sync' }, lobby)
           .on('broadcast', { event: 'start' }, function (m) { begin(m.payload.idx); })
           .on('broadcast', { event: 'score' }, function (m) { var p = m.payload; scores[p.id] = p; if (over) return; var l = $('#rlive'); if (l) l.innerHTML = board(); else if (qs && i >= qs.length) finish(); })
           .subscribe(function (st) { if (st === 'SUBSCRIBED') ch.track({ name: name, host: host, at: Date.now() }); else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') box.innerHTML = '<p class="gn">تعذر الاتصال بالغرفة. جرّب تاني.</p><button class="btn" id="rb">رجوع</button>', $('#rb').onclick = race; });
