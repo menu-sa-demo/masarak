@@ -898,7 +898,7 @@
     else if (it.k === 'essay') h += '<div class="xlines"><i></i><i></i><i></i></div>';
     return h + '</div>';
   }
-  var XH = { mcq: 108, tf: 84, match: 250, fill: 70, essay: 200 };
+  var XH = { mcq: 108, tf: 106, match: 285, fill: 70, essay: 200 };
   function examPages(x, d, model) {
     var secs = xsections(x, model), N = +x.sheets || 0, tot = 0;
     secs.forEach(function (sec) { tot += 50 + sec.items.length * XH[sec.k]; });
