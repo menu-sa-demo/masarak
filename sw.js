@@ -1,4 +1,4 @@
-var C='masarak-v28',A=['./','index.html','style.css?v=35','data.js?v=35','app.js?v=35','manifest.json'];
+var C='masarak-v29',A=['./','index.html','style.css?v=36','data.js?v=36','app.js?v=36','manifest.json'];
 self.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(A)}).then(function(){return self.skipWaiting()}))});
 self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(n){return n!==C}).map(function(n){return caches.delete(n)}))}).then(function(){return self.clients.claim()}))});
 self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(function(r){var c=r.clone();caches.open(C).then(function(x){x.put(e.request,c)});return r}).catch(function(){return caches.match(e.request)}))});
