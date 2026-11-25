@@ -904,14 +904,14 @@
     secs.forEach(function (sec) { tot += 50 + sec.items.length * XH[sec.k]; });
     var s = 1; if (N > 0) { s = Math.max(0.6, Math.min(1, (700 + (N - 1) * 900) * 0.88 / tot)); }
     x.warn = N > 0 && tot * 0.6 > 0.88 * (700 + (N - 1) * 900);
-    var pages = [[]], used = 0, cap = 700;
+    var pages = [[]], used = 0, cap = 630;
     secs.forEach(function (sec, si) {
       var total = sec.items.reduce(function (t, it) { return t + it.m; }, 0), hh = XH[sec.k] * s, sh = 50 * s;
       var hd = '<div class="xsec"><b>السؤال ' + ORD[si] + ':</b> ' + XSEC[sec.k] + '<span>(' + fm(total) + ' درجات)</span></div>';
-      if (used + sh + hh > cap) { pages.push([]); used = 0; cap = 900; }
+      if (used + sh + hh > cap) { pages.push([]); used = 0; cap = 820; }
       pages[pages.length - 1].push(hd); used += sh;
       sec.items.forEach(function (it, i) {
-        if (used + hh > cap) { pages.push([]); used = 0; cap = 900; }
+        if (used + hh > cap) { pages.push([]); used = 0; cap = 820; }
         pages[pages.length - 1].push(xblock(x, it, i + 1)); used += hh;
       });
     });
