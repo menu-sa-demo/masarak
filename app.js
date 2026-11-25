@@ -542,7 +542,7 @@
     function load3d(cb) {
       if (window.__3d !== undefined) return cb(window.__3d);
       var C = 'https://cdn.jsdelivr.net/npm/three@0.160.0/';
-      Promise.all([import(C + '+esm'), import(C + 'examples/jsm/loaders/GLTFLoader.js/+esm'), import(C + 'examples/jsm/libs/meshopt_decoder.module.js/+esm'), new Promise(function (ok, no) { if (window.MODELS) return ok(); var sc = document.createElement('script'); sc.src = 'models.js?v=45'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); })]).then(function (x) {
+      Promise.all([import(C + '+esm'), import(C + 'examples/jsm/loaders/GLTFLoader.js/+esm'), import(C + 'examples/jsm/libs/meshopt_decoder.module.js/+esm'), new Promise(function (ok, no) { if (window.MODELS) return ok(); var sc = document.createElement('script'); sc.src = 'models.js?v=46'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); })]).then(function (x) {
         var T = x[0], ld = new x[1].GLTFLoader(); ld.setMeshoptDecoder(x[2].MeshoptDecoder); var models = {}, keys = Object.keys(window.MODELS);
         return Promise.all(keys.map(function (k) { var bin = atob(window.MODELS[k]), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Promise(function (ok, no) { ld.parse(u.buffer, '', function (g) { models[k] = g; ok(); }, no); }); })).then(function () { window.__3d = { T: T, models: models }; cb(window.__3d); });
       }).catch(function () { window.__3d = null; cb(null); });
@@ -562,8 +562,8 @@
     }
     function ground3(S, c1, c2, z) { var T = S.T, cv = document.createElement('canvas'); cv.width = 256; cv.height = 256; var cx = cv.getContext('2d'); for (var i = 0; i < 8; i++) { cx.fillStyle = i % 2 ? c1 : c2; cx.fillRect(0, i * 32, 256, 32); } var tx = new T.CanvasTexture(cv); tx.colorSpace = T.SRGBColorSpace; tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(1, 3); var g = new T.Mesh(new T.PlaneGeometry(90, 70), new T.MeshStandardMaterial({ map: tx })); g.rotation.x = -Math.PI / 2; g.position.z = z || 0; g.receiveShadow = true; S.sc.add(g); }
     function pen3d(m) {
-      var S = scene3(m, 900, 300, 0x8ecbff), T = S.T, sc = S.sc; S.cam.position.set(0, 1.7, 6.5); S.cam.lookAt(0, 1.3, -10); ground3(S, '#3f9d4a', '#368c41', -14);
-      var wh = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }), GZ = -10, GW = 8, GH = 2.6;
+      var S = scene3(m, 900, 300, 0x8ecbff), T = S.T, sc = S.sc; S.cam.position.set(0, 1.5, 5); S.cam.lookAt(0, 1.2, -7.5); ground3(S, '#3f9d4a', '#368c41', -14);
+      var wh = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }), GZ = -7.5, GW = 8, GH = 2.6;
       function post(x, y, len, rot) { var p = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, len, 12), wh); p.position.set(x, y, GZ); if (rot) p.rotation.z = Math.PI / 2; p.castShadow = true; sc.add(p); }
       post(-GW / 2, GH / 2, GH); post(GW / 2, GH / 2, GH); post(0, GH, GW, true);
       var nm = new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.4 }); var net = new T.Mesh(new T.PlaneGeometry(GW, GH, 28, 9), nm); net.position.set(0, GH / 2, GZ - 1.2); sc.add(net);
@@ -571,7 +571,7 @@
       var top = new T.Mesh(new T.PlaneGeometry(GW, 1.2, 28, 4), nm); top.rotation.x = Math.PI / 2; top.position.set(0, GH, GZ - 0.6); sc.add(top);
       var stand = new T.Mesh(new T.BoxGeometry(70, 7, 2), new T.MeshStandardMaterial({ color: 0x35456b })); stand.position.set(0, 3.5, -27); sc.add(stand);
       for (var k = 0; k < 90; k++) { var d = new T.Mesh(new T.BoxGeometry(0.5, 0.55, 0.2), new T.MeshBasicMaterial({ color: [0xffc928, 0xc23b3b, 0x1f6fd1, 0xffffff, 0x2fb36b][(k * 7) % 5] })); d.position.set(-27 + (k % 30) * 1.85, 1.4 + Math.floor(k / 30) * 1.7, -25.9); sc.add(d); }
-      var kp = S.actor('male', 1.9), kk = S.actor('female', 1.9); kp.obj.position.set(0, 0, GZ + 0.5); kp.play('idle'); kk.obj.position.set(0.9, 0, 1.4); kk.obj.rotation.y = Math.PI; kk.play('idle');
+      var kp = S.actor('male', 2.4), kk = S.actor('female', 2.2); kp.obj.position.set(0, 0, GZ + 0.5); kp.play('idle'); kk.obj.position.set(1.9, 0, 0.9); kk.obj.rotation.y = Math.PI; kk.play('idle');
       var ball = new T.Group(), bm = new T.Mesh(new T.SphereGeometry(0.23, 28, 20), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 })); bm.castShadow = true; ball.add(bm);
       [[0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [.7, .7, .7], [-.7, .7, -.7], [.7, -.7, -.7], [-.7, -.7, .7]].forEach(function (v) { var l = Math.hypot(v[0], v[1], v[2]), p = new T.Mesh(new T.SphereGeometry(0.08, 10, 8), new T.MeshStandardMaterial({ color: 0x151515 })); p.position.set(v[0] / l * 0.22, v[1] / l * 0.22, v[2] / l * 0.22); p.scale.set(1, 1, 0.4); p.lookAt(0, 0, 0); ball.add(p); }); sc.add(ball);
       var fly = null;
