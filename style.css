@@ -621,3 +621,17 @@ button,input,select,textarea{font-family:inherit}
 .scn.pen3{height:auto;background:#8ecbff;line-height:0}
 .scn.tug3{height:auto;background:#cfe8ff;line-height:0}
 .tug{justify-content:space-between}
+/* v52 exam marking */
+.xmk{position:absolute;width:34px;height:34px;background:#fff;z-index:6}.xmk::after{content:"";position:absolute;inset:4px;background:#000}
+.xmk[data-m=tl]{left:3px;top:3px}.xmk[data-m=tr]{right:3px;top:3px}.xmk[data-m=bl]{left:3px;bottom:3px}
+.xmk.big{width:48px;height:48px;right:3px;bottom:3px}.xmk.big::after{inset:4px}
+.xcd{position:absolute;left:50%;top:5px;transform:translateX(-50%);background:#fff;padding:4px 6px;display:flex;gap:6px;direction:ltr;z-index:6}
+.xcd u{display:block;width:14px;height:14px;border:2px solid #000;box-sizing:border-box;text-decoration:none}.xcd u.on{background:#000}
+.xo .xl{width:30px;height:30px;border-radius:50%;font-size:0;margin-inline-end:0}.xo .xl::after{content:none}
+.xtf .xl{width:30px;height:30px;border-radius:50%}
+.xlt{font-style:normal;font-weight:700;color:var(--c);font-size:18px;margin-inline:2px 4px}
+.xp[data-nb="1"] .xl{visibility:hidden}
+.xmt{margin:8px 20px 0 0}.xmr{display:flex;gap:18px;flex-wrap:wrap;font-size:18px;background:color-mix(in srgb,var(--c) 7%,#fff);border-radius:10px;padding:6px 12px;margin-bottom:8px}
+.xml{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:19px}.xmq{flex:1}.xmb{display:flex;gap:10px}.xmb>span{display:flex;align-items:center;gap:3px}
+.xn.s{min-width:26px;height:26px;font-size:14px}
+.xsg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}.xsr{display:flex;align-items:center;gap:6px;height:38px;border-bottom:1px dotted #bbb}.xsr>span:not(.xn){display:flex;align-items:center;gap:2px}.xsr .xl{width:24px;height:24px}.xsr .xlt{font-size:14px;margin-inline:1px 3px}
