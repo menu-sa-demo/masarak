@@ -316,7 +316,7 @@
   }
   var views = {
     games: function () {
-      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button></div><div id="gbox" class="panelw"></div></section>';
+      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل، وفي سباق مع زمايلك.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button><button class="chip" data-g="race" aria-pressed="false">🏁 سباق</button></div><div id="gbox" class="panelw"></div></section>';
     },
     guide: function () {
       return '<section class="page-s guide"><h2>شرح استخدام المنصة</h2><div class="vidbox"><video controls preload="metadata" playsinline src="https://htkwymimktphqmpbqffq.supabase.co/storage/v1/object/public/media/1-explainer2.mp4"></video></div><p class="sub">وبعده شرح تفاعلي قصير بيوريك الخطوات من الاختيار لحد استلام الملف.</p><div class="gwrap"><div class="gstage" id="gst"></div><div class="gcap" id="gcap"></div></div><div class="gbar"><div id="gbar"></div></div><div class="gctl"><button class="btn" id="gprev">السابق</button><button class="btn y" id="gplay">❚❚ إيقاف</button><button class="btn" id="gnext">التالي</button><button class="btn" id="gvoice" aria-pressed="false">🔊 قراءة صوتية</button></div><div class="gdots">' + GSTEPS.map(function (g, k) { return '<button type="button" aria-label="' + g[1] + '">' + g[0] + '</button>'; }).join('') + '</div><div class="row"><a class="btn y" href="#/editor">ابدأ صمّم مذكرتك</a></div></section>';
@@ -455,8 +455,63 @@
         };
       });
     }
-    var cur = { quiz: quiz, mem: mem };
-    document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { clearTimers(); document.querySelectorAll('[data-g]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); cur[b.dataset.g](); }; });
+
+    function raceLeave() { if (window.__rc) { try { window.__rc.unsubscribe(); } catch (e) {} window.__rc = null; } }
+    function loadSB(cb) { if (window.supabase) return cb(); var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js'; sc.onload = cb; sc.onerror = function () { box.innerHTML = '<p class="gn">تعذر الاتصال. جرّب تاني.</p>'; }; document.head.appendChild(sc); }
+    function race() {
+      raceLeave();
+      var nick = localStorage.getItem('masarak_nick') || '';
+      box.innerHTML = '<div class="gh"><span>سباق مع زمايلك: كلكم بتجاوبوا نفس الأسئلة والترتيب بيتحدث لحظيًا</span></div><div class="rform"><input id="rnick" maxlength="12" placeholder="اسمك المستعار" value="' + esc(nick) + '"><button class="btn y" id="rmk">أنشئ غرفة</button></div><div class="rform"><input id="rcode" inputmode="numeric" maxlength="4" placeholder="كود الغرفة (٤ أرقام)"><button class="btn" id="rjn">ادخل الغرفة</button></div><p class="sub">لحد ٨ لاعبين في الغرفة. مفيش تسجيل مطلوب.</p><div id="gfb" class="gfb"></div>';
+      function nm() { var v = $('#rnick').value.trim(); if (!v) { $('#gfb').innerHTML = '<b class="gn">اكتب اسم مستعار الأول.</b>'; return null; } try { localStorage.setItem('masarak_nick', v); } catch (e) {} return v; }
+      $('#rmk').onclick = function () { var v = nm(); if (v) enter(v, String(1000 + Math.floor(Math.random() * 9000)), true); };
+      $('#rjn').onclick = function () { var v = nm(), c = $('#rcode').value.trim(); if (!v) return; if (!/^\d{4}$/.test(c)) { $('#gfb').innerHTML = '<b class="gn">الكود لازم ٤ أرقام.</b>'; return; } enter(v, c, false); };
+    }
+    function enter(name, code, host) {
+      box.innerHTML = '<p class="sub">بيتم الاتصال...</p>';
+      loadSB(function () {
+        var uid = Math.random().toString(36).slice(2, 8), cl = window.supabase.createClient(SB, KEY, { realtime: { params: { eventsPerSecond: 10 } } });
+        var ch = cl.channel('race:' + code, { config: { broadcast: { self: true }, presence: { key: uid } } }); window.__rc = ch;
+        var qs = null, i = 0, score = 0, streak = 0, left = 20, scores = {}, started = false, over = false, joinedAt = Date.now(), tm;
+        function players() { var st = ch.presenceState(), a = []; Object.keys(st).forEach(function (k) { var m = st[k][0]; a.push({ id: k, name: m.name, host: m.host, at: m.at }); }); a.sort(function (x, y) { return x.at - y.at; }); return a; }
+        function board() { var a = Object.keys(scores).map(function (k) { return scores[k]; }); a.sort(function (x, y) { return y.score - x.score; }); return '<ol class="rb">' + a.map(function (p) { return '<li class="lane' + (p.id === uid ? ' me' : '') + '"><span class="ln">' + esc(p.name) + '</span><span class="trk"><i style="inset-inline-start:' + Math.round(p.n * 9) + '%">🏎️</i><em>🏁</em></span><span>' + (p.done ? '✔ ' : '') + '<b>' + p.score + '</b></span></li>'; }).join('') + '</ol>'; }
+        function lobby() {
+          if (started) return; var pl = players();
+          if (!host && pl.length && pl.length > 8 && pl.findIndex(function (p) { return p.id === uid; }) >= 8) { box.innerHTML = '<p class="gn">الغرفة مليانة (٨ لاعبين).</p><button class="btn" id="rb">رجوع</button>'; $('#rb').onclick = race; raceLeave(); return; }
+          var hasHost = pl.some(function (p) { return p.host; });
+          box.innerHTML = '<div class="gh"><span>كود الغرفة: <b class="rcode">' + code + '</b></span><span>' + pl.length + ' / 8 لاعبين</span></div><ol class="rb">' + pl.map(function (p) { return '<li><span>' + esc(p.name) + (p.host ? ' 👑' : '') + '</span></li>'; }).join('') + '</ol>' + (host ? '<button class="btn y" id="rgo"' + (pl.length < 2 ? ' disabled' : '') + '>ابدأ السباق</button><p class="sub">ابعت الكود لزمايلك. تقدر تبدأ لما يبقوا لاعبين على الأقل.</p>' : (hasHost ? '<p class="sub">مستني صاحب الغرفة يبدأ السباق...</p>' : '<p class="gn">الغرفة غير موجودة. اتأكد من الكود.</p>')) + '<button class="btn" id="rlv">خروج</button>';
+          $('#rlv').onclick = function () { raceLeave(); race(); };
+          if (host && pl.length >= 2) $('#rgo').onclick = function () { var idx = shuffle(Q.map(function (_, k) { return k; })).slice(0, 10); ch.send({ type: 'broadcast', event: 'start', payload: { idx: idx } }); };
+        }
+        function begin(idx) {
+          if (started) return; started = true; qs = idx.map(function (k) { return Q[k]; }); scores = {}; players().forEach(function (p) { scores[p.id] = { id: p.id, name: p.name, score: 0, n: 0, done: false }; }); show();
+        }
+        function push(done) { ch.send({ type: 'broadcast', event: 'score', payload: { id: uid, name: name, score: score, n: i, done: !!done } }); }
+        function show() {
+          if (i >= qs.length) { push(true); clearTimers(); return finish(); }
+          var q = qs[i]; left = 20;
+          box.innerHTML = '<div class="gh"><span>سؤال ' + (i + 1) + ' من ' + qs.length + '</span><span>النقاط: <b>' + score + '</b></span></div><div class="gtime"><i id="gtb"></i></div><div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div><div id="rlive">' + board() + '</div>';
+          clearTimers(); tm = every(function () { left -= 0.1; var b = $('#gtb'); if (b) b.style.width = Math.max(0, left / 20 * 100) + '%'; if (left <= 0) pick(-1); }, 100);
+          box.querySelectorAll('.gopt').forEach(function (b) { b.onclick = function () { pick(+b.dataset.k); }; });
+          function pick(k) {
+            clearTimers(); var ok = k === q.a; if (ok) { streak++; score += 10 + Math.round(left / 4) + Math.min(streak - 1, 5); } else streak = 0;
+            box.querySelectorAll('.gopt').forEach(function (b) { b.disabled = true; var bk = +b.dataset.k; if (bk === q.a) b.classList.add('ok'); else if (bk === k) b.classList.add('no'); });
+            i++; push(false); $('#gfb').innerHTML = (ok ? '<b class="gy">صح!</b>' : '<b class="gn">' + (k < 0 ? 'الوقت خلص.' : 'غلط.') + '</b>');
+            later(show, 1200);
+          }
+        }
+        function finish() {
+          var a = Object.keys(scores).map(function (k) { return scores[k]; }), all = a.every(function (p) { return p.done; });
+          box.innerHTML = '<div class="gres"><h3>' + (all ? 'النتيجة النهائية' : 'خلصت أسئلتك. مستني الباقي...') + '</h3>' + board() + '<button class="btn y" id="rend">سباق جديد</button></div>';
+          $('#rend').onclick = function () { raceLeave(); race(); };
+        }
+        ch.on('presence', { event: 'sync' }, lobby)
+          .on('broadcast', { event: 'start' }, function (m) { begin(m.payload.idx); })
+          .on('broadcast', { event: 'score' }, function (m) { var p = m.payload; scores[p.id] = p; if (over) return; var l = $('#rlive'); if (l) l.innerHTML = board(); else if (qs && i >= qs.length) finish(); })
+          .subscribe(function (st) { if (st === 'SUBSCRIBED') ch.track({ name: name, host: host, at: Date.now() }); else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') box.innerHTML = '<p class="gn">تعذر الاتصال بالغرفة. جرّب تاني.</p><button class="btn" id="rb">رجوع</button>', $('#rb').onclick = race; });
+      });
+    }
+    var cur = { quiz: quiz, mem: mem, race: race };
+    document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { clearTimers(); document.querySelectorAll('[data-g]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); raceLeave(); cur[b.dataset.g](); }; });
     quiz();
   }
   function allPrint(D) {
