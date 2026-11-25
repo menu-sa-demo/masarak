@@ -593,3 +593,4 @@ button,input,select,textarea{font-family:inherit}
 .ilogo .it::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);animation:ish 1.4s 1.1s ease-out forwards}
 @keyframes ish{to{transform:translateX(120%)}}
 @media(max-width:520px){.ilogo .it{font-size:32px}.ilogo .ik{width:48px;height:48px;font-size:28px}}
+.vidbox{max-width:880px;margin:14px auto 18px;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 8px 26px rgba(10,20,60,.25)}.vidbox video{display:block;width:100%;aspect-ratio:16/9;background:#000}
