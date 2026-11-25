@@ -71,13 +71,13 @@
     return pageOpen(d, 'q') + top(d, 'الصف الثالث الإعدادي، بنك أسئلة الأسس') + '<div class="pbody"><div class="qwrap ' + frame(d) + '"><div class="qhead"><span class="hex big">' + (i + 1) + '</span><span class="qof">السؤال ' + (i + 1) + ' من ' + Q.length + '</span></div><div class="qtext">' + txt(q.t) + '</div><div class="opts">' + opts + '</div><div class="hint"><span class="note-t">فكّر</span>' + esc(q.h) + '</div>' + (d.solve === 'none' ? '' : '<div class="lines"><div class="lbl">اكتب خطوات الحل:</div>' + (d.solve === 'grid' ? '<div class="gridbox"></div>' : '<i></i><i></i><i></i><i></i>') + '</div>') + '</div></div>' + wm(d) + bottom(d, pgNum || i + 1) + '</div>';
   }
   var EXS = [
-    ['اختصر لأبسط صورة: {{2^3 × 2^4}}', ['{{2^3 × 2^4 = 2^(3+4)}}', '{{= 2^7 = 128}}'], 'اختصر لأبسط صورة: {{5^2 × 5^3}}'],
+    ['اختصر لأبسط صورة: {{2^3 × 2^4}}', ['{{2^3 × 2^4 = 2^(3+4) = 2^7 = 128}}'], 'اختصر لأبسط صورة: {{5^2 × 5^3}}'],
     ['اختصر: {{(3^2)^3 ÷ 3^4}}', ['{{(3^2)^3 ÷ 3^4 = 3^6 ÷ 3^4}}', '{{= 3^(6-4) = 3^2 = 9}}'], 'اختصر: {{(2^3)^2 ÷ 2^4}}'],
-    ['أوجد قيمة س: {{2^(س+1) = 16}}', ['{{2^(س+1) = 2^4}}', '∵ الأساسات متساوية ∴ الأسس متساوية', '{{س + 1 = 4}} ومنها {{س = 3}}'], 'أوجد قيمة س: {{3^(س-1) = 27}}']
+    ['أوجد قيمة س: {{2^(س+1) = 16}}', ['{{2^(س+1) = 2^4}}', 'الأساسات متساوية، إذن الأسس متساوية:', '{{س + 1 = 4}}', '{{س = 3}}'], 'أوجد قيمة س: {{3^(س-1) = 27}}']
   ];
   function examplePage(d, pgNum) {
     var blocks = EXS.map(function (e, i) {
-      return '<div class="exb"><div class="exh"><span class="exbadge">مثال ' + (i + 1) + '</span><div class="exq">' + txt(e[0]) + '</div></div><div class="exs"><span class="sol">الحل</span>' + e[1].map(function (l) { return '<div class="sl">' + txt(l) + '</div>'; }).join('') + '</div><div class="try"><span class="trytag">جرّب بنفسك</span><div class="exq">' + txt(e[2]) + '</div><div class="lines"><i></i><i></i></div></div></div>';
+      return '<div class="exb"><div class="exh"><span class="exbadge">مثال ' + (i + 1) + '</span><div class="exq">' + txt(e[0]) + '</div></div><div class="exs"><span class="sol">الحل</span>' + e[1].map(function (l) { return '<div class="sl' + (/^\{\{.*\}\}$/.test(l) ? ' sm' : '') + '">' + txt(l) + '</div>'; }).join('') + '</div><div class="try"><span class="trytag">جرّب بنفسك</span><div class="exq">' + txt(e[2]) + '</div><div class="lines"><i></i><i></i></div></div></div>';
     }).join('');
     return pageOpen(d) + top(d, 'الصف الثالث الإعدادي، أمثلة محلولة') + '<div class="pbody"><div class="unit"><span>أمثلة وتدريب</span></div><div class="wrap ' + frame(d) + '">' + blocks + '</div></div>' + wm(d) + bottom(d, pgNum || 1) + '</div>';
   }
