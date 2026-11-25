@@ -316,7 +316,7 @@
   }
   var views = {
     games: function () {
-      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل، وفي سباق مع زمايلك.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button><button class="chip" data-g="race" aria-pressed="false">🏁 سباق</button></div><div id="gbox" class="panelw"></div></section>';
+      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل، وفي سباق مع زمايلك.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button><button class="chip" data-g="race" aria-pressed="false">🏁 سباق</button><button class="chip" data-g="team" aria-pressed="false">🏎️ سباق الفرق</button><button class="chip" data-g="tug" aria-pressed="false">🪢 شد الحبل</button></div><div id="gbox" class="panelw"></div></section>';
     },
     guide: function () {
       return '<section class="page-s guide"><h2>شرح استخدام المنصة</h2><div class="vidbox"><video controls preload="metadata" playsinline src="https://htkwymimktphqmpbqffq.supabase.co/storage/v1/object/public/media/1-explainer2.mp4"></video></div><p class="sub">وبعده شرح تفاعلي قصير بيوريك الخطوات من الاختيار لحد استلام الملف.</p><div class="gwrap"><div class="gstage" id="gst"></div><div class="gcap" id="gcap"></div></div><div class="gbar"><div id="gbar"></div></div><div class="gctl"><button class="btn" id="gprev">السابق</button><button class="btn y" id="gplay">❚❚ إيقاف</button><button class="btn" id="gnext">التالي</button><button class="btn" id="gvoice" aria-pressed="false">🔊 قراءة صوتية</button></div><div class="gdots">' + GSTEPS.map(function (g, k) { return '<button type="button" aria-label="' + g[1] + '">' + g[0] + '</button>'; }).join('') + '</div><div class="row"><a class="btn y" href="#/editor">ابدأ صمّم مذكرتك</a></div></section>';
@@ -510,7 +510,32 @@
           .subscribe(function (st) { if (st === 'SUBSCRIBED') ch.track({ name: name, host: host, at: Date.now() }); else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') box.innerHTML = '<p class="gn">تعذر الاتصال بالغرفة. جرّب تاني.</p><button class="btn" id="rb">رجوع</button>', $('#rb').onclick = race; });
       });
     }
-    var cur = { quiz: quiz, mem: mem, race: race };
+
+    function teamsGame(mode) {
+      var NM = ['الفريق الأحمر', 'الفريق الأزرق', 'الفريق الأخضر', 'الفريق الأصفر'], CL = ['#c23b3b', '#1f6fd1', '#14877a', '#d9a21a'], tug = mode === 'tug';
+      box.innerHTML = '<div class="gh"><span>' + (tug ? 'شد الحبل: فريقين بيتبادلوا الأسئلة، كل إجابة صح بتشد الحبل ناحيتكم' : 'سباق الفرق: الفرق بتتبادل الأسئلة على نفس الشاشة، كل إجابة صح بتقدّم عربيتكم') + '</span></div>' + (tug ? '' : '<div class="rform"><span class="sub">عدد الفرق:</span><button class="chip" data-n="2" aria-pressed="true">٢</button><button class="chip" data-n="3" aria-pressed="false">٣</button><button class="chip" data-n="4" aria-pressed="false">٤</button></div>') + '<button class="btn y" id="tgo">ابدأ</button>';
+      var N = 2; box.querySelectorAll('[data-n]').forEach(function (b) { b.onclick = function () { N = +b.dataset.n; box.querySelectorAll('[data-n]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); }; });
+      $('#tgo').onclick = function () {
+        var qs = shuffle(Q), qi = 0, pos = [], t = 0, goal = tug ? 4 : 8, done = false; for (var k = 0; k < N; k++) pos.push(0);
+        function view() {
+          if (tug) { var d = pos[1] - pos[0]; return '<div class="tug"><span style="color:' + CL[0] + '">' + NM[0] + '</span><div class="tbar"><i style="inset-inline-start:' + (50 + d * 11) + '%">🪢</i></div><span style="color:' + CL[1] + '">' + NM[1] + '</span></div>'; }
+          return '<ol class="rb">' + pos.map(function (p, k) { return '<li class="lane' + (k === t ? ' me' : '') + '"><span class="ln" style="color:' + CL[k] + '">' + NM[k] + '</span><span class="trk"><i style="inset-inline-start:' + Math.round(p / goal * 88) + '%">🏎️</i><em>🏁</em></span><span><b>' + p + '</b></span></li>'; }).join('') + '</ol>';
+        }
+        function ask() {
+          var q = qs[qi % qs.length]; qi++;
+          box.innerHTML = view() + '<div class="gh"><span>الدور على: <b style="color:' + CL[t] + '">' + NM[t] + '</b></span></div><div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>';
+          box.querySelectorAll('.gopt').forEach(function (b) { b.onclick = function () {
+            var k = +b.dataset.k, ok = k === q.a; box.querySelectorAll('.gopt').forEach(function (x) { x.disabled = true; var xk = +x.dataset.k; if (xk === q.a) x.classList.add('ok'); else if (xk === k) x.classList.add('no'); });
+            if (ok) pos[t]++; $('#gfb').innerHTML = ok ? '<b class="gy">صح! الفريق اتقدم.</b>' : '<b class="gn">غلط.</b> <span>' + txt(q.s) + '</span>';
+            var win = tug ? (pos[0] - pos[1] >= goal ? 0 : pos[1] - pos[0] >= goal ? 1 : -1) : (pos[t] >= goal ? t : -1);
+            later(function () { if (win >= 0) return fin(win); t = (t + 1) % N; ask(); }, ok ? 1100 : 2200);
+          }; });
+        }
+        function fin(w) { box.innerHTML = view() + '<div class="gres"><h3>🏆 ' + NM[w] + ' كسب!</h3><button class="btn y" id="tag">العب تاني</button></div>'; $('#tag').onclick = function () { teamsGame(mode); }; }
+        ask();
+      };
+    }
+    var cur = { quiz: quiz, mem: mem, race: race, team: function () { teamsGame('race'); }, tug: function () { teamsGame('tug'); } };
     document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { clearTimers(); document.querySelectorAll('[data-g]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); raceLeave(); cur[b.dataset.g](); }; });
     quiz();
   }
