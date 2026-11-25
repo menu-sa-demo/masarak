@@ -20,20 +20,30 @@
         if (y > 0 && b[q - w] && !seen[q - w]) { seen[q - w] = 1; st[sp++] = q - w; } if (y < h - 1 && b[q + w] && !seen[q + w]) { seen[q + w] = 1; st[sp++] = q + w; } }
       var bw = maxx - minx + 1, bh = maxy - miny + 1;
       if (area < minA || bw > maxSide || bh > maxSide) continue;
-      out.push({ bw: bw, bh: bh, area: area, fill: area / (bw * bh), cx: sx / area, cy: sy / area, side: Math.sqrt(area) });
+      out.push({ minx: minx, miny: miny, bw: bw, bh: bh, area: area, fill: area / (bw * bh), cx: sx / area, cy: sy / area, side: Math.sqrt(area) });
     }
     return out;
   }
   function dist(a, b) { return Math.hypot(a.cx - b.cx, a.cy - b.cy); }
   function cross(o, a, b) { return (a.cx - o.cx) * (b.cy - o.cy) - (a.cy - o.cy) * (b.cx - o.cx); }
-  /* find the 4 corner markers: three small solid squares and one big one (bottom-right on the page) */
+  function dk(b, w, h, x, y) { x = Math.round(x); y = Math.round(y); return x >= 0 && y >= 0 && x < w && y < h && b[y * w + x] ? 1 : 0; }
+  /* finder pattern: black ring with a white gap and a black dot in the centre */
+  function isFinder(b, w, h, c) {
+    var cx = c.minx + c.bw / 2, cy = c.miny + c.bh / 2, s = (c.bw + c.bh) / 2, n = 0, i, j;
+    for (i = -1; i <= 1; i++) for (j = -1; j <= 1; j++) n += dk(b, w, h, cx + i * 0.06 * s, cy + j * 0.06 * s);
+    if (n < 7) return false;
+    var gap = 0; for (i = 0; i < 8; i++) { var a = i * Math.PI / 4; gap += dk(b, w, h, cx + Math.cos(a) * 0.235 * s, cy + Math.sin(a) * 0.235 * s); }
+    return gap <= 2;
+  }
+  /* find the 4 corner finder markers: three small and one big (bottom-right on the page) */
   function findMarkers(b, w, h, ratio) {
-    var M = Math.max(w, h), cs = comps(b, w, h, 20, M * 0.14).filter(function (c) { return c.fill > 0.82 && c.bw / c.bh > 0.7 && c.bw / c.bh < 1.43 && c.bw > M * 0.008; });
-    cs.sort(function (a, b2) { return b2.area - a.area; }); cs = cs.slice(0, 36);
+    var M = Math.max(w, h), cs = comps(b, w, h, 30, M * 0.16).filter(function (c) { return c.fill > 0.4 && c.fill < 0.85 && c.bw / c.bh > 0.75 && c.bw / c.bh < 1.33 && c.bw > M * 0.008 && isFinder(b, w, h, c); });
+    cs.forEach(function (c) { c.cx = c.minx + c.bw / 2; c.cy = c.miny + c.bh / 2; c.side = (c.bw + c.bh) / 2; });
+    cs.sort(function (a, b2) { return b2.area - a.area; }); cs = cs.slice(0, 24);
     var best = null, bestA = 0, n = cs.length;
     for (var i = 0; i < n; i++) {
       var B = cs[i];
-      for (var a = 0; a < n; a++) { if (a === i) continue; var A = cs[a]; if (B.side / A.side < 1.25 || B.side / A.side > 2.3) continue;
+      for (var a = 0; a < n; a++) { if (a === i) continue; var A = cs[a]; if (B.side / A.side < 1.25 || B.side / A.side > 1.9) continue;
         for (var c = a + 1; c < n; c++) { if (c === i) continue; var C = cs[c]; if (Math.abs(C.side / A.side - 1) > 0.3) continue;
           for (var d = c + 1; d < n; d++) { if (d === i) continue; var Dd = cs[d]; if (Math.abs(Dd.side / A.side - 1) > 0.3) continue;
             var o = [A, C, Dd].sort(function (p, q) { return dist(q, B) - dist(p, B); }), TL = o[0], r1 = o[1], r2 = o[2], BL, TR;
@@ -63,7 +73,7 @@
   }
   /* decode the 6 code squares: [anchor 1, model, page bits x3, parity] */
   function readCode(bin, w, h, H, P, scale) {
-    var bits = P.cd.map(function (c) { return darkFrac(bin, w, h, H, c[0], c[1], c[2] * 0.15, scale) > 0.55 ? 1 : 0; });
+    var bits = P.cd.map(function (c) { return darkFrac(bin, w, h, H, c[0], c[1], c[2] * 0.25, scale) > 0.55 ? 1 : 0; });
     if (bits.length < 6 || bits[0] !== 1) return { bad: bits }; var par = bits.slice(0, 5).reduce(function (a, b2) { return a + b2; }, 0) % 2; if (par !== bits[5]) return { bad: bits };
     return { model: bits[1] ? 'B' : 'A', page: bits[2] * 4 + bits[3] * 2 + bits[4], bits: bits };
   }
