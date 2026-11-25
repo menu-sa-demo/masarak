@@ -56,6 +56,21 @@
             if (area > bestA) { bestA = area; best = { tl: TL, tr: TR, bl: BL, br: B }; }
           } } }
     }
+    if (!best) best = find3(cs, ratio, M);
+    return best;
+  }
+  /* fallback: only 3 markers visible (one cut off at the photo edge): infer the 4th as a parallelogram corner */
+  function find3(cs, ratio, M) {
+    var best = null, bestA = 0, n = cs.length;
+    for (var i = 0; i < n; i++) { var B = cs[i];
+      for (var a = 0; a < n; a++) { if (a === i) continue; var A = cs[a]; if (B.side / A.side < 1.25 || B.side / A.side > 1.9) continue;
+        for (var c = a + 1; c < n; c++) { if (c === i) continue; var C = cs[c]; if (Math.abs(C.side / A.side - 1) > 0.3) continue;
+          var wd = dist(A, B), ht = dist(C, B), BL = A, TR = C, rt;
+          if (wd < ht) { BL = C; TR = A; var t = wd; wd = ht; ht = t; }
+          if (!(wd > M * 0.1 && ht > M * 0.1)) continue; rt = wd / ht; if (rt < ratio * 0.8 || rt > ratio * 1.25) continue;
+          var v1 = [BL.cx - B.cx, BL.cy - B.cy], v2 = [TR.cx - B.cx, TR.cy - B.cy]; if (Math.abs(v1[0] * v2[0] + v1[1] * v2[1]) / (wd * ht) > 0.2) continue;
+          var area = wd * ht; if (area > bestA) { bestA = area; best = { tl: { cx: BL.cx + TR.cx - B.cx, cy: BL.cy + TR.cy - B.cy, side: A.side }, tr: TR, bl: BL, br: B, est: true }; }
+        } } }
     return best;
   }
   function solve(A, bb) { var n = bb.length, i, j, k; for (i = 0; i < n; i++) A[i].push(bb[i]); for (i = 0; i < n; i++) { var m = i; for (j = i + 1; j < n; j++) if (Math.abs(A[j][i]) > Math.abs(A[m][i])) m = j; var t = A[i]; A[i] = A[m]; A[m] = t; for (j = i + 1; j < n; j++) { var f = A[j][i] / A[i][i]; for (k = i; k <= n; k++) A[j][k] -= f * A[i][k]; } } var x = new Array(n); for (i = n - 1; i >= 0; i--) { var s = A[i][n]; for (j = i + 1; j < n; j++) s -= A[i][j] * x[j]; x[i] = s / A[i][i]; } return x; }
