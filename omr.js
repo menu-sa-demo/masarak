@@ -63,7 +63,7 @@
   }
   /* decode the 6 code squares: [anchor 1, model, page bits x3, parity] */
   function readCode(bin, w, h, H, P, scale) {
-    var bits = P.cd.map(function (c) { return darkFrac(bin, w, h, H, c[0], c[1], c[2] * 0.2, scale) > 0.55 ? 1 : 0; });
+    var bits = P.cd.map(function (c) { return darkFrac(bin, w, h, H, c[0], c[1], c[2] * 0.15, scale) > 0.55 ? 1 : 0; });
     if (bits.length < 6 || bits[0] !== 1) return { bad: bits }; var par = bits.slice(0, 5).reduce(function (a, b2) { return a + b2; }, 0) % 2; if (par !== bits[5]) return { bad: bits };
     return { model: bits[1] ? 'B' : 'A', page: bits[2] * 4 + bits[3] * 2 + bits[4], bits: bits };
   }
