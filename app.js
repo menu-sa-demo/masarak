@@ -542,9 +542,9 @@
     function load3d(cb) {
       if (window.__3d !== undefined) return cb(window.__3d);
       var C = 'https://cdn.jsdelivr.net/npm/three@0.160.0/';
-      Promise.all([import(C + '+esm'), import(C + 'examples/jsm/loaders/GLTFLoader.js/+esm'), import(C + 'examples/jsm/libs/meshopt_decoder.module.js/+esm'), new Promise(function (ok, no) { if (window.MODELS) return ok(); var sc = document.createElement('script'); sc.src = 'models.js?v=47'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); })]).then(function (x) {
+      Promise.all([import(C + '+esm'), import(C + 'examples/jsm/loaders/GLTFLoader.js/+esm'), import(C + 'examples/jsm/libs/meshopt_decoder.module.js/+esm'), new Promise(function (ok, no) { if (window.MODELS) return ok(); var sc = document.createElement('script'); sc.src = 'models.js?v=47'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }), new Promise(function (ok) { if (window.HUMAN) return ok(); var s2 = document.createElement('script'); s2.src = 'models2.js?v=48'; s2.onload = ok; s2.onerror = ok; document.head.appendChild(s2); })]).then(function (x) {
         var T = x[0], ld = new x[1].GLTFLoader(); ld.setMeshoptDecoder(x[2].MeshoptDecoder); var models = {}, keys = Object.keys(window.MODELS);
-        return Promise.all(keys.map(function (k) { var bin = atob(window.MODELS[k]), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Promise(function (ok, no) { ld.parse(u.buffer, '', function (g) { models[k] = g; ok(); }, no); }); })).then(function () { window.__3d = { T: T, models: models }; cb(window.__3d); });
+        return Promise.all(keys.map(function (k) { var bin = atob(window.MODELS[k]), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Promise(function (ok, no) { ld.parse(u.buffer, '', function (g) { models[k] = g; ok(); }, no); }); })).then(function () { if (!window.HUMAN) return; var hb = atob(window.HUMAN), hu = new Uint8Array(hb.length); for (var i = 0; i < hb.length; i++) hu[i] = hb.charCodeAt(i); return Promise.all(['ha', 'hb'].map(function (k) { return new Promise(function (ok) { ld.parse(hu.buffer.slice(0), '', function (g) { models[k] = g; ok(); }, function () { ok(); }); }); })); }).then(function () { window.__3d = { T: T, models: models }; cb(window.__3d); });
       }).catch(function () { window.__3d = null; cb(null); });
     }
     function scene3(m, W, H, sky) {
@@ -556,6 +556,61 @@
         var md = m.models[key], o = md.scene; o.scale.setScalar(scale); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.traverse(function (n) { if (n.isMesh) n.castShadow = true; });
         var mx = new T.AnimationMixer(o); mixers.push(mx); var a = { obj: o, cur: null, play: function (name, once) { var clip = T.AnimationClip.findByName(md.animations, name); if (!clip) return; var act = mx.clipAction(clip); act.reset(); act.setLoop(once ? T.LoopOnce : T.LoopRepeat, once ? 1 : Infinity); act.clampWhenFinished = !!once; if (a.cur && a.cur !== act) act.crossFadeFrom(a.cur, 0.15, false); act.play(); a.cur = act; } };
         sc.add(o); return a;
+      };
+
+      S.human = function (key, shirt, shorts, scale, idleSeq) {
+        try {
+          var md = m.models[key]; if (!md) return null; var o = md.scene, bn = {}, skins = [];
+          o.traverse(function (n) { if (n.isBone) bn[n.name] = n; if (n.isSkinnedMesh) skins.push(n); });
+          var need = ['upperarm_l', 'upperarm_r', 'lowerarm_l', 'lowerarm_r', 'hand_l', 'hand_r', 'thigh_l', 'thigh_r', 'calf_l', 'calf_r', 'foot_l', 'foot_r']; for (var q = 0; q < need.length; q++) if (!bn[need[q]]) return null;
+          if (!md.rest) { md.rest = {}; Object.keys(bn).forEach(function (k) { md.rest[k] = bn[k].quaternion.clone(); }); }
+          var body = skins[0]; skins.forEach(function (s) { if (s.geometry.attributes.position.count > body.geometry.attributes.position.count) body = s; });
+          var geo = body.geometry, p = geo.attributes.position, miny = 1e9, maxy = -1e9, i; for (i = 0; i < p.count; i++) { var yy = p.getY(i); if (yy < miny) miny = yy; if (yy > maxy) maxy = yy; }
+          var h = maxy - miny, col = new Float32Array(p.count * 3), cs = new T.Color(shirt), cr = new T.Color(0xffffff), cb = new T.Color(shorts), sk = new T.Color(0xc98f6a), hr = new T.Color(0x2a1d14), sh = new T.Color(0x151515), c;
+          for (i = 0; i < p.count; i++) { var t = (p.getY(i) - miny) / h, ax = Math.abs(p.getX(i)) / h; c = sk; if (t < 0.04) c = sh; else if (t < 0.12) c = cr; else if (t < 0.27) c = sk; else if (t < 0.5 && ax < 0.2) c = cb; else if (t >= 0.5 && t < 0.84 && ax < 0.2) c = cs; else if (ax >= 0.2 && ax < 0.3 && t > 0.6) c = cs; else if (t > 0.93) c = hr; col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
+          geo.setAttribute('color', new T.BufferAttribute(col, 3));
+          if (!md.mat) { md.mat = 1; o.traverse(function (n) { if (n.isMesh) { n.material = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 }); n.castShadow = true; n.frustumCulled = false; } }); }
+          var g = new T.Group(); g.add(o); g.scale.setScalar(scale); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0);
+          function wp(x) { var v = new T.Vector3(); x.getWorldPosition(v); return v; }
+          Object.keys(bn).forEach(function (k) { bn[k].quaternion.copy(md.rest[k]); }); g.updateMatrixWorld(true);
+          var sx = Math.sign(o.worldToLocal(wp(bn.upperarm_l)).x - o.worldToLocal(wp(bn.upperarm_r)).x) || 1;
+          var KM = { ua: ['upperarm', 'lowerarm'], la: ['lowerarm', 'hand'], th: ['thigh', 'calf'], ca: ['calf', 'foot'] };
+          function apply(pp) {
+            Object.keys(bn).forEach(function (k) { bn[k].quaternion.copy(md.rest[k]); });
+            var fq = new T.Quaternion();
+            ['ua', 'th', 'la', 'ca'].forEach(function (part) { ['l', 'r'].forEach(function (s) {
+              var d = pp[part + '_' + s]; if (!d) return; var b = bn[KM[part][0] + '_' + s], ch = bn[KM[part][1] + '_' + s];
+              g.updateMatrixWorld(true); o.getWorldQuaternion(fq);
+              var cur = wp(ch).sub(wp(b)).normalize(), side = (s === 'l' ? sx : -sx);
+              var D = new T.Vector3(d[0] * side, d[1], d[2]).normalize().applyQuaternion(fq);
+              var qq = new T.Quaternion().setFromUnitVectors(cur, D), bq = new T.Quaternion(), pq = new T.Quaternion(); b.getWorldQuaternion(bq); b.parent.getWorldQuaternion(pq);
+              b.quaternion.copy(pq.invert().multiply(qq).multiply(bq));
+            }); });
+          }
+          function sym(ua, la, th, ca) { return { ua_l: ua, ua_r: ua, la_l: la, la_r: la, th_l: th, th_r: th, ca_l: ca, ca_r: ca }; }
+          function PP(base, ov) { var r = {}, k; for (k in base) r[k] = base[k]; for (k in ov) r[k] = ov[k]; return r; }
+          function K(t, pose, lean, y) { return { t: t, p: pose, lean: lean || 0, y: y || 0 }; }
+          var IDLE = sym([.12, -1, 0], [.1, -1, .25], [.05, -1, 0], [0, -1, -.05]), IDLE2 = PP(IDLE, { ua_l: [.2, -1, .06], ua_r: [.2, -1, .06] });
+          var READY = sym([.8, -.55, .3], [.45, -.3, 1], [.42, -1, .1], [.25, -1, -.25]);
+          var JUMP = sym([.4, 1, .1], [.25, 1, .1], [.35, -1, 0], [.2, -.8, -.5]);
+          var PL1 = PP(sym([.25, -.2, 1], [.15, -.15, 1], [0, -1, 0], [0, -1, 0]), { th_l: [.3, -1, .6], ca_l: [.1, -1, -.15], th_r: [.3, -1, -.5], ca_r: [.1, -.7, -1] });
+          var PL2 = PP(PL1, { ua_l: [.25, -.4, 1], ua_r: [.25, -.4, 1], la_l: [.15, -.4, 1], la_r: [.15, -.4, 1] });
+          var SEQ = {
+            idle: [K(0, IDLE, 0, 0), K(1.2, IDLE2, 0, .01), K(2.4, IDLE, 0, 0)],
+            ready: [K(0, READY, .1, -.08), K(.8, PP(READY, { ua_l: [.9, -.5, .35], ua_r: [.9, -.5, .35] }), .12, -.1), K(1.6, READY, .1, -.08)],
+            'holding-both': [K(0, PL1, -.32, -.1), K(.5, PL2, -.5, -.14), K(1, PL1, -.32, -.1)],
+            'attack-kick-right': [K(0, PP(IDLE, { ua_l: [1, -.2, .2], ua_r: [1, -.2, -.2] }), 0, 0), K(.22, PP(IDLE, { th_r: [.05, -.8, -.7], ca_r: [0, -.35, -1], ua_l: [1, -.2, .4], ua_r: [1, -.3, -.3] }), -.15, 0), K(.38, PP(IDLE, { th_r: [.05, -.35, 1], ca_r: [0, -1, .7], ua_l: [1, -.2, -.3], ua_r: [1, -.2, .4] }), .2, 0), K(.8, PP(IDLE, { th_r: [.05, -.1, 1], ca_r: [0, -1, .3], ua_l: [1, -.2, -.3], ua_r: [1, -.2, .4] }), .15, 0)],
+            jump: [K(0, READY, .1, -.08), K(.35, JUMP, 0, .15)],
+            'emote-yes': [K(0, sym([.35, 1, 0], [.25, 1, 0], [.15, -1, 0], [0, -1, 0]), 0, 0), K(.25, sym([.5, .9, .1], [.3, 1, .1], [.15, -1, 0], [0, -.8, -.4]), 0, .2), K(.5, sym([.35, 1, 0], [.25, 1, 0], [.15, -1, 0], [0, -1, 0]), 0, 0)],
+            fall: [K(0, PL1, -.3, -.1), K(.7, sym([1, .3, 0], [1, .3, 0], [.1, -1, .2], [0, -1, -.3]), -1.45, 0)]
+          };
+          var cur = { p: PP(IDLE, {}), lean: 0, y: 0 }, seq = SEQ.idle, tt = 0, loop = true, from = null, bl = 1;
+          function lerpSt(a, b, f) { var r = { p: {}, lean: a.lean + (b.lean - a.lean) * f, y: a.y + (b.y - a.y) * f }; Object.keys(b.p).forEach(function (k) { var u = a.p[k] || b.p[k], v = b.p[k]; r.p[k] = [u[0] + (v[0] - u[0]) * f, u[1] + (v[1] - u[1]) * f, u[2] + (v[2] - u[2]) * f]; }); return r; }
+          function sample() { var ks = seq, T0 = ks[ks.length - 1].t, t = loop ? tt % T0 : Math.min(tt, T0), j = 0; while (j < ks.length - 2 && ks[j + 1].t <= t) j++; var a = ks[j], b = ks[j + 1], f = b.t > a.t ? Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t))) : 1; f = f * f * (3 - 2 * f); return lerpSt(a, b, f); }
+          function step(dt) { tt += dt; var tg = sample(); if (bl < 1) { bl = Math.min(1, bl + dt / 0.16); tg = lerpSt(from, tg, bl); } cur = tg; apply(cur.p); o.rotation.x = cur.lean; o.position.y = cur.y; }
+          var act = { obj: g, cur: null, play: function (name, once) { var nm = name === 'idle' ? (idleSeq || 'idle') : name; var ns = SEQ[nm] || SEQ.idle; if (ns === seq && loop && !once) return; seq = ns; tt = 0; loop = !once || nm === 'emote-yes'; from = cur; bl = 0; } };
+          S.ups.push(step); step(0.001); return act;
+        } catch (e) { return null; }
       };
       (function lp() { if (!r.domElement.isConnected && S.seen) { r.dispose(); return; } if (r.domElement.isConnected) S.seen = true; var dt = Math.min(clock.getDelta(), 0.05); mixers.forEach(function (x) { x.update(dt); }); S.ups.forEach(function (f) { f(dt); }); r.render(sc, cam); requestAnimationFrame(lp); })();
       return S;
@@ -571,7 +626,7 @@
       var top = new T.Mesh(new T.PlaneGeometry(GW, 1.2, 28, 4), nm); top.rotation.x = Math.PI / 2; top.position.set(0, GH, GZ - 0.6); sc.add(top);
       var stand = new T.Mesh(new T.BoxGeometry(70, 7, 2), new T.MeshStandardMaterial({ color: 0x35456b })); stand.position.set(0, 3.5, -27); sc.add(stand);
       for (var k = 0; k < 90; k++) { var d = new T.Mesh(new T.BoxGeometry(0.5, 0.55, 0.2), new T.MeshBasicMaterial({ color: [0xffc928, 0xc23b3b, 0x1f6fd1, 0xffffff, 0x2fb36b][(k * 7) % 5] })); d.position.set(-27 + (k % 30) * 1.85, 1.4 + Math.floor(k / 30) * 1.7, -25.9); sc.add(d); }
-      var kp = S.actor('male', 2.4), kk = S.actor('female', 2.2); kp.obj.position.set(0, 0, GZ + 0.5); kp.play('idle'); kk.obj.position.set(1.9, 0, 0.9); kk.obj.rotation.y = Math.PI; kk.play('idle');
+      var kp = S.human('hb', 0xffc928, 0x222222, 1.15, 'ready') || S.actor('male', 2.4), kk = S.human('ha', 0xd23b3b, 0x1b2a55, 1.1) || S.actor('female', 2.2); kp.obj.position.set(0, 0, GZ + 0.5); kp.play('idle'); kk.obj.position.set(1.9, 0, 0.9); kk.obj.rotation.y = Math.PI; kk.play('idle');
       var ball = new T.Group(), bm = new T.Mesh(new T.SphereGeometry(0.23, 28, 20), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 })); bm.castShadow = true; ball.add(bm);
       [[0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [.7, .7, .7], [-.7, .7, -.7], [.7, -.7, -.7], [-.7, -.7, .7]].forEach(function (v) { var l = Math.hypot(v[0], v[1], v[2]), p = new T.Mesh(new T.SphereGeometry(0.08, 10, 8), new T.MeshStandardMaterial({ color: 0x151515 })); p.position.set(v[0] / l * 0.22, v[1] / l * 0.22, v[2] / l * 0.22); p.scale.set(1, 1, 0.4); p.lookAt(0, 0, 0); ball.add(p); }); sc.add(ball);
       var fly = null;
@@ -583,7 +638,7 @@
     function tug3d(m) {
       var S = scene3(m, 900, 300, 0xcfe8ff), T = S.T, sc = S.sc; S.cam.position.set(0, 1.5, 4.4); S.cam.lookAt(0, 0.85, 0); ground3(S, '#7fae4d', '#76a548', 0);
       var mud = new T.Mesh(new T.CircleGeometry(1.5, 32), new T.MeshStandardMaterial({ color: 0x6b4a2b })); mud.rotation.x = -Math.PI / 2; mud.position.y = 0.01; mud.scale.set(1.5, 0.6, 1); sc.add(mud);
-      var asm = new T.Group(); sc.add(asm); var A = S.actor('female', 1.9), B = S.actor('male', 1.9); asm.add(A.obj); asm.add(B.obj); A.obj.position.set(-2.6, 0, 0); A.obj.rotation.y = Math.PI / 2; B.obj.position.set(2.6, 0, 0); B.obj.rotation.y = -Math.PI / 2; A.play('holding-both'); B.play('holding-both');
+      var asm = new T.Group(); sc.add(asm); var A = S.human('ha', 0xd23b3b, 0x1b2a55, 1.1) || S.actor('female', 1.9), B = S.human('hb', 0x1f6fd1, 0x1b2a55, 1.1) || S.actor('male', 1.9); asm.add(A.obj); asm.add(B.obj); A.obj.position.set(-2.6, 0, 0); A.obj.rotation.y = Math.PI / 2; B.obj.position.set(2.6, 0, 0); B.obj.rotation.y = -Math.PI / 2; A.play('holding-both'); B.play('holding-both');
       var rope = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 4.6, 10), new T.MeshStandardMaterial({ color: 0xb98a4a })); rope.rotation.z = Math.PI / 2; rope.position.set(0, 1.0, 0.12); rope.castShadow = true; asm.add(rope);
       var flag = new T.Mesh(new T.BoxGeometry(0.1, 0.5, 0.5), new T.MeshStandardMaterial({ color: 0xc23b3b })); flag.position.set(0, 0.8, 0.12); asm.add(flag);
       [-1.8, 1.8].forEach(function (x, i) { var st = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 1.4, 8), new T.MeshStandardMaterial({ color: i ? 0x1f6fd1 : 0xc23b3b })); st.position.set(x * 1.0, 0.7, -1.2); sc.add(st); });
