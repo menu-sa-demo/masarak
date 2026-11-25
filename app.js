@@ -123,7 +123,7 @@
   }
   function controls() {
     return '<div class="panel"><h3>بياناتك</h3>' +
-      '<label>الاسم<input data-k="name" value="' + esc(D.name) + '" placeholder="مثلا: م/ أحمد علي"></label>' +
+      '<label>الاسم<input data-k="name" value="' + esc(D.name) + '" placeholder="مثلا: مستر ........"></label>' +
       '<label>الرقم<input data-k="phone" dir="ltr" inputmode="tel" value="' + esc(D.phone) + '" placeholder="01xxxxxxxxx"></label>' +
       '<label>اسم السلسلة<input data-k="series" value="' + esc(D.series) + '" placeholder="سلسلة المراجعة"></label>' +
       '<div class="lab">اللون</div><div class="pick">' + COLORS.map(function (c) { return '<button type="button" class="sw" data-color="' + c[0] + '" aria-label="' + c[1] + '" aria-pressed="' + (c[0] === D.color) + '" style="background:' + c[0] + '"></button>'; }).join('') + '<label class="custom">لون آخر<input type="color" data-k="color" value="' + D.color + '"></label></div>' +
@@ -180,13 +180,13 @@
   var ORDERS = []; try { ORDERS = JSON.parse(localStorage.getItem('masarak_orders') || '[]'); } catch (e) {}
   function cartItems() { return cart.map(function (id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean); }
   function cartSum(items) { var t = items.reduce(function (a, p) { return a + p.price; }, 0); return items.length === PRODUCTS.length ? BUNDLE : t; }
-  var DEMO = Object.assign({}, D, { name: 'م/ أحمد علي', phone: '01012345678', series: 'سلسلة النخبة', shape: 'a4', logo: '' });
+  var DEMO = Object.assign({}, D, { name: 'مستر ........', phone: '01012345678', series: 'سلسلة النخبة', shape: 'a4', logo: '' });
   var timers = [];
   function later(fn, ms) { var t = setTimeout(fn, ms); timers.push(t); return t; }
   function every(fn, ms) { var t = setInterval(fn, ms); timers.push(t); return t; }
   function clearTimers() { timers.forEach(function (t) { clearTimeout(t); clearInterval(t); }); timers = []; }
   var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var NAMES = ['م/ أحمد علي', 'أ/ سارة محمود', 'د/ كريم حسن', 'م/ منى عادل'];
+  var NAMES = ['مستر ........', 'أ/ سارة محمود', 'د/ كريم حسن', 'م/ منى عادل'];
   var PAL = [['#1f6fd1', 'dashed'], ['#14877a', 'solid'], ['#7a3fa0', 'double'], ['#c23b3b', 'dashed'], ['#d9731a', 'solid']];
   function demoLoop(root) {
     var i = 0;
@@ -357,13 +357,28 @@
       box.querySelectorAll('[data-ap]').forEach(function (b) { b.onclick = function () { var x = b.dataset.ap.split('|'), bd = {}, uc = x[1] === 'plan' ? 'plan_until' : 'exams_until'; if (x[2] === 'renew') { var base = Math.max(Date.now(), x[3] ? new Date(x[3]).getTime() : 0); bd[x[1]] = 'paid'; bd[uc] = new Date(base + 30 * 86400000).toISOString(); } else { bd[x[1]] = x[2]; bd[uc] = null; } b.disabled = true; token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + x[0], { method: 'PATCH', body: bd, prefer: 'return=minimal' }, t); }).then(loadAdmin).catch(function () { b.textContent = 'فشل'; }); }; });
     }).catch(function () { box.textContent = 'مشكلة في التحميل.'; });
   }
-  var TOUR = [['#/editor', '✏️', 'صمّم مذكرتك', 'اكتب اسمك ورقمك واختار اللون والإطار، وشوف المذكرة بتتغير قدامك.'], ['#/bank', '📚', 'بنك الأسئلة', 'أسئلة مرتبة بالحل والتلميح. التصفح مفتوح للكل.'], ['#/exams', '📝', 'الاختبارات', 'ركّب اختبار بالأسئلة اللي تختارها واطبعه بورقة أو ورقتين.'], ['#/account', '🔓', 'الاشتراك', 'سجّل حساب واختار صفك. التحميل والطباعة بيتفتحوا بعد تفعيل اشتراكك.']];
+  var TOUR = [['#/editor', '✏️', 'صمّم مذكرتك', 'اكتب اسمك ورقمك واختار اللون والإطار، وشوف المذكرة بتتغير قدامك.', '[data-nav=editor]'], ['#/bank', '📚', 'بنك الأسئلة', 'أسئلة مرتبة بالحل والتلميح. التصفح مفتوح للكل.', '[data-nav=bank]'], ['#/exams', '📝', 'الاختبارات', 'ركّب اختبار بالأسئلة اللي تختارها واطبعه بورقة أو ورقتين.', '[data-nav=exams]'], ['#/account', '🔓', 'الاشتراك', 'سجّل حساب واختار صفك. التحميل والطباعة بيتفتحوا بعد تفعيل اشتراكك.', '.hbtns .acc']];
   function sheet(html, id) { var o = document.getElementById('wl'); if (o) o.remove(); var d = document.createElement('div'); d.id = 'wl'; d.innerHTML = '<div class="wlb" role="dialog" aria-modal="true">' + html + '</div>'; document.body.appendChild(d); return d; }
+  var SPSEL = null;
+  function spotPlace() {
+    var sp = document.getElementById('spl'); if (!sp || !SPSEL) return;
+    var el = document.querySelector(SPSEL); if (!el) return; var r = el.getBoundingClientRect(), p = 6;
+    sp.style.cssText = 'left:' + (r.left - p) + 'px;top:' + (r.top - p) + 'px;width:' + (r.width + 2 * p) + 'px;height:' + (r.height + 2 * p) + 'px';
+  }
+  function spot(sel) {
+    SPSEL = sel; var sp = document.getElementById('spl');
+    if (!sp) { sp = document.createElement('div'); sp.id = 'spl'; document.body.appendChild(sp); }
+    var el = document.querySelector(sel); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest', inline: 'center' });
+    setTimeout(spotPlace, 60); spotPlace();
+  }
+  function spotOff() { SPSEL = null; var sp = document.getElementById('spl'); if (sp) sp.remove(); }
+  window.addEventListener('resize', spotPlace); window.addEventListener('scroll', spotPlace, true);
+  function tourEnd() { var o = document.getElementById('wl'); if (o) o.remove(); spotOff(); }
   function tourStep(i) {
-    if (i >= TOUR.length) { var o = document.getElementById('wl'); if (o) o.remove(); return; }
-    var t = TOUR[i]; location.hash = t[0];
+    if (i >= TOUR.length) { tourEnd(); return; }
+    var t = TOUR[i]; location.hash = t[0]; spot(t[4]);
     var d = sheet('<div class="wlt"><span class="wli">' + t[1] + '</span><span class="sub">' + (i + 1) + ' / ' + TOUR.length + '</span></div><h3>' + t[2] + '</h3><p>' + t[3] + '</p><div class="wlr"><button class="btn y" id="wn">' + (i === TOUR.length - 1 ? 'خلصنا' : 'التالي') + '</button><button class="btn" id="ws">تخطّي</button></div>');
-    d.querySelector('#wn').onclick = function () { tourStep(i + 1); }; d.querySelector('#ws').onclick = function () { d.remove(); };
+    d.querySelector('#wn').onclick = function () { tourStep(i + 1); }; d.querySelector('#ws').onclick = tourEnd;
   }
   function welcome() {
     try { if (localStorage.getItem('masarak_seen')) return; localStorage.setItem('masarak_seen', '1'); } catch (e) {}
@@ -431,7 +446,7 @@
     var d = document.createElement('div'); d.id = 'intro';
     d.innerHTML = '<div class="isy"><i>x²</i><i>√</i><i>÷</i><i>π</i><i>∑</i><i>%</i><i>a⁵</i><i>∞</i></div><div class="scene"><div class="book"><div class="bk back"></div><div class="bk pl p3"></div><div class="bk pl p2"></div><div class="bk pl p1"><div class="mini"><b>الوحدة الأولى</b><u></u><u></u><u></u><span id="itype"></span></div></div><div class="bk cover"><div class="cf"><div class="cb1">مسارك</div><div class="cb2">مذكرات باسمك</div><div class="cb3"></div></div><div class="cr"></div></div></div></div><div class="itag">مذكرتك <em>باسمك</em> وعلامتك</div><button id="iskip" type="button">تخطي</button>';
     document.body.appendChild(d);
-    var nm = 'م/ أحمد علي', k = 0, ty = setInterval(function () { k++; var e = $('#itype'); if (e) e.textContent = nm.slice(0, k); if (k >= nm.length) clearInterval(ty); }, 120);
+    var nm = 'مستر ........', k = 0, ty = setInterval(function () { k++; var e = $('#itype'); if (e) e.textContent = nm.slice(0, k); if (k >= nm.length) clearInterval(ty); }, 120);
     var done = false;
     function end() { if (done) return; done = true; clearInterval(ty); d.classList.add('out'); setTimeout(function () { d.remove(); }, 900); }
     $('#iskip').onclick = end; d.onclick = end; setTimeout(end, 4600);
