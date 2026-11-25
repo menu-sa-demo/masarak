@@ -516,78 +516,85 @@
       box.innerHTML = '<div class="gh"><span>' + (tug ? 'شد الحبل: فريقين بيتبادلوا الأسئلة، كل إجابة صح بتشد الحبل ناحيتكم' : 'سباق الفرق: الفرق بتتبادل الأسئلة على نفس الشاشة، كل إجابة صح بتقدّم عربيتكم') + '</span></div>' + (tug ? '' : '<div class="rform"><span class="sub">عدد الفرق:</span><button class="chip" data-n="2" aria-pressed="true">٢</button><button class="chip" data-n="3" aria-pressed="false">٣</button><button class="chip" data-n="4" aria-pressed="false">٤</button></div>') + '<button class="btn y" id="tgo">ابدأ</button>';
       var N = 2; box.querySelectorAll('[data-n]').forEach(function (b) { b.onclick = function () { N = +b.dataset.n; box.querySelectorAll('[data-n]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); }; });
       $('#tgo').onclick = function () {
+        var t3 = null; if (tug && !window.__tl) { return load3d(function (m) { window.__m3 = m; window.__tl = 1; $('#tgo').onclick(); }); } if (tug && window.__m3) t3 = tug3d(window.__m3);
         var qs = shuffle(Q), qi = 0, pos = [], t = 0, goal = tug ? 4 : 8, done = false; for (var k = 0; k < N; k++) pos.push(0);
         function view() {
+          if (tug && t3) return '<div class="tug"><span style="color:' + CL[0] + '">' + NM[0] + '</span><span style="color:' + CL[1] + '">' + NM[1] + '</span></div><div class="scn tug3"></div>';
           if (tug) { var d = pos[1] - pos[0]; return '<div class="tug"><span style="color:' + CL[0] + '">' + NM[0] + '</span><div class="tbar"><i style="inset-inline-start:' + (50 + d * 11) + '%">🪢</i></div><span style="color:' + CL[1] + '">' + NM[1] + '</span></div>'; }
           return '<ol class="rb">' + pos.map(function (p, k) { return '<li class="lane' + (k === t ? ' me' : '') + '"><span class="ln" style="color:' + CL[k] + '">' + NM[k] + '</span><span class="trk"><i style="inset-inline-start:' + Math.round(p / goal * 88) + '%">🏎️</i><em>🏁</em></span><span><b>' + p + '</b></span></li>'; }).join('') + '</ol>';
         }
         function ask() {
           var q = qs[qi % qs.length]; qi++; window.__q = q;
-          box.innerHTML = view() + '<div class="gh"><span>الدور على: <b style="color:' + CL[t] + '">' + NM[t] + '</b></span></div><div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>';
+          box.innerHTML = view() + '<div class="gh"><span>الدور على: <b style="color:' + CL[t] + '">' + NM[t] + '</b></span></div><div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>'; if (t3) { $('.tug3').appendChild(t3.el); t3.set(pos[0] - pos[1]); }
           box.querySelectorAll('.gopt').forEach(function (b) { b.onclick = function () {
             var k = +b.dataset.k, ok = k === q.a; box.querySelectorAll('.gopt').forEach(function (x) { x.disabled = true; var xk = +x.dataset.k; if (xk === q.a) x.classList.add('ok'); else if (xk === k) x.classList.add('no'); });
-            if (ok) pos[t]++; $('#gfb').innerHTML = ok ? '<b class="gy">صح! الفريق اتقدم.</b>' : '<b class="gn">غلط.</b> <span>' + txt(q.s) + '</span>';
+            if (ok) pos[t]++; if (t3) t3.set(pos[0] - pos[1]); $('#gfb').innerHTML = ok ? '<b class="gy">صح! الفريق اتقدم.</b>' : '<b class="gn">غلط.</b> <span>' + txt(q.s) + '</span>';
             var win = tug ? (pos[0] - pos[1] >= goal ? 0 : pos[1] - pos[0] >= goal ? 1 : -1) : (pos[t] >= goal ? t : -1);
             later(function () { if (win >= 0) return fin(win); t = (t + 1) % N; ask(); }, ok ? 1100 : 2200);
           }; });
         }
-        function fin(w) { box.innerHTML = view() + '<div class="gres"><h3>🏆 ' + NM[w] + ' كسب!</h3><button class="btn y" id="tag">العب تاني</button></div>'; $('#tag').onclick = function () { teamsGame(mode); }; }
+        function fin(w) { box.innerHTML = view() + '<div class="gres"><h3>🏆 ' + NM[w] + ' كسب!</h3><button class="btn y" id="tag">العب تاني</button></div>'; if (t3) { $('.tug3').appendChild(t3.el); t3.set(pos[0] - pos[1]); t3.win(w); } $('#tag').onclick = function () { teamsGame(mode); }; }
         ask();
       };
     }
 
 
-    function loadThree(cb) { if (window.THREE) return cb(); var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js'; sc.onload = cb; sc.onerror = function () { cb(); }; document.head.appendChild(sc); }
-    function pen3d() {
-      var T = window.THREE; if (!T) return null;
-      var W = 900, H = 270, r;
-      try { r = new T.WebGLRenderer({ antialias: true }); } catch (e) { return null; }
-      r.setSize(W, H); r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); r.shadowMap.enabled = true; r.domElement.style.cssText = 'width:100%;height:auto;display:block;border-radius:14px';
-      var sc = new T.Scene(); sc.background = new T.Color(0x8ecbff); sc.fog = new T.Fog(0x8ecbff, 18, 42);
-      var cam = new T.PerspectiveCamera(48, W / H, 0.1, 80); cam.position.set(0, 1.5, 6.2); cam.lookAt(0, 1.2, -10);
-      sc.add(new T.HemisphereLight(0xffffff, 0x4a7a3a, 0.75)); var dl = new T.DirectionalLight(0xffffff, 0.9); dl.position.set(4, 10, 6); dl.castShadow = true; dl.shadow.camera.left = -12; dl.shadow.camera.right = 12; dl.shadow.camera.top = 12; dl.shadow.camera.bottom = -14; dl.shadow.mapSize.set(1024, 1024); sc.add(dl);
-      var cv = document.createElement('canvas'); cv.width = 256; cv.height = 256; var cx = cv.getContext('2d'); for (var i = 0; i < 8; i++) { cx.fillStyle = i % 2 ? '#3f9d4a' : '#368c41'; cx.fillRect(0, i * 32, 256, 32); }
-      var tx = new T.CanvasTexture(cv); tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(1, 3);
-      var gr = new T.Mesh(new T.PlaneGeometry(80, 60), new T.MeshStandardMaterial({ map: tx })); gr.rotation.x = -Math.PI / 2; gr.position.z = -14; gr.receiveShadow = true; sc.add(gr);
-      var wh = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
-      function post(x, y, z, len, rot) { var m = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, len, 12), wh); m.position.set(x, y, z); if (rot) m.rotation.z = Math.PI / 2; m.castShadow = true; sc.add(m); }
-      var GZ = -10, GW = 8, GH = 2.6; post(-GW / 2, GH / 2, GZ, GH); post(GW / 2, GH / 2, GZ, GH); post(0, GH, GZ, GW, true);
-      var net = new T.Mesh(new T.PlaneGeometry(GW, GH, 24, 8), new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.45 })); net.position.set(0, GH / 2, GZ - 1.1); sc.add(net);
-      [[-GW / 2, 1], [GW / 2, 1]].forEach(function (p) { var sn = new T.Mesh(new T.PlaneGeometry(1.1, GH, 4, 8), new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.35 })); sn.rotation.y = Math.PI / 2; sn.position.set(p[0], GH / 2, GZ - 0.55); sc.add(sn); });
-      var stand = new T.Mesh(new T.BoxGeometry(60, 6, 2), new T.MeshStandardMaterial({ color: 0x35456b })); stand.position.set(0, 3, -26); sc.add(stand);
-      for (var k = 0; k < 60; k++) { var d = new T.Mesh(new T.BoxGeometry(0.5, 0.5, 0.2), new T.MeshBasicMaterial({ color: [0xffc928, 0xc23b3b, 0x1f6fd1, 0xffffff][k % 4] })); d.position.set(-24 + (k % 30) * 1.6, 1.5 + Math.floor(k / 30) * 1.8, -24.9); sc.add(d); }
-      var kp = new T.Group(); var jm = new T.MeshStandardMaterial({ color: 0xffc928 });
-      var body = new T.Mesh(new T.BoxGeometry(0.62, 0.95, 0.32), jm); body.position.y = 1.15; body.castShadow = true; kp.add(body);
-      var head = new T.Mesh(new T.SphereGeometry(0.2, 20, 16), new T.MeshStandardMaterial({ color: 0xe8b48a })); head.position.y = 1.85; kp.add(head);
-      var legs = new T.Mesh(new T.BoxGeometry(0.5, 0.7, 0.28), new T.MeshStandardMaterial({ color: 0x1b2a55 })); legs.position.y = 0.35; legs.castShadow = true; kp.add(legs);
-      [-1, 1].forEach(function (sd) { var arm = new T.Mesh(new T.CylinderGeometry(0.08, 0.08, 0.75, 10), jm); arm.position.set(sd * 0.5, 1.4, 0); arm.rotation.z = sd * 0.5; kp.add(arm); var gl = new T.Mesh(new T.SphereGeometry(0.15, 14, 12), new T.MeshStandardMaterial({ color: 0xff5a1a })); gl.position.set(sd * 0.68, 1.78, 0); kp.add(gl); });
-      kp.position.set(0, 0, GZ + 0.3); sc.add(kp);
-      var ball = new T.Group(); var bm = new T.Mesh(new T.SphereGeometry(0.22, 28, 20), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 })); bm.castShadow = true; ball.add(bm);
-      var pv = [[0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [.7, .7, .7], [-.7, .7, -.7], [.7, -.7, -.7], [-.7, -.7, .7]];
-      pv.forEach(function (v) { var l = Math.hypot(v[0], v[1], v[2]), p = new T.Mesh(new T.SphereGeometry(0.075, 10, 8), new T.MeshStandardMaterial({ color: 0x151515 })); p.position.set(v[0] / l * 0.21, v[1] / l * 0.21, v[2] / l * 0.21); p.scale.set(1, 1, 0.4); p.lookAt(0, 0, 0); ball.add(p); });
-      sc.add(ball);
-      var busy = false;
-      function draw() { r.render(sc, cam); }
-      function reset() { ball.position.set(0, 0.22, 0); ball.rotation.set(0, 0, 0); kp.position.x = 0; kp.rotation.z = 0; kp.position.y = 0; draw(); }
-      function shoot(ok, side, done) {
-        var tx2 = [-3, 0, 3][side], ty = [1.9, 0.7, 1.7][side], t0 = performance.now(), D = 900, keeperTo = ok ? -tx2 * 0.9 : tx2, saveTo = !ok;
-        if (ok && keeperTo * tx2 > 0) keeperTo = -keeperTo;
-        busy = true;
-        (function step(now) {
-          var t = Math.min(1, (now - t0) / D), e = t * (2 - t);
-          ball.position.x = tx2 * e; ball.position.z = (GZ - 0.5) * e; ball.position.y = 0.22 + (ty - 0.22) * e + Math.sin(Math.PI * t) * 0.8; ball.rotation.x -= 0.25; ball.rotation.z += 0.12;
-          var kt = Math.min(1, t * 1.15), ke = kt * (2 - kt); kp.position.x = keeperTo * ke; kp.rotation.z = -Math.sign(keeperTo || 1) * 1.2 * ke; kp.position.y = 0.25 * Math.sin(Math.PI * ke);
-          if (saveTo && t > 0.9) { ball.position.x = kp.position.x; }
-          draw(); if (t < 1 && r.domElement.isConnected) requestAnimationFrame(step); else { busy = false; if (done) done(); }
-        })(t0);
-      }
-      reset();
-      return { el: r.domElement, reset: reset, shoot: shoot, dispose: function () { try { r.dispose(); } catch (e) {} } };
+    function load3d(cb) {
+      if (window.__3d !== undefined) return cb(window.__3d);
+      var C = 'https://cdn.jsdelivr.net/npm/three@0.160.0/';
+      Promise.all([import(C + '+esm'), import(C + 'examples/jsm/loaders/GLTFLoader.js/+esm'), import(C + 'examples/jsm/libs/meshopt_decoder.module.js/+esm'), new Promise(function (ok, no) { if (window.MODELS) return ok(); var sc = document.createElement('script'); sc.src = 'models.js?v=45'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); })]).then(function (x) {
+        var T = x[0], ld = new x[1].GLTFLoader(); ld.setMeshoptDecoder(x[2].MeshoptDecoder); var models = {}, keys = Object.keys(window.MODELS);
+        return Promise.all(keys.map(function (k) { var bin = atob(window.MODELS[k]), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Promise(function (ok, no) { ld.parse(u.buffer, '', function (g) { models[k] = g; ok(); }, no); }); })).then(function () { window.__3d = { T: T, models: models }; cb(window.__3d); });
+      }).catch(function () { window.__3d = null; cb(null); });
+    }
+    function scene3(m, W, H, sky) {
+      var T = m.T, r = new T.WebGLRenderer({ antialias: true }); r.setSize(W, H, false); r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); r.shadowMap.enabled = true; r.domElement.style.cssText = 'width:100%;height:auto;aspect-ratio:' + W + '/' + H + ';display:block;border-radius:14px';
+      var sc = new T.Scene(); sc.background = new T.Color(sky); sc.fog = new T.Fog(sky, 22, 55); var cam = new T.PerspectiveCamera(48, W / H, 0.1, 100);
+      sc.add(new T.HemisphereLight(0xffffff, 0x557744, 1.6)); var dl = new T.DirectionalLight(0xffffff, 2.4); dl.position.set(4, 10, 6); dl.castShadow = true; dl.shadow.camera.left = -14; dl.shadow.camera.right = 14; dl.shadow.camera.top = 14; dl.shadow.camera.bottom = -16; dl.shadow.mapSize.set(1024, 1024); sc.add(dl);
+      var mixers = [], clock = new T.Clock(), S = { T: T, r: r, sc: sc, cam: cam, ups: [], el: r.domElement, seen: false };
+      S.actor = function (key, scale) {
+        var md = m.models[key], o = md.scene; o.scale.setScalar(scale); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.traverse(function (n) { if (n.isMesh) n.castShadow = true; });
+        var mx = new T.AnimationMixer(o); mixers.push(mx); var a = { obj: o, cur: null, play: function (name, once) { var clip = T.AnimationClip.findByName(md.animations, name); if (!clip) return; var act = mx.clipAction(clip); act.reset(); act.setLoop(once ? T.LoopOnce : T.LoopRepeat, once ? 1 : Infinity); act.clampWhenFinished = !!once; if (a.cur && a.cur !== act) act.crossFadeFrom(a.cur, 0.15, false); act.play(); a.cur = act; } };
+        sc.add(o); return a;
+      };
+      (function lp() { if (!r.domElement.isConnected && S.seen) { r.dispose(); return; } if (r.domElement.isConnected) S.seen = true; var dt = Math.min(clock.getDelta(), 0.05); mixers.forEach(function (x) { x.update(dt); }); S.ups.forEach(function (f) { f(dt); }); r.render(sc, cam); requestAnimationFrame(lp); })();
+      return S;
+    }
+    function ground3(S, c1, c2, z) { var T = S.T, cv = document.createElement('canvas'); cv.width = 256; cv.height = 256; var cx = cv.getContext('2d'); for (var i = 0; i < 8; i++) { cx.fillStyle = i % 2 ? c1 : c2; cx.fillRect(0, i * 32, 256, 32); } var tx = new T.CanvasTexture(cv); tx.colorSpace = T.SRGBColorSpace; tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(1, 3); var g = new T.Mesh(new T.PlaneGeometry(90, 70), new T.MeshStandardMaterial({ map: tx })); g.rotation.x = -Math.PI / 2; g.position.z = z || 0; g.receiveShadow = true; S.sc.add(g); }
+    function pen3d(m) {
+      var S = scene3(m, 900, 300, 0x8ecbff), T = S.T, sc = S.sc; S.cam.position.set(0, 1.7, 6.5); S.cam.lookAt(0, 1.3, -10); ground3(S, '#3f9d4a', '#368c41', -14);
+      var wh = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }), GZ = -10, GW = 8, GH = 2.6;
+      function post(x, y, len, rot) { var p = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, len, 12), wh); p.position.set(x, y, GZ); if (rot) p.rotation.z = Math.PI / 2; p.castShadow = true; sc.add(p); }
+      post(-GW / 2, GH / 2, GH); post(GW / 2, GH / 2, GH); post(0, GH, GW, true);
+      var nm = new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.4 }); var net = new T.Mesh(new T.PlaneGeometry(GW, GH, 28, 9), nm); net.position.set(0, GH / 2, GZ - 1.2); sc.add(net);
+      [-1, 1].forEach(function (sd) { var sn = new T.Mesh(new T.PlaneGeometry(1.2, GH, 4, 9), nm); sn.rotation.y = Math.PI / 2; sn.position.set(sd * GW / 2, GH / 2, GZ - 0.6); sc.add(sn); });
+      var top = new T.Mesh(new T.PlaneGeometry(GW, 1.2, 28, 4), nm); top.rotation.x = Math.PI / 2; top.position.set(0, GH, GZ - 0.6); sc.add(top);
+      var stand = new T.Mesh(new T.BoxGeometry(70, 7, 2), new T.MeshStandardMaterial({ color: 0x35456b })); stand.position.set(0, 3.5, -27); sc.add(stand);
+      for (var k = 0; k < 90; k++) { var d = new T.Mesh(new T.BoxGeometry(0.5, 0.55, 0.2), new T.MeshBasicMaterial({ color: [0xffc928, 0xc23b3b, 0x1f6fd1, 0xffffff, 0x2fb36b][(k * 7) % 5] })); d.position.set(-27 + (k % 30) * 1.85, 1.4 + Math.floor(k / 30) * 1.7, -25.9); sc.add(d); }
+      var kp = S.actor('male', 1.9), kk = S.actor('female', 1.9); kp.obj.position.set(0, 0, GZ + 0.5); kp.play('idle'); kk.obj.position.set(0.9, 0, 1.4); kk.obj.rotation.y = Math.PI; kk.play('idle');
+      var ball = new T.Group(), bm = new T.Mesh(new T.SphereGeometry(0.23, 28, 20), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 })); bm.castShadow = true; ball.add(bm);
+      [[0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [.7, .7, .7], [-.7, .7, -.7], [.7, -.7, -.7], [-.7, -.7, .7]].forEach(function (v) { var l = Math.hypot(v[0], v[1], v[2]), p = new T.Mesh(new T.SphereGeometry(0.08, 10, 8), new T.MeshStandardMaterial({ color: 0x151515 })); p.position.set(v[0] / l * 0.22, v[1] / l * 0.22, v[2] / l * 0.22); p.scale.set(1, 1, 0.4); p.lookAt(0, 0, 0); ball.add(p); }); sc.add(ball);
+      var fly = null;
+      S.ups.push(function () { if (!fly) return; var t = Math.min(1, (performance.now() - fly.t0) / fly.D); if (t < 0) return; var e = t * (2 - t); ball.position.x = fly.tx * e; ball.position.z = (GZ - 0.4) * e; ball.position.y = 0.23 + (fly.ty - 0.23) * e + Math.sin(Math.PI * t) * 0.7; ball.rotation.x -= 0.3; ball.rotation.z += 0.15; var kt = Math.min(1, t * 1.2), ke = kt * (2 - kt); kp.obj.position.x = fly.kx * ke; kp.obj.rotation.z = -Math.sign(fly.kx || 1) * 0.5 * ke; if (t >= 1) { var dn = fly.done; fly = null; if (dn) dn(); } });
+      function reset() { fly = null; ball.position.set(0, 0.23, 0); ball.rotation.set(0, 0, 0); kp.obj.position.x = 0; kp.obj.rotation.z = 0; kp.play('idle'); kk.play('idle'); }
+      function shoot(ok, side, done) { var tx = [-3, 0, 3][side], ty = [1.9, 0.8, 1.7][side], kx = ok ? (tx > 0 ? -2.2 : tx < 0 ? 2.2 : 3) : tx; kk.play('attack-kick-right', true); setTimeout(function () { kp.play('jump', true); fly = { t0: performance.now(), D: 800, tx: tx, ty: ty, kx: kx, done: done }; }, 350); }
+      reset(); return { el: S.el, reset: reset, shoot: shoot };
+    }
+    function tug3d(m) {
+      var S = scene3(m, 900, 300, 0xcfe8ff), T = S.T, sc = S.sc; S.cam.position.set(0, 2.1, 7.2); S.cam.lookAt(0, 0.9, 0); ground3(S, '#7fae4d', '#76a548', 0);
+      var mud = new T.Mesh(new T.CircleGeometry(1.5, 32), new T.MeshStandardMaterial({ color: 0x6b4a2b })); mud.rotation.x = -Math.PI / 2; mud.position.y = 0.01; mud.scale.set(1.5, 0.6, 1); sc.add(mud);
+      var asm = new T.Group(); sc.add(asm); var A = S.actor('female', 1.9), B = S.actor('male', 1.9); asm.add(A.obj); asm.add(B.obj); A.obj.position.set(-2.6, 0, 0); A.obj.rotation.y = Math.PI / 2; B.obj.position.set(2.6, 0, 0); B.obj.rotation.y = -Math.PI / 2; A.play('holding-both'); B.play('holding-both');
+      var rope = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 4.6, 10), new T.MeshStandardMaterial({ color: 0xb98a4a })); rope.rotation.z = Math.PI / 2; rope.position.set(0, 1.0, 0.12); rope.castShadow = true; asm.add(rope);
+      var flag = new T.Mesh(new T.BoxGeometry(0.1, 0.5, 0.5), new T.MeshStandardMaterial({ color: 0xc23b3b })); flag.position.set(0, 0.8, 0.12); asm.add(flag);
+      [-1.8, 1.8].forEach(function (x, i) { var st = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 1.4, 8), new T.MeshStandardMaterial({ color: i ? 0x1f6fd1 : 0xc23b3b })); st.position.set(x * 1.0, 0.7, -1.2); sc.add(st); });
+      var mid = new T.Mesh(new T.BoxGeometry(0.06, 0.02, 3), new T.MeshBasicMaterial({ color: 0xffffff })); mid.position.set(0, 0.02, 0); sc.add(mid);
+      var tgt = 0; S.ups.push(function (dt) { asm.position.x += (tgt - asm.position.x) * Math.min(1, dt * 5); });
+      return { el: S.el, set: function (d) { tgt = -d * 0.5; }, win: function (w) { (w === 0 ? A : B).play('emote-yes', true); (w === 0 ? B : A).play('fall', true); } };
     }
     function shootGame(kind, _l) {
       var pen = kind === 'pen', qs = shuffle(Q).slice(0, 10), i = 0, goals = 0, streak = 0, pts = 0, g3 = null;
-      if (pen && !_l) return loadThree(function () { shootGame(kind, 1); });
-      if (pen) { if (window.__g3old) window.__g3old.dispose(); g3 = window.__g3old = pen3d(); }
+      if (pen && !_l) return load3d(function (m) { window.__m3 = m; shootGame(kind, 1); });
+      if (pen && window.__m3) g3 = pen3d(window.__m3);
       function scene(res, side) {
         var bx = res === 'goal' ? [20, 50, 80][side] : (res === 'miss' ? [8, 50, 92][side] : 50), by = pen ? (res === 'goal' || res === 'save' ? 24 : 12) : (res === 'goal' ? 22 : 8);
         if (pen && g3) return '<div class="scn pen3"></div>';
