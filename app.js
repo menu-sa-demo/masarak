@@ -278,7 +278,7 @@
   }
   var GSTEPS = [
     ['١', 'اختار ملفك من المتجر', 'ادخل على «المذكرات» وشوف الملخصات وبنك الأسئلة. كل ملف عليه معاينة وسعره.'],
-    ['٢', 'جرّب عينة مجانية', 'افتح ١٠ أسئلة مجانًا وشوف الشكل والحل قبل ما تدفع حاجة.'],
+    ['٢', 'جرّب عينة مجانية', 'افتح ٤ صفحات من المذكرة مجانًا وشوف الشكل باسمك قبل ما تدفع حاجة.'],
     ['٣', 'صمّم نسختك', 'اكتب اسمك ورقمك، واختار اللون والإطار وشكل الملف وألوان السؤال، والمعاينة بتتغير قدامك.'],
     ['٤', 'كمّل الطلب', 'ضيف الملفات للسلة، واكتب بياناتك وطريقة الدفع والرقم اللي هتحوّل منه.'],
     ['٥', 'تابع حالة الطلب', 'من «الطلبات والملفات» هتشوف الطلب: تم الاستلام، مراجعة التحويل، الملف جاهز.'],
@@ -319,16 +319,16 @@
       return '<section class="page-s guide"><h2>شرح استخدام المنصة</h2><p class="sub">فيديو تفاعلي قصير بيوريك الخطوات من الاختيار لحد استلام الملف.</p><div class="gwrap"><div class="gstage" id="gst"></div><div class="gcap" id="gcap"></div></div><div class="gbar"><div id="gbar"></div></div><div class="gctl"><button class="btn" id="gprev">السابق</button><button class="btn y" id="gplay">❚❚ إيقاف</button><button class="btn" id="gnext">التالي</button><button class="btn" id="gvoice" aria-pressed="false">🔊 قراءة صوتية</button></div><div class="gdots">' + GSTEPS.map(function (g, k) { return '<button type="button" aria-label="' + g[1] + '">' + g[0] + '</button>'; }).join('') + '</div><div class="row"><a class="btn y" href="#/editor">ابدأ صمّم مذكرتك</a></div></section>';
     },
     home: function () {
-      return '<section class="hero"><div class="syms" aria-hidden="true"><i>x²</i><i>√</i><i>÷</i><i>π</i><i>∑</i><i>%</i><i>a⁵</i></div><div class="hero-t"><h1>مذكرتك <em>باسمك</em> وعلامتك</h1><p>أسئلة وملخصات جاهزة لكل مرحلة. اكتب اسمك ورقمك، اختار اللون والإطار، وشوف الصفحة بتتغير قدامك. بعدها اطبعها بالـ PDF جاهزة للطلاب.</p><div class="cta"><a class="btn y" href="#/editor">صمّم مذكرتك</a><a class="btn" href="#/s/1">جرّب ١٠ أسئلة مجانًا</a><a class="btn ghost" href="#/guide">▶ شاهد الشرح</a></div><div class="panelw tryc" id="tryc"><h4>جرّب بنفسك</h4><div class="trr"><input id="tn" placeholder="اسمك" maxlength="30"><input id="tp" dir="ltr" inputmode="tel" placeholder="01xxxxxxxxx" maxlength="14"></div><div class="pick">' + COLORS.map(function (c) { return '<button type="button" class="sw" data-tc="' + c[0] + '" aria-label="' + c[1] + '" style="background:' + c[0] + '"></button>'; }).join('') + '</div></div><div class="ver">النموذج الحالي: الصف الثالث الإعدادي، الترم الأول</div></div><div class="hero-p"><div class="tilt" id="tilt">' + fitBox(summaryPage(DEMO)) + '</div></div></section>' +
+      return '<section class="hero"><div class="syms" aria-hidden="true"><i>x²</i><i>√</i><i>÷</i><i>π</i><i>∑</i><i>%</i><i>a⁵</i></div><div class="hero-t"><h1>مذكرتك <em>باسمك</em> وعلامتك</h1><p>أسئلة وملخصات جاهزة لكل مرحلة. اكتب اسمك ورقمك، اختار اللون والإطار، وشوف الصفحة بتتغير قدامك. بعدها اطبعها بالـ PDF جاهزة للطلاب.</p><div class="cta"><a class="btn y" href="#/editor">صمّم مذكرتك</a><a class="btn" href="#/s/1">جرّب ٤ صفحات مجانًا</a><a class="btn ghost" href="#/guide">▶ شاهد الشرح</a></div><div class="panelw tryc" id="tryc"><h4>جرّب بنفسك</h4><div class="trr"><input id="tn" placeholder="اسمك" maxlength="30"><input id="tp" dir="ltr" inputmode="tel" placeholder="01xxxxxxxxx" maxlength="14"></div><div class="pick">' + COLORS.map(function (c) { return '<button type="button" class="sw" data-tc="' + c[0] + '" aria-label="' + c[1] + '" style="background:' + c[0] + '"></button>'; }).join('') + '</div></div><div class="ver">النموذج الحالي: الصف الثالث الإعدادي، الترم الأول</div></div><div class="hero-p"><div class="tilt" id="tilt">' + fitBox(summaryPage(DEMO)) + '</div></div></section>' +
         '<section class="steps"><div><b>١</b><h4>اكتب بياناتك</h4><p>الاسم والرقم واسم السلسلة.</p></div><div><b>٢</b><h4>اختار الشكل</h4><p>لون وإطار وعلامة اسم.</p></div><div><b>٣</b><h4>اطبع واستلم</h4><p>صفحات PDF باسمك.</p></div></section>' +
         '<section class="feat"><div class="fc"><h4>ملخصات منظمة</h4><p>قوانين وأمثلة في كروت ملونة مرتبة.</p></div><div class="fc"><h4>بنك أسئلة</h4><p>سؤال في كل صفحة، معه تلميح ومساحة للحل.</p></div><div class="fc"><h4>نموذج إجابة</h4><p>صفحة حل مرتبة لكل مجموعة أسئلة.</p></div><div class="fc"><h4>محتوى أصلي</h4><p>كل الأسئلة والشرح من تأليفنا.</p></div></section>';
     },
     store: function () {
-      return '<section class="page-s"><div class="shero"><h2>المتجر</h2><p>اختار الملف وشوف عينة منه، وبعدين صمّم نسختك: اسمك ورقمك والإطار بتاعك وألوانك.</p><div class="yb"><b>جرّب قبل ما تدفع:</b> اختار أي ملف وصمّم نسختك، ودوس «جرّب عينة مجانًا». عينة من ١٠ أسئلة بتوصلك بالتصميم اللي اخترته.</div><div class="st4"><div class="on"><b>١</b>اختار الملف</div><div><b>٢</b>شوف العينة</div><div><b>٣</b>صمّم نسختك</div><div><b>٤</b>اطلب</div></div></div>' +
+      return '<section class="page-s"><div class="shero"><h2>المتجر</h2><p>اختار الملف وشوف عينة منه، وبعدين صمّم نسختك: اسمك ورقمك والإطار بتاعك وألوانك.</p><div class="yb"><b>جرّب قبل ما تدفع:</b> اختار أي ملف وصمّم نسختك، ودوس «جرّب عينة مجانًا». عينة من ٤ صفحات من المذكرة بتوصلك بالتصميم اللي اخترته.</div><div class="st4"><div class="on"><b>١</b>اختار الملف</div><div><b>٢</b>شوف العينة</div><div><b>٣</b>صمّم نسختك</div><div><b>٤</b>اطلب</div></div></div>' +
         '<div class="chips"><span class="chip on">كل الصفوف</span><span class="chip off">أولى إعدادي (قريبًا)</span><span class="chip off">تانية إعدادي (قريبًا)</span><span class="chip on">تالتة إعدادي</span></div>' +
         '<div class="bundle"><span class="bd">الأوفر</span><h3>الباقة الكاملة</h3><p>ملخص الأسس + بنك الأسئلة مع نموذج الإجابة</p><div class="bl"><div><b>ملخص</b> قوانين الأسس</div><div><b>بنك أسئلة</b> الأسس والجذور</div></div><div class="price">' + BUNDLE + ' ج <small>بدل ' + (PRODUCTS[0].price + PRODUCTS[1].price) + ' ج، سعر تجريبي</small></div><button class="btn y" data-bundle="1">أضف الباقة للسلة</button></div>' +
         '<h3 class="sec">تالتة إعدادي <small>' + (PRODUCTS.length + 1) + ' ملفات</small></h3><div class="pgrid">' + PRODUCTS.map(card).join('') +
-        '<div class="pc"><div class="free"><b>١٠</b><span>أسئلة</span></div><div class="tags"><span>تالتة إعدادي</span><span>عينة</span><span class="gr">مجاني</span></div><h4>عينة ١٠ أسئلة</h4><div class="meta">تجربة الشكل قبل الملف الكامل</div><div class="price">٠ ج</div><div class="pbtns"><a class="btn y" href="#/s/1">جرّب عينة مجانًا</a></div></div></div>' +
+        '<div class="pc"><div class="free"><b>٤</b><span>صفحات</span></div><div class="tags"><span>تالتة إعدادي</span><span>عينة</span><span class="gr">مجاني</span></div><h4>عينة ٤ صفحات</h4><div class="meta">تجربة الشكل قبل الملف الكامل</div><div class="price">٠ ج</div><div class="pbtns"><a class="btn y" href="#/s/1">جرّب عينة مجانًا</a></div></div></div>' +
         '<h3 class="sec">أولى وتانية إعدادي <small>قريبًا</small></h3><p class="sub">هنضيفهم بعد اعتماد نموذج تالتة إعدادي.</p></section>';
     },
     cart: function () {
@@ -380,7 +380,7 @@
     },
     bank: function () {
       return '<section class="page-s"><h2>بنك الأسئلة</h2><p class="sub">أسئلة الأسس والجذور، الصف الثالث الإعدادي. سؤال في كل صفحة، مع تلميح ومساحة للحل.</p><div class="grid g2">' +
-        '<a class="prod" href="#/s/1"><span class="badge g">مجاني</span><h4>عينة ١٠ أسئلة</h4><p>أول ١٠ أسئلة.</p><span class="go">ابدأ</span></a>' +
+        '<a class="prod" href="#/s/1"><span class="badge g">مجاني</span><h4>عينة ٤ صفحات</h4><p>أول ٤ صفحات من المذكرة.</p><span class="go">ابدأ</span></a>' +
         '<a class="prod" href="#/q/1"><span class="badge">كامل</span><h4>كل الأسئلة (' + Q.length + ')</h4><p>' + 'تصفّح كل الأسئلة مع نموذج الإجابة.' + '</p><span class="go">ابدأ</span></a></div>' +
         '<div class="panelw"><h3>طباعة باسمك</h3><p class="sub">اكتب بياناتك في صفحة التصميم، ثم اطبع كل الأسئلة صفحة صفحة، تليها صفحات الإجابة.</p><div class="row"><a class="btn" href="#/editor">عدّل بياناتك</a><button class="btn y" id="prall">اطبع كل الأسئلة PDF</button></div></div></section>';
     }
@@ -399,12 +399,12 @@
     return t + '</div>';
   }
   function viewer(mode, n) {
-    var max = mode === 's' ? 10 : Q.length;
+    var max = mode === 's' ? 4 : Q.length;
     n = Math.max(1, Math.min(max, n));
     var p = n - 1, state = { shown: false };
-    var html = '<section class="page-s"><div class="vh"><a href="#/bank">رجوع</a><span>' + (mode === 's' ? 'العينة المجانية' : 'بنك الأسئلة') + '</span></div><div id="vp"></div><div class="nav"><a class="btn' + (n <= 1 ? ' dis' : '') + '" href="#/' + mode + '/' + (n - 1) + '">السابق</a><button class="btn y" id="rv">أظهر الحل</button><a class="btn' + (n >= max ? ' dis' : '') + '" href="#/' + mode + '/' + (n + 1) + '">التالي</a></div><div id="sol" class="sol" hidden><b>الإجابة: ' + L[Q[p].a] + '</b><div>' + txt(Q[p].s) + '</div></div><div class="dots">' + Array.from({ length: max }, function (_, i) { return '<a class="' + (i === p ? 'on' : '') + '" href="#/' + mode + '/' + (i + 1) + '">' + (i + 1) + '</a>'; }).join('') + '</div></section>';
+    var html = '<section class="page-s"><div class="vh"><a href="#/bank">رجوع</a><span>' + (mode === 's' ? 'عينة مجانية: ٤ صفحات من المذكرة' : 'بنك الأسئلة') + '</span></div><div id="vp"></div><div class="nav"><a class="btn' + (n <= 1 ? ' dis' : '') + '" href="#/' + mode + '/' + (n - 1) + '">السابق</a><button class="btn y" id="rv">أظهر الحل</button><a class="btn' + (n >= max ? ' dis' : '') + '" href="#/' + mode + '/' + (n + 1) + '">التالي</a></div><div id="sol" class="sol" hidden><b>الإجابة: ' + L[Q[p % Q.length].a] + '</b><div>' + txt(Q[p % Q.length].s) + '</div></div><div class="dots">' + Array.from({ length: max }, function (_, i) { return '<a class="' + (i === p ? 'on' : '') + '" href="#/' + mode + '/' + (i + 1) + '">' + (i + 1) + '</a>'; }).join('') + '</div></section>';
     return { html: html, after: function () {
-      $('#vp').innerHTML = fitBox(questionPage(D, p), 'q'); fitAll();
+      var sp = [function () { return summaryPage(D); }, function () { return examplePage(D, 2); }, function () { return questionPage(D, 0, 3); }, function () { return questionPage(D, 1, 4); }]; $('#vp').innerHTML = mode === 's' ? fitBox(sp[p](), 's') : fitBox(questionPage(D, p), 'q'); if (mode === 's') { var rb = $('#rv'); if (rb) rb.style.display = 'none'; } fitAll();
       $('#rv').onclick = function () { var s = $('#sol'); s.hidden = !s.hidden; this.textContent = s.hidden ? 'أظهر الحل' : 'أخفِ الحل'; };
     } };
   }
