@@ -1,5 +1,5 @@
 /* v24 theme: navy dark layout. Light mode keeps body.lt */
-:root{--c2:#0a2038;--c3:#0b2240;--btn:#0f2d52;--i0:#e8f2ff;--i1:#cfe0f2;--i2:#aec3da;--sel:#18314f;--hnav:#0d2846;--bg:#061b30;--nav:#0d2846;--card:var(--card);--card2:var(--c2);--line:#1b3a5e;--ink:#dbe7f5;--ink2:#9fb4cc;--hd:#b9d6f4;--blue:#1a5599;--blue2:#18509a;--ylw:#f7b919;--lnk:#2f7be0}
+:root{--c2:#0a2038;--c3:#0b2240;--btn:#0f2d52;--i0:#e8f2ff;--i1:#cfe0f2;--i2:#aec3da;--sel:#18314f;--hnav:#0d2846;--bg:#061b30;--nav:#0d2846;--card:#0e2746;--card2:var(--c2);--line:#1b3a5e;--ink:#dbe7f5;--ink2:#9fb4cc;--hd:#b9d6f4;--blue:#1a5599;--blue2:#18509a;--ylw:#f7b919;--lnk:#2f7be0}
 body{background:var(--bg);color:var(--ink);font-family:"Cairo","Tajawal","Segoe UI",Tahoma,sans-serif}
 .site-h{background:var(--hnav);padding:0;border-bottom:1px solid rgba(255,255,255,.04);gap:0;flex-wrap:nowrap}
 .hin{max-width:880px;width:100%;margin:0 auto;display:flex;align-items:center;gap:26px;padding:14px 0;min-height:66px}
@@ -167,3 +167,5 @@ body.lt .authw h2{color:#1d5ea8}
 .wlb{background:var(--card)!important;color:var(--i0)!important;border:1px solid var(--line)}
 .wlb h3,.wlb p{color:var(--i0)!important}.wlb .sub{color:var(--ink2)!important}
 .wlb .btn:not(.y){background:var(--btn)!important;color:var(--i0)!important}
+.wlb{background:#0e2746!important;opacity:1!important;backdrop-filter:none!important}
+body.lt .wlb{background:#fff!important}
