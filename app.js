@@ -70,6 +70,17 @@
     var opts = q.o.map(function (o, k) { return '<div class="opt"><span class="lt">' + L[k] + '</span><span class="ot">' + txt(o) + '</span></div>'; }).join('');
     return pageOpen(d, 'q') + top(d, 'الصف الثالث الإعدادي، بنك أسئلة الأسس') + '<div class="pbody"><div class="qwrap ' + frame(d) + '"><div class="qhead"><span class="hex big">' + (i + 1) + '</span><span class="qof">السؤال ' + (i + 1) + ' من ' + Q.length + '</span></div><div class="qtext">' + txt(q.t) + '</div><div class="opts">' + opts + '</div><div class="hint"><span class="note-t">فكّر</span>' + esc(q.h) + '</div>' + (d.solve === 'none' ? '' : '<div class="lines"><div class="lbl">اكتب خطوات الحل:</div>' + (d.solve === 'grid' ? '<div class="gridbox"></div>' : '<i></i><i></i><i></i><i></i>') + '</div>') + '</div></div>' + wm(d) + bottom(d, pgNum || i + 1) + '</div>';
   }
+  var EXS = [
+    ['اختصر لأبسط صورة: {{2^3 × 2^4}}', ['{{2^3 × 2^4 = 2^(3+4)}}', '{{= 2^7 = 128}}'], 'اختصر لأبسط صورة: {{5^2 × 5^3}}'],
+    ['اختصر: {{(3^2)^3 ÷ 3^4}}', ['{{(3^2)^3 ÷ 3^4 = 3^6 ÷ 3^4}}', '{{= 3^(6-4) = 3^2 = 9}}'], 'اختصر: {{(2^3)^2 ÷ 2^4}}'],
+    ['أوجد قيمة س: {{2^(س+1) = 16}}', ['{{2^(س+1) = 2^4}}', '∵ الأساسات متساوية ∴ الأسس متساوية', '{{س + 1 = 4}} ومنها {{س = 3}}'], 'أوجد قيمة س: {{3^(س-1) = 27}}']
+  ];
+  function examplePage(d, pgNum) {
+    var blocks = EXS.map(function (e, i) {
+      return '<div class="exb"><div class="exh"><span class="exbadge">مثال ' + (i + 1) + '</span><div class="exq">' + txt(e[0]) + '</div></div><div class="exs"><span class="sol">الحل</span>' + e[1].map(function (l) { return '<div class="sl">' + txt(l) + '</div>'; }).join('') + '</div><div class="try"><span class="trytag">جرّب بنفسك</span><div class="exq">' + txt(e[2]) + '</div><div class="lines"><i></i><i></i></div></div></div>';
+    }).join('');
+    return pageOpen(d) + top(d, 'الصف الثالث الإعدادي، أمثلة محلولة') + '<div class="pbody"><div class="unit"><span>أمثلة وتدريب</span></div><div class="wrap ' + frame(d) + '">' + blocks + '</div></div>' + wm(d) + bottom(d, pgNum || 1) + '</div>';
+  }
   function answersPage(d, from, to, pgNum) {
     var rows = '';
     for (var i = from; i < to; i++) rows += '<div class="ans"><b>' + (i + 1) + ') ' + L[Q[i].a] + '</b> ' + txt(Q[i].s) + '</div>';
@@ -365,7 +376,7 @@
       return '<section class="page-s"><h2>صفحة الإدارة</h2><div class="panelw"><p class="sub">المشتركين وطلبات الاشتراك. فعّل بعد ما تتأكد من التحويل.</p><div id="adl">جاري التحميل...</div></div></section>';
     },
     editor: function () {
-      return '<section class="page-s"><h2>صمّم مذكرتك</h2><div class="ed"><div id="ctl"></div><div class="prev"><div class="tabs"><button class="chip" data-tab="s" aria-pressed="true">صفحة الملخص</button><button class="chip" data-tab="q" aria-pressed="false">صفحة سؤال</button></div><div id="pv"></div><div class="row"><button class="btn y" id="pr">اطبع أو احفظ PDF</button></div><p class="sub">الطباعة تفتح نافذة المتصفح. اختار "حفظ بصيغة PDF".</p></div></div></section>';
+      return '<section class="page-s"><h2>صمّم مذكرتك</h2><div class="ed"><div id="ctl"></div><div class="prev"><div class="tabs"><button class="chip" data-tab="s" aria-pressed="true">صفحة الملخص</button><button class="chip" data-tab="q" aria-pressed="false">صفحة سؤال</button><button class="chip" data-tab="e" aria-pressed="false">صفحة مثال</button></div><div id="pv"></div><div class="row"><button class="btn y" id="pr">اطبع أو احفظ PDF</button></div><p class="sub">الطباعة تفتح نافذة المتصفح. اختار "حفظ بصيغة PDF".</p></div></div></section>';
     },
     bank: function () {
       return '<section class="page-s"><h2>بنك الأسئلة</h2><p class="sub">أسئلة الأسس والجذور، الصف الثالث الإعدادي. سؤال في كل صفحة، مع تلميح ومساحة للحل.</p><div class="grid g2">' +
@@ -458,11 +469,11 @@
       var tab = 's';
       var draw = function (full) {
         if (full) { $('#ctl').innerHTML = controls(); bindControls($('#ctl'), draw); }
-        $('#pv').innerHTML = fitBox(tab === 's' ? summaryPage(D) : questionPage(D, 0), tab); fitAll();
+        $('#pv').innerHTML = fitBox(tab === 's' ? summaryPage(D) : tab === 'e' ? examplePage(D, 1) : questionPage(D, 0), tab); fitAll();
       };
       $('#ctl').innerHTML = controls(); bindControls($('#ctl'), draw); draw(false);
       document.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { tab = b.dataset.tab; document.querySelectorAll('[data-tab]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); draw(false); }; });
-      $('#pr').onclick = function () { if (tab === 's') printPages(summaryPage(D) + questionPage(D, 0, 2)); else printPages(questionPage(D, 0, 1), D.shape === 'slide'); };
+      $('#pr').onclick = function () { if (tab === 'e') printPages(examplePage(D, 1)); else if (tab === 's') printPages(summaryPage(D) + questionPage(D, 0, 2)); else printPages(questionPage(D, 0, 1), D.shape === 'slide'); };
     }
     if (name === 'exams') examInit();
     if (name === 'bank') $('#prall').onclick = function () { printPages(allPrint(D), D.shape === 'slide'); };
