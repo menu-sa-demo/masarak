@@ -143,6 +143,15 @@
     g.restore();
   }
   function toast(m) { var t = $('#pdfmsg'); if (!t) { t = document.createElement('div'); t.id = 'pdfmsg'; t.style.cssText = 'position:fixed;inset:auto 0 24px 0;margin:auto;width:max-content;max-width:90vw;background:#12307a;color:#fff;padding:12px 22px;border-radius:14px;z-index:99999;font:700 15px Cairo,sans-serif;box-shadow:0 8px 30px #0006'; document.body.appendChild(t); } t.textContent = m; t.style.display = m ? 'block' : 'none'; }
+  function fixColors(doc) {
+    var re = /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)/g, gs = doc.defaultView.getComputedStyle.bind(doc.defaultView);
+    var props = ['color', 'background-color', 'background-image', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color', 'box-shadow', 'text-shadow', 'outline-color'];
+    function cv(m, r, g, b, a) { return 'rgba(' + Math.round(r * 255) + ',' + Math.round(g * 255) + ',' + Math.round(b * 255) + ',' + (a === undefined ? 1 : a) + ')'; }
+    doc.querySelectorAll('*').forEach(function (e) {
+      var c = gs(e);
+      props.forEach(function (p) { var v = c.getPropertyValue(p); if (v && v.indexOf('color(') > -1) e.style.setProperty(p, v.replace(re, cv), 'important'); });
+    });
+  }
   function printPages(html, slide, free, kind) {
     if (!free && !isPaid(kind)) { paywall(kind); return; }
     var pa = $('#print-area'); pa.innerHTML = html; pa.style.cssText = 'display:block;position:fixed;left:-20000px;top:0;background:#fff';
@@ -154,7 +163,7 @@
       function next() {
         if (i >= els.length) return Promise.resolve();
         var el = els[i++]; toast('جاري تجهيز الصفحة ' + i + ' من ' + els.length);
-        return html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false }).then(function (cv) {
+        return html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, onclone: fixColors }).then(function (cv) {
           burn(cv, nm); out.push({ w: el.offsetWidth, h: el.offsetHeight, cw: cv.width, ch: cv.height, jpg: b64bytes(cv.toDataURL('image/jpeg', 0.92)) });
           return new Promise(function (r) { setTimeout(r, 20); }).then(next);
         });
