@@ -337,7 +337,7 @@
         '<div class="yb2">رقم التحويل هيتحط هنا قبل الإطلاق الحقيقي. في النموذج التجريبي مفيش دفع فعلي.</div>' +
         '<label>الرقم اللي هتحوّل منه<input name="f" required dir="ltr" inputmode="tel"></label>' +
         '<label>طريقة استلام الملفات<select name="d"><option>رابط تحميل في صفحة الطلبات</option><option>على واتساب</option></select></label>' +
-        '<label>ملاحظات<textarea name="t" rows="3"></textarea></label><button class="btn y" type="submit">ابعت الطلب</button></form>' +
+        '<label>ملاحظات<textarea name="t" rows="3"></textarea></label><button class="btn y" type="submit">ابعت الطلب</button><p class="sub">بعد التحويل، من صفحة الطلبات دوس "ابعت صورة التحويل على واتساب" وابعت الصورة ورقم الطلب.</p></form>' +
         '<aside class="panelw"><h3>ملخص طلبك</h3>' + items.map(function (p) { return '<div class="ci"><span>' + p.title + '</span><span>' + p.price + ' ج</span></div>'; }).join('') + '<div class="ci tot"><span>الإجمالي</span><span>' + sum + ' ج</span></div><hr><div class="sm2"><div>الاسم على الملف: <b>' + esc(D.name || 'اسم المدرس') + '</b></div><div>الشكل: <b>' + (D.shape === 'slide' ? 'سلايد' : 'بوكليت A4') + '</b></div><div>مربع السؤال: <b>' + ({ full: 'كامل', dashed: 'منقط', none: 'بدون' })[D.qbox] + '</b></div><div>الاستدارة: <b>' + D.round + '</b></div><a href="#/editor">عدّل التصميم</a></div></aside></div></section>';
     },
     orders: function () {
@@ -348,7 +348,7 @@
         return '<div class="panelw ord"><div class="oh"><b>' + o.id + '</b><span class="badge s' + o.st + '">' + ST[o.st] + '</span><small>' + o.date + '</small></div><div class="steps3">' + ST.map(function (t, i) { return '<span class="' + (i <= o.st ? 'on' : '') + '">' + t + '</span>'; }).join('') + '</div>' +
           o.items.map(function (it) { return '<div class="ci"><span>' + it.t + '</span>' + (o.st === 2 ? '<button class="btn y" data-dl="' + o.id + '|' + it.id + '">حمّل PDF</button>' : '<span class="sub">بيتجهز بعد تأكيد التحويل</span>') + '</div>'; }).join('') +
           '<div class="ci tot"><span>الإجمالي · ' + esc(o.pay) + '</span><span>' + o.total + ' ج</span></div>' +
-          (o.st < 2 ? '<button class="chip" data-adv="' + o.id + '">تجربة: خلّي الطلب جاهز</button>' : '') + '</div>';
+          (o.st < 2 ? '<a class="btn y" target="_blank" rel="noopener" href="https://wa.me/201147795940?text=' + encodeURIComponent('أنا حوّلت مبلغ طلب رقم ' + o.id + ' (' + o.total + ' ج). دي صورة التحويل:') + '">ابعت صورة التحويل على واتساب</a> ' : '') + (o.st < 2 ? '<button class="chip" data-adv="' + o.id + '">تجربة: خلّي الطلب جاهز</button>' : '') + '</div>';
       }).join('') + '<p class="sub">في النموذج التجريبي حالة الطلب بتتغير بزر التجربة. في النسخة الحقيقية بتتغير بعد تأكيد التحويل.</p></section>';
     },
     account: function () {
