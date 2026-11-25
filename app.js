@@ -815,7 +815,7 @@
   /* ===== exams ===== */
   var TOPICS = [['t1', 'قوانين الأسس (ضرب وقسمة وقوة القوة)', [0, 1, 2, 7, 14, 16]], ['t2', 'القوى الخاصة والإشارات', [3, 4, 6, 8, 9]], ['t3', 'توزيع الأس على الضرب والكسور', [5, 13, 19]], ['t4', 'الجذور التربيعية والتكعيبية', [10, 11, 12, 17]], ['t5', 'المعادلات الأسية والأعداد غير النسبية', [15, 18]]];
   var XESSAY = { t1: [{ t: 'أثبت بمثال عددي أن {{(a^m)^n = a^(m×n)}} ثم احسب {{(2^2)^3}}.', s: '{{(2^2)^3 = 2^(2×3) = 2^6 = 64}}' }], t2: [{ t: 'اشرح بكلماتك لماذا أي عدد لا يساوي صفرًا مرفوع للأس صفر يساوي 1، مع مثال.', s: '{{a^3 ÷ a^3 = a^(3-3) = a^0}} ومن جهة أخرى {{a^3 ÷ a^3 = 1}}، إذن {{a^0 = 1}}. مثال: {{7^0 = 1}}.' }], t3: [{ t: 'اكتب {{2^3 × 5^3}} على صورة قوة واحدة ثم احسب قيمتها، موضحًا خطوات الحل.', s: '{{2^3 × 5^3 = (2 × 5)^3 = 10^3 = 1000}}' }], t4: [{ t: 'احسب {{√[16|25] + ∛27}} موضحًا خطوات الحل.', s: '{{√[16|25] = [4|5]}} و {{∛27 = 3}}، فالناتج {{[4|5] + 3 = 3[4|5]}}.' }], t5: [{ t: 'وضّح الفرق بين العدد النسبي والعدد غير النسبي مع مثال لكل منهما.', s: 'العدد النسبي يمكن كتابته على صورة كسر مثل {{[1|2]}}، وغير النسبي لا يمكن مثل {{√2}}.' }] };
-  var XSEC = { mcq: 'اختر الإجابة الصحيحة', tf: 'اكتب (صح) أو (خطأ)', fill: 'أكمل ما يأتي', essay: 'أجب عن الأسئلة الآتية موضحًا خطوات الحل' };
+  var XSEC = { mcq: 'اختر الإجابة الصحيحة', tf: 'ظلل (صح) أو (خطأ)', match: 'صل بين العمودين', fill: 'أكمل ما يأتي', essay: 'أجب عن الأسئلة الآتية موضحًا خطوات الحل' };
   var ORD = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
   var MONTHS = ['أكتوبر', 'نوفمبر', 'ديسمبر', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو'];
   var EXAMS = []; try { EXAMS = JSON.parse(localStorage.getItem('masarak_exams') || '[]'); } catch (e) {}
@@ -826,12 +826,12 @@
   var ARB = /[\u0600-\u06FF]/;
   function derOk(i) { var q = Q[i], o = q.o[q.a]; return /:$/.test(q.t) && o.indexOf('{{') < 0 && !ARB.test(o); }
   function stemOf(i) { return Q[i].t.replace(/:$/, ''); }
-  function newExam() { return { id: 'x' + Date.now(), type: 'monthly', month: 'نوفمبر', title: '', topics: ['t1', 't2'], n: 6, nt: 3, nf: 3, ne: 2, time: 45, per: 1, pe: 3, models: 2, key: true, custom: [], gen: [], seed: Date.now() % 100000 }; }
+  function newExam() { return { id: 'x' + Date.now(), type: 'monthly', month: 'نوفمبر', title: '', topics: ['t1', 't2'], n: 6, nt: 3, nf: 3, ne: 2, time: 45, per: 1, pe: 3, models: 2, key: true, custom: [], gen: [], nm: 1, total: 20, ans: 'paper', seed: Date.now() % 100000 }; }
   function xpool(x) { var ids = []; TOPICS.forEach(function (t) { if (x.topics.indexOf(t[0]) >= 0) ids = ids.concat(t[2]); }); return ids; }
-  function xcaps(x) { var p = xpool(x), d = p.filter(derOk), ess = d.length; TOPICS.forEach(function (t) { if (x.topics.indexOf(t[0]) >= 0) ess += (XESSAY[t[0]] || []).length; }); return { mcq: p.length, tf: d.length, fill: d.length, essay: ess }; }
+  function xcaps(x) { var p = xpool(x), d = p.filter(derOk), ess = d.length; TOPICS.forEach(function (t) { if (x.topics.indexOf(t[0]) >= 0) ess += (XESSAY[t[0]] || []).length; }); return { mcq: p.length, tf: d.length, fill: d.length, essay: ess, match: Math.floor(d.length / 4) }; }
   function xgen(x) {
     var r = rng(x.seed), p = xpool(x), cap = xcaps(x), d = p.filter(derOk), out = [];
-    x.n = Math.min(x.n, cap.mcq); x.nt = Math.min(x.nt, cap.tf); x.nf = Math.min(x.nf, cap.fill); x.ne = Math.min(x.ne, cap.essay);
+    x.n = Math.min(x.n, cap.mcq); x.nt = Math.min(x.nt, cap.tf); x.nf = Math.min(x.nf, cap.fill); x.ne = Math.min(x.ne, cap.essay); x.nm = Math.min(x.nm || 0, cap.match);
     shuf(p.slice(), r).slice(0, x.n).sort(function (a, b) { return a - b; }).forEach(function (i) { out.push({ k: 'mcq', t: Q[i].t, o: Q[i].o.slice(), a: Q[i].a, s: Q[i].s }); });
     shuf(d.slice(), r).slice(0, x.nt).forEach(function (i) {
       var q = Q[i], truth = r() < 0.5, wr = q.o.filter(function (o, k) { return k !== q.a && o.indexOf('{{') < 0 && !ARB.test(o); });
@@ -840,6 +840,15 @@
       out.push({ k: 'tf', t: stemOf(i) + ' {{' + o + '}}', a: truth ? 0 : 1, s: truth ? 'صح' : 'خطأ، والصواب {{' + q.o[q.a] + '}}.' });
     });
     shuf(d.slice(), r).slice(0, x.nf).forEach(function (i) { out.push({ k: 'fill', t: stemOf(i).replace(/\s*(يساوي|تساوي)$/, '') + ' = ........', ans: q_ans(i), s: Q[i].s }); });
+    var pool = shuf(d.slice(), r), used = {}, mg = 0;
+    for (var gi = 0; gi < x.nm; gi++) {
+      var grp = [], seen = {};
+      pool.forEach(function (i) { if (grp.length < 4 && !used[i] && !seen[q_ans(i)]) { grp.push(i); seen[q_ans(i)] = 1; } });
+      if (grp.length < 4) break;
+      grp.forEach(function (i) { used[i] = 1; });
+      var rr = shuf(grp.slice(), r);
+      out.push({ k: 'match', t: 'صل كل عبارة من العمود الأول بما يناسبها من العمود الثاني', l: grp.map(function (i) { return stemOf(i).replace(/\s*(يساوي|تساوي)$/, ''); }), r: rr.map(q_ans), a: grp.map(function (i) { return rr.indexOf(i); }), s: '' });
+    }
     var ec = []; d.forEach(function (i) { var m = /\{\{(.+?)\}\}/.exec(Q[i].t); if (m && m[1].indexOf('=') < 0) ec.push({ t: 'أوجد قيمة {{' + m[1] + '}} موضحًا خطوات الحل.', s: Q[i].s }); });
     TOPICS.forEach(function (t) { if (x.topics.indexOf(t[0]) >= 0) ec = ec.concat(XESSAY[t[0]] || []); });
     shuf(ec, r).slice(0, x.ne).forEach(function (c) { out.push({ k: 'essay', t: c.t, s: c.s }); });
@@ -852,29 +861,44 @@
     if (model === 'B') {
       var r = rng(x.seed + 77);
       items.forEach(function (it) { if (it.k === 'mcq') { var idx = [0, 1, 2, 3]; shuf(idx, r); it.a = idx.indexOf(it.a); it.o = idx.map(function (k) { return it.o[k]; }); } });
-      ['mcq', 'tf', 'fill', 'essay'].forEach(function (k) { var pos = [], its = []; items.forEach(function (it, i) { if (it.k === k) { pos.push(i); its.push(it); } }); shuf(its, r); pos.forEach(function (p, j) { items[p] = its[j]; }); });
+      items.forEach(function (it) { if (it.k === 'match') { var ix = [0, 1, 2, 3]; shuf(ix, r); it.r = ix.map(function (k) { return it.r[k]; }); it.a = it.a.map(function (o) { return ix.indexOf(o); }); } });
+      ['mcq', 'tf', 'match', 'fill', 'essay'].forEach(function (k) { var pos = [], its = []; items.forEach(function (it, i) { if (it.k === k) { pos.push(i); its.push(it); } }); shuf(its, r); pos.forEach(function (p, j) { items[p] = its[j]; }); });
     }
+    assignMarks(x, items);
     return items;
   }
+  var XW = { mcq: 1, tf: 1, fill: 1, essay: 3 };
+  function assignMarks(x, items) {
+    if (!x.total) { items.forEach(function (it) { it.m = it.k === 'essay' ? x.pe : it.k === 'match' ? x.per * it.l.length : x.per; }); return; }
+    var w = items.map(function (it) { return it.k === 'match' ? it.l.length : XW[it.k]; }), W = w.reduce(function (a, b) { return a + b; }, 0), U = Math.round(x.total * 2), raw = w.map(function (v) { return U * v / W; }), fl = raw.map(Math.floor), left = U - fl.reduce(function (a, b) { return a + b; }, 0);
+    raw.map(function (v, i) { return [v - fl[i], i]; }).sort(function (a, b) { return b[0] - a[0]; }).slice(0, Math.max(0, left)).forEach(function (p) { fl[p[1]]++; });
+    items.forEach(function (it, i) { it.m = fl[i] / 2; });
+  }
+  function fm(n) { return String(Math.round(n * 100) / 100); }
   function xsections(x, model) {
-    var items = xitems(x, model), out = [];
-    ['mcq', 'tf', 'fill', 'essay'].forEach(function (k) { var its = items.filter(function (it) { return it.k === k; }); if (its.length) out.push({ k: k, items: its }); });
+    var items = xitems(x, model), out = [], qi = 0;
+    ['mcq', 'tf', 'match', 'fill', 'essay'].forEach(function (k) { var its = items.filter(function (it) { return it.k === k; }); its.forEach(function (it) { it.qi = qi++; }); if (its.length) out.push({ k: k, items: its }); });
     return out;
   }
-  function xmarks(x) { var t = 0; xitems(x, 'A').forEach(function (it) { t += it.k === 'essay' ? x.pe : x.per; }); return t; }
+  function xmarks(x) { var t = 0; xitems(x, 'A').forEach(function (it) { t += it.m; }); return t; }
   function xhead(x, d, model, sub) {
     return '<div class="xh"><div class="xh1"><b>' + esc(d.name.trim() || 'اسم المدرس') + '</b><span>' + esc(d.series.trim() || 'سلسلة المراجعة') + '</span></div><div class="xh2"><div class="xt">' + esc(xtitle(x)) + '</div><div class="xs">الصف الثالث الإعدادي، الفصل الدراسي الأول' + (sub ? '، ' + sub : (x.models > 1 ? '، نموذج (' + (model === 'B' ? 'ب' : 'أ') + ')' : '')) + '</div></div><div class="xh3">' + (d.logo ? '<img alt="" src="' + d.logo + '">' : '<span dir="ltr">' + esc(d.phone.trim() || '01000000000') + '</span>') + '</div></div>';
   }
   function xfoot(d, n, m) { return '<div class="xf"><span>' + esc(d.name.trim() || 'اسم المدرس') + '</span><span dir="ltr">' + esc(d.phone.trim() || '01000000000') + '</span><span>صفحة ' + n + ' من ' + m + '</span></div>'; }
-  function xopen(d) { return '<div class="xp" style="--c:' + d.color + ';--ff:' + (d.font || 'Cairo') + '">'; }
+  function xopen(d, nb) { return '<div class="xp"' + (nb ? ' data-nb="1"' : '') + ' style="--c:' + d.color + ';--ff:' + (d.font || 'Cairo') + '">'; }
+  function xbub(q, sb, o) { return '<i class="xl" data-q="' + q + '" data-s="' + sb + '" data-o="' + o + '"></i>'; }
   function xblock(x, it, n) {
-    var m = it.k === 'essay' ? x.pe : x.per, h = '<div class="xq"><div class="xqh"><span class="xn">' + n + '</span><div class="xqt">' + txt(it.t) + '</div><span class="xm">(' + m + ' ' + (m > 2 && m < 11 ? 'درجات' : 'درجة') + ')</span></div>';
-    if (it.k === 'mcq') h += '<div class="xo">' + it.o.map(function (o, k) { return '<span><i class="xl">' + L[k] + '</i>' + txt(o) + '</span>'; }).join('') + '</div>';
-    else if (it.k === 'tf') h += '<div class="xtf"><span><i class="xl"></i>صح</span><span><i class="xl"></i>خطأ</span></div>';
+    var m = it.m, q = it.qi, h = '<div class="xq" data-q="' + q + '"><div class="xqh"><span class="xn">' + n + '</span><div class="xqt">' + txt(it.t) + '</div><span class="xm">(' + fm(m) + ' ' + (m > 2 && m < 11 ? 'درجات' : 'درجة') + ')</span></div>';
+    if (it.k === 'mcq') h += '<div class="xo">' + it.o.map(function (o, k) { return '<span>' + xbub(q, 0, k) + '<b class="xlt">' + L[k] + '</b>' + txt(o) + '</span>'; }).join('') + '</div>';
+    else if (it.k === 'tf') h += '<div class="xtf"><span>' + xbub(q, 0, 0) + 'صح</span><span>' + xbub(q, 0, 1) + 'خطأ</span></div>';
+    else if (it.k === 'match') {
+      h += '<div class="xmt"><div class="xmr">' + it.r.map(function (o, k) { return '<span><b class="xlt">' + L[k] + '</b> ' + txt(o) + '</span>'; }).join('') + '</div>' +
+        it.l.map(function (l, i) { return '<div class="xml"><span class="xn s">' + (i + 1) + '</span><div class="xmq">' + txt(l) + '</div><div class="xmb">' + [0, 1, 2, 3].map(function (k) { return '<span>' + xbub(q, i, k) + '<b class="xlt">' + L[k] + '</b></span>'; }).join('') + '</div></div>'; }).join('') + '</div>';
+    }
     else if (it.k === 'essay') h += '<div class="xlines"><i></i><i></i><i></i></div>';
     return h + '</div>';
   }
-  var XH = { mcq: 108, tf: 84, fill: 70, essay: 200 };
+  var XH = { mcq: 108, tf: 84, match: 250, fill: 70, essay: 200 };
   function examPages(x, d, model) {
     var secs = xsections(x, model), N = +x.sheets || 0, tot = 0;
     secs.forEach(function (sec) { tot += 50 + sec.items.length * XH[sec.k]; });
@@ -882,8 +906,8 @@
     x.warn = N > 0 && tot * 0.6 > 0.88 * (700 + (N - 1) * 900);
     var pages = [[]], used = 0, cap = 700;
     secs.forEach(function (sec, si) {
-      var total = sec.items.reduce(function (t, it) { return t + (it.k === 'essay' ? x.pe : x.per); }, 0), hh = XH[sec.k] * s, sh = 50 * s;
-      var hd = '<div class="xsec"><b>السؤال ' + ORD[si] + ':</b> ' + XSEC[sec.k] + '<span>(' + total + ' درجات)</span></div>';
+      var total = sec.items.reduce(function (t, it) { return t + it.m; }, 0), hh = XH[sec.k] * s, sh = 50 * s;
+      var hd = '<div class="xsec"><b>السؤال ' + ORD[si] + ':</b> ' + XSEC[sec.k] + '<span>(' + fm(total) + ' درجات)</span></div>';
       if (used + sh + hh > cap) { pages.push([]); used = 0; cap = 900; }
       pages[pages.length - 1].push(hd); used += sh;
       sec.items.forEach(function (it, i) {
@@ -893,7 +917,7 @@
     });
     var wn = x.warn ? '<div class="xwarn">عدد الأسئلة كبير على ' + (N === 1 ? 'ورقة واحدة' : 'ورقتين') + '، قلل الأسئلة أو اختار ورقتين عشان الخط يفضل مقروء.</div>' : '', out = '', count = xitems(x, 'A').length;
     pages.forEach(function (pg, pi) {
-      out += xopen(d) + xhead(x, d, model);
+      out += xopen(d, x.ans === 'sheet') + '%%MK%%' + xhead(x, d, model);
       if (pi === 0) out += '<div class="xinfo"><span>اسم الطالب: ................................</span><span>الفصل: ..........</span><span>التاريخ: ....../....../......</span></div><div class="xmeta"><span>الزمن: ' + (+x.time || 30) + ' دقيقة</span><span>عدد الأسئلة: ' + count + '</span><span>الدرجة الكلية: ' + xmarks(x) + '</span></div><div class="xins">أجب عن جميع الأسئلة الآتية.</div>';
       out += (pi === 0 ? wn : '') + '<div class="xqs" style="zoom:' + s + '">' + pg.join('') + '</div>' + xfoot(d, pi + 1, pages.length) + '</div>';
     });
@@ -906,13 +930,60 @@
       xsections(x, m).forEach(function (sec, si) {
         out += '<div class="xks">السؤال ' + ORD[si] + '</div>';
         if (sec.k === 'essay') out += '<div class="xke">' + sec.items.map(function (it, i) { return '<div><b>' + (i + 1) + '</b> ' + txt(it.s || '') + '</div>'; }).join('') + '</div>';
-        else out += '<div class="xkg">' + sec.items.map(function (it, i) { var v = sec.k === 'mcq' ? L[it.a] : sec.k === 'tf' ? (it.a === 0 ? 'صح' : 'خطأ') : txt(it.ans || it.s || ''); return '<span><b>' + (i + 1) + '</b> ' + v + '</span>'; }).join('') + '</div>';
+        else out += '<div class="xkg">' + sec.items.map(function (it, i) { var v = sec.k === 'match' ? it.a.map(function (p, j) { return (j + 1) + '←' + L[p]; }).join('، ') : sec.k === 'mcq' ? L[it.a] : sec.k === 'tf' ? (it.a === 0 ? 'صح' : 'خطأ') : txt(it.ans || it.s || ''); return '<span><b>' + (i + 1) + '</b> ' + v + '</span>'; }).join('') + '</div>';
       });
       out += '</div>';
     });
     return out + '</div>' + xfoot(d, 1, 1) + '</div>';
   }
-  function xall(x, d) { var h = examPages(x, d, 'A'); if (x.models > 1) h += examPages(x, d, 'B'); if (x.key) h += examKey(x, d); return h; }
+  function mk(model, i) {
+    var bits = [1, model === 'B' ? 1 : 0, (i >> 2) & 1, (i >> 1) & 1, i & 1], par = bits.reduce(function (a, b) { return a + b; }, 0) % 2; bits.push(par);
+    return '<i class="xmk" data-m="tl"></i><i class="xmk" data-m="tr"></i><i class="xmk" data-m="bl"></i><i class="xmk big" data-m="br"></i><div class="xcd">' + bits.map(function (b, k) { return '<u data-b="' + k + '" class="' + (b ? 'on' : '') + '"></u>'; }).join('') + '</div>';
+  }
+  function sheetPages(x, d, model) {
+    var secs = xsections(x, model), rows = [];
+    secs.forEach(function (sec) { sec.items.forEach(function (it) {
+      if (it.k === 'mcq') rows.push({ lab: it.qi + 1, q: it.qi, s: 0, n: 4 });
+      else if (it.k === 'tf') rows.push({ lab: it.qi + 1, q: it.qi, s: 0, n: 2, tf: 1 });
+      else if (it.k === 'match') for (var j = 0; j < it.l.length; j++) rows.push({ lab: (it.qi + 1) + '-' + (j + 1), q: it.qi, s: j, n: 4 });
+    }); });
+    var per = 21 * 3, out = '', np = Math.max(1, Math.ceil(rows.length / per));
+    for (var p = 0; p < np; p++) {
+      var part = rows.slice(p * per, (p + 1) * per), cols = '';
+      for (var c = 0; c < 3; c++) {
+        var cr = part.slice(c * 21, (c + 1) * 21);
+        cols += '<div class="xsc">' + cr.map(function (r) { var b = ''; for (var k = 0; k < r.n; k++) b += '<span>' + xbub(r.q, r.s, k) + '<b class="xlt">' + (r.tf ? (k ? 'خ' : 'ص') : L[k]) + '</b></span>'; return '<div class="xsr"><span class="xn s">' + r.lab + '</span>' + b + '</div>'; }).join('') + '</div>';
+      }
+      out += xopen(d, false) + '%%MK%%' + xhead(x, d, model, 'ورقة الإجابة') + '<div class="xinfo"><span>اسم الطالب: ................................</span><span>الفصل: ..........</span><span>التاريخ: ....../....../......</span></div><div class="xins">ظلل الدائرة المناسبة بقلم واضح (ظلل دائرة واحدة فقط لكل سؤال). صح = ص، خطأ = خ.</div><div class="xsg">' + cols + '</div>' + xfoot(d, p + 1, np) + '</div>';
+    }
+    return out;
+  }
+  function xdoc(x, d, model) { var h = examPages(x, d, model); if (x.ans === 'sheet') h += sheetPages(x, d, model); var i = 0; return h.replace(/%%MK%%/g, function () { return mk(model, Math.min(7, i++)); }); }
+  function xall(x, d) { var h = xdoc(x, d, 'A'); if (x.models > 1) h += xdoc(x, d, 'B'); if (x.key) h += examKey(x, d); return h; }
+  function xsig(x) { return JSON.stringify([xitems(x, 'A'), x.models > 1 ? xitems(x, 'B') : 0, x.ans, x.total, x.sheets]).length + ':' + (function (t) { var h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h; })(JSON.stringify([xitems(x, 'A'), x.models > 1 ? xitems(x, 'B') : 0, x.ans, x.total, x.sheets])); }
+  function xlayout(x, d) {
+    var host = document.createElement('div'); host.style.cssText = 'position:fixed;left:-12000px;top:0;width:800px;visibility:hidden'; document.body.appendChild(host);
+    var res = {};
+    return (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
+      ['A', 'B'].slice(0, x.models > 1 ? 2 : 1).forEach(function (m) {
+        host.innerHTML = xdoc(x, d, m); var pgs = [];
+        host.querySelectorAll('.xp').forEach(function (pg) {
+          var o = pg.getBoundingClientRect(), W = 800 / o.width, nb = pg.getAttribute('data-nb') === '1', P = { mk: {}, bub: [], crop: [], cd: [] };
+          var cc = function (el) { var r = el.getBoundingClientRect(); return [(r.left + r.width / 2 - o.left) * W, (r.top + r.height / 2 - o.top) * W, r.width * W, r.height * W]; };
+          pg.querySelectorAll('.xmk').forEach(function (e) { var c = cc(e); P.mk[e.dataset.m] = [c[0], c[1], c[2]]; });
+          pg.querySelectorAll('.xcd u').forEach(function (e) { var c = cc(e); P.cd.push([c[0], c[1], c[2]]); });
+          if (!nb || pg.querySelector('.xsg')) pg.querySelectorAll('.xl').forEach(function (e) { var c = cc(e); P.bub.push([+e.dataset.q, +e.dataset.s, +e.dataset.o, c[0], c[1], c[2] / 2]); });
+          pg.querySelectorAll('.xq').forEach(function (e) { var r = e.getBoundingClientRect(); P.crop.push([+e.dataset.q, (r.left - o.left) * W, (r.top - o.top) * W, r.width * W, r.height * W]); });
+          var ni = pg.querySelector('.xinfo'); if (ni) { var r2 = ni.getBoundingClientRect(); P.name = [(r2.left - o.left) * W, (r2.top - o.top) * W, r2.width * W, r2.height * W]; }
+          pgs.push(P);
+        });
+        res[m] = pgs;
+      });
+      host.remove(); return res;
+    });
+  }
+  function xsaveLayout() { return xlayout(X, D).then(function (lo) { X.layout = lo; X.lsig = xsig(X); var i = EXAMS.map(function (z) { return z.id; }).indexOf(X.id), cp = JSON.parse(JSON.stringify(X)); if (i >= 0) EXAMS[i] = cp; else EXAMS.push(cp); saveExams(); }); }
+  window.__MX = { get EXAMS() { return EXAMS; }, saveExams: function () { saveExams(); }, xsections: xsections, xitems: xitems, xtitle: xtitle, xsig: xsig, fm: fm, txt: txt, esc: esc, L: L, $: $, toast: toast, loadH2C: loadH2C, D: function () { return D; }, get X() { return X; } };
   function chip(attr, v, on, label) { return '<button type="button" class="chip" ' + attr + '="' + v + '" aria-pressed="' + on + '">' + label + '</button>'; }
   function xcontrols() {
     var x = X, cp = xcaps(x);
@@ -923,8 +994,10 @@
       (x.type === 'monthly' ? '<div class="lab">الشهر</div><div class="pick">' + MONTHS.map(function (m) { return chip('data-xm', m, x.month === m, m); }).join('') + '</div>' : '') +
       '<div class="lab">الدروس اللي اتشرحت (اختار اللي يدخل في الاختبار)</div><div class="pick">' + TOPICS.map(function (t) { return chip('data-xtp', t[0], x.topics.indexOf(t[0]) >= 0, t[1]); }).join('') + '</div>' +
       '<div class="lab">أنواع الأسئلة وعددها (الصفر يعني النوع ده مش هيظهر)</div>' +
-      num('n', 'اختر الإجابة الصحيحة (متاح ' + cp.mcq + ')', cp.mcq) + num('nt', 'صح أو خطأ (متاح ' + cp.tf + ')', cp.tf) + num('nf', 'أكمل (متاح ' + cp.fill + ')', cp.fill) + num('ne', 'أسئلة مقالية (متاح ' + cp.essay + ')', cp.essay) +
-      num('per', 'درجة السؤال (اختر، صح وخطأ، أكمل)', 10) + num('pe', 'درجة السؤال المقالي', 20) + num('time', 'الزمن بالدقائق', 180) +
+      num('n', 'اختر الإجابة الصحيحة (متاح ' + cp.mcq + ')', cp.mcq) + num('nt', 'صح أو خطأ (متاح ' + cp.tf + ')', cp.tf) + num('nf', 'أكمل (متاح ' + cp.fill + ')', cp.fill) + num('nm', 'مزاوجة، كل سؤال ٤ عبارات (متاح ' + cp.match + ')', cp.match) + num('ne', 'أسئلة مقالية (متاح ' + cp.essay + ')', cp.essay) +
+      '<div class="lab">الدرجة الكلية (بتتوزع على الأسئلة تلقائي)</div><div class="pick">' + [20, 40, 60, 100].map(function (t) { return chip('data-xtot', t, x.total === t, t); }).join('') + chip('data-xtot', '0', !x.total, 'يدوي') + '</div>' +
+      '<div class="lab">الطالب بيجاوب فين؟ (للتصحيح من الصور)</div><div class="pick">' + chip('data-xans', 'paper', x.ans !== 'sheet', 'على ورقة الأسئلة نفسها') + chip('data-xans', 'sheet', x.ans === 'sheet', 'ورقة إجابة بدوائر منفصلة') + '</div>' +
+      (x.total ? '' : num('per', 'درجة السؤال (اختر، صح وخطأ، أكمل)', 10) + num('pe', 'درجة السؤال المقالي', 20)) + num('time', 'الزمن بالدقائق', 180) +
       '<div class="lab">حجم الاختبار على الورق</div><div class="pick">' + chip('data-xsh', '0', !x.sheets, 'تلقائي') + chip('data-xsh', '1', x.sheets === 1, 'ورقة واحدة') + chip('data-xsh', '2', x.sheets === 2, 'ورقتين') + '</div>' + '<div class="lab">النماذج</div><div class="pick">' + chip('data-xmd', '1', x.models === 1, 'نموذج واحد') + chip('data-xmd', '2', x.models === 2, 'نموذجين (أ و ب) بترتيب مختلف') + '</div>' +
       '<div class="lab">نموذج الإجابة</div><div class="pick">' + chip('data-xkey', '1', x.key, 'اطبعه مع الاختبار') + chip('data-xkey', '0', !x.key, 'من غير') + '</div>' +
       '<button type="button" class="chip" id="xre" style="margin-top:12px;width:100%">🔀 أسئلة مختلفة من نفس الدروس</button>' +
@@ -945,17 +1018,19 @@
       if (!tabs.some(function (t) { return t[0] === XV; })) XV = 'A';
       $('#xtabs').innerHTML = tabs.map(function (t) { return '<button class="chip" data-xv="' + t[0] + '" aria-pressed="' + (XV === t[0]) + '">' + t[1] + '</button>'; }).join('');
       document.querySelectorAll('[data-xv]').forEach(function (b) { b.onclick = function () { XV = b.dataset.xv; draw(false); }; });
-      var html = XV === 'K' ? examKey(X, D) : examPages(X, D, XV);
+      var html = XV === 'K' ? examKey(X, D) : xdoc(X, D, XV);
       var pgs = html.split('<div class="xp" ').filter(Boolean).map(function (p) { return '<div class="xp" ' + p; });
       $('#xv').innerHTML = pgs.map(function (p) { return '<div style="margin-bottom:16px">' + fitBox(p, 's') + '</div>'; }).join(''); fitAll();
     };
     function x_label(m) { return X.models > 1 ? 'نموذج ' + (m === 'A' ? 'أ' : 'ب') : 'الاختبار'; }
     function xbind() {
       var c = $('#xc');
-      c.querySelectorAll('[data-xk]').forEach(function (i) { i.onchange = function () { var k = i.dataset.xk; if (k === 'title') X.title = i.value; else { X[k] = Math.max(['n', 'nt', 'nf', 'ne'].indexOf(k) >= 0 ? 0 : 1, parseInt(i.value, 10) || 0); if (['n', 'nt', 'nf', 'ne'].indexOf(k) >= 0) xgen(X); } draw(k !== 'title'); }; if (i.dataset.xk === 'title') i.oninput = function () { X.title = i.value; draw(false); }; });
+      c.querySelectorAll('[data-xk]').forEach(function (i) { i.onchange = function () { var k = i.dataset.xk; if (k === 'title') X.title = i.value; else { X[k] = Math.max(['n', 'nt', 'nf', 'ne', 'nm'].indexOf(k) >= 0 ? 0 : 1, parseInt(i.value, 10) || 0); if (['n', 'nt', 'nf', 'ne', 'nm'].indexOf(k) >= 0) xgen(X); } draw(k !== 'title'); }; if (i.dataset.xk === 'title') i.oninput = function () { X.title = i.value; draw(false); }; });
       c.querySelectorAll('[data-xt]').forEach(function (b) { b.onclick = function () { X.type = b.dataset.xt; if (X.type === 'full') { X.topics = TOPICS.map(function (t) { return t[0]; }); var cp = xcaps(X); X.n = cp.mcq; X.nt = Math.min(5, cp.tf); X.nf = Math.min(5, cp.fill); X.ne = Math.min(3, cp.essay); X.time = 90; } xgen(X); draw(); }; });
       c.querySelectorAll('[data-xm]').forEach(function (b) { b.onclick = function () { X.month = b.dataset.xm; draw(); }; });
       c.querySelectorAll('[data-xtp]').forEach(function (b) { b.onclick = function () { var t = b.dataset.xtp, i = X.topics.indexOf(t); if (i >= 0) { if (X.topics.length > 1) X.topics.splice(i, 1); } else X.topics.push(t); xgen(X); draw(); }; });
+      c.querySelectorAll('[data-xtot]').forEach(function (b) { b.onclick = function () { X.total = +b.dataset.xtot; draw(); }; });
+      c.querySelectorAll('[data-xans]').forEach(function (b) { b.onclick = function () { X.ans = b.dataset.xans; draw(); }; });
       c.querySelectorAll('[data-xsh]').forEach(function (b) { b.onclick = function () { X.sheets = +b.dataset.xsh; draw(); }; });
       c.querySelectorAll('[data-xmd]').forEach(function (b) { b.onclick = function () { X.models = +b.dataset.xmd; draw(); }; });
       c.querySelectorAll('[data-xkey]').forEach(function (b) { b.onclick = function () { X.key = b.dataset.xkey === '1'; draw(); }; });
@@ -976,8 +1051,8 @@
       document.querySelectorAll('[data-xo]').forEach(function (b) { b.onclick = function () { var e = EXAMS.filter(function (z) { return z.id === b.dataset.xo; })[0]; if (e) { X = JSON.parse(JSON.stringify(e)); if (!X.gen || !X.gen.length || X.gen[0].k === undefined) { X.nt = X.nt || 3; X.nf = X.nf || 3; X.ne = X.ne || 2; X.pe = X.pe || 3; X.custom = (X.custom || []).map(function (c) { return c.k ? c : { k: 'mcq', t: c.t, o: c.o, a: c.a, s: '' }; }); xgen(X); } draw(); } }; });
       document.querySelectorAll('[data-xd]').forEach(function (b) { b.onclick = function () { EXAMS = EXAMS.filter(function (z) { return z.id !== b.dataset.xd; }); saveExams(); if (X && X.id === b.dataset.xd) { X = newExam(); xgen(X); } draw(); }; });
     }
-    $('#xsv').onclick = function () { var i = EXAMS.map(function (z) { return z.id; }).indexOf(X.id); var cp = JSON.parse(JSON.stringify(X)); if (i >= 0) EXAMS[i] = cp; else EXAMS.push(cp); saveExams(); $('#xmsg').textContent = 'اتحفظ. تقدر تعمل اختبار تاني من "+ اختبار جديد".'; draw(false); };
-    $('#xpr').onclick = function () { printPages(xall(X, D), false, false, 'x'); };
+    $('#xsv').onclick = function () { xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ. تقدر تعمل اختبار تاني من "+ اختبار جديد".'; draw(false); }); };
+    $('#xpr').onclick = function () { xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ الاختبار تلقائي عشان تقدر تصححه من الصور.'; printPages(xall(X, D), false, false, 'x'); }); };
     draw();
   }
 
