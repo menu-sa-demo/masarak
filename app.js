@@ -536,10 +536,61 @@
       };
     }
 
-    function shootGame(kind) {
-      var pen = kind === 'pen', qs = shuffle(Q).slice(0, 10), i = 0, goals = 0, streak = 0, pts = 0;
+
+    function loadThree(cb) { if (window.THREE) return cb(); var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js'; sc.onload = cb; sc.onerror = function () { cb(); }; document.head.appendChild(sc); }
+    function pen3d() {
+      var T = window.THREE; if (!T) return null;
+      var W = 900, H = 270, r;
+      try { r = new T.WebGLRenderer({ antialias: true }); } catch (e) { return null; }
+      r.setSize(W, H); r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); r.shadowMap.enabled = true; r.domElement.style.cssText = 'width:100%;height:auto;display:block;border-radius:14px';
+      var sc = new T.Scene(); sc.background = new T.Color(0x8ecbff); sc.fog = new T.Fog(0x8ecbff, 18, 42);
+      var cam = new T.PerspectiveCamera(48, W / H, 0.1, 80); cam.position.set(0, 1.5, 6.2); cam.lookAt(0, 1.2, -10);
+      sc.add(new T.HemisphereLight(0xffffff, 0x4a7a3a, 0.75)); var dl = new T.DirectionalLight(0xffffff, 0.9); dl.position.set(4, 10, 6); dl.castShadow = true; dl.shadow.camera.left = -12; dl.shadow.camera.right = 12; dl.shadow.camera.top = 12; dl.shadow.camera.bottom = -14; dl.shadow.mapSize.set(1024, 1024); sc.add(dl);
+      var cv = document.createElement('canvas'); cv.width = 256; cv.height = 256; var cx = cv.getContext('2d'); for (var i = 0; i < 8; i++) { cx.fillStyle = i % 2 ? '#3f9d4a' : '#368c41'; cx.fillRect(0, i * 32, 256, 32); }
+      var tx = new T.CanvasTexture(cv); tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(1, 3);
+      var gr = new T.Mesh(new T.PlaneGeometry(80, 60), new T.MeshStandardMaterial({ map: tx })); gr.rotation.x = -Math.PI / 2; gr.position.z = -14; gr.receiveShadow = true; sc.add(gr);
+      var wh = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+      function post(x, y, z, len, rot) { var m = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, len, 12), wh); m.position.set(x, y, z); if (rot) m.rotation.z = Math.PI / 2; m.castShadow = true; sc.add(m); }
+      var GZ = -10, GW = 8, GH = 2.6; post(-GW / 2, GH / 2, GZ, GH); post(GW / 2, GH / 2, GZ, GH); post(0, GH, GZ, GW, true);
+      var net = new T.Mesh(new T.PlaneGeometry(GW, GH, 24, 8), new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.45 })); net.position.set(0, GH / 2, GZ - 1.1); sc.add(net);
+      [[-GW / 2, 1], [GW / 2, 1]].forEach(function (p) { var sn = new T.Mesh(new T.PlaneGeometry(1.1, GH, 4, 8), new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.35 })); sn.rotation.y = Math.PI / 2; sn.position.set(p[0], GH / 2, GZ - 0.55); sc.add(sn); });
+      var stand = new T.Mesh(new T.BoxGeometry(60, 6, 2), new T.MeshStandardMaterial({ color: 0x35456b })); stand.position.set(0, 3, -26); sc.add(stand);
+      for (var k = 0; k < 60; k++) { var d = new T.Mesh(new T.BoxGeometry(0.5, 0.5, 0.2), new T.MeshBasicMaterial({ color: [0xffc928, 0xc23b3b, 0x1f6fd1, 0xffffff][k % 4] })); d.position.set(-24 + (k % 30) * 1.6, 1.5 + Math.floor(k / 30) * 1.8, -24.9); sc.add(d); }
+      var kp = new T.Group(); var jm = new T.MeshStandardMaterial({ color: 0xffc928 });
+      var body = new T.Mesh(new T.BoxGeometry(0.62, 0.95, 0.32), jm); body.position.y = 1.15; body.castShadow = true; kp.add(body);
+      var head = new T.Mesh(new T.SphereGeometry(0.2, 20, 16), new T.MeshStandardMaterial({ color: 0xe8b48a })); head.position.y = 1.85; kp.add(head);
+      var legs = new T.Mesh(new T.BoxGeometry(0.5, 0.7, 0.28), new T.MeshStandardMaterial({ color: 0x1b2a55 })); legs.position.y = 0.35; legs.castShadow = true; kp.add(legs);
+      [-1, 1].forEach(function (sd) { var arm = new T.Mesh(new T.CylinderGeometry(0.08, 0.08, 0.75, 10), jm); arm.position.set(sd * 0.5, 1.4, 0); arm.rotation.z = sd * 0.5; kp.add(arm); var gl = new T.Mesh(new T.SphereGeometry(0.15, 14, 12), new T.MeshStandardMaterial({ color: 0xff5a1a })); gl.position.set(sd * 0.68, 1.78, 0); kp.add(gl); });
+      kp.position.set(0, 0, GZ + 0.3); sc.add(kp);
+      var ball = new T.Group(); var bm = new T.Mesh(new T.SphereGeometry(0.22, 28, 20), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 })); bm.castShadow = true; ball.add(bm);
+      var pv = [[0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [.7, .7, .7], [-.7, .7, -.7], [.7, -.7, -.7], [-.7, -.7, .7]];
+      pv.forEach(function (v) { var l = Math.hypot(v[0], v[1], v[2]), p = new T.Mesh(new T.SphereGeometry(0.075, 10, 8), new T.MeshStandardMaterial({ color: 0x151515 })); p.position.set(v[0] / l * 0.21, v[1] / l * 0.21, v[2] / l * 0.21); p.scale.set(1, 1, 0.4); p.lookAt(0, 0, 0); ball.add(p); });
+      sc.add(ball);
+      var busy = false;
+      function draw() { r.render(sc, cam); }
+      function reset() { ball.position.set(0, 0.22, 0); ball.rotation.set(0, 0, 0); kp.position.x = 0; kp.rotation.z = 0; kp.position.y = 0; draw(); }
+      function shoot(ok, side, done) {
+        var tx2 = [-3, 0, 3][side], ty = [1.9, 0.7, 1.7][side], t0 = performance.now(), D = 900, keeperTo = ok ? -tx2 * 0.9 : tx2, saveTo = !ok;
+        if (ok && keeperTo * tx2 > 0) keeperTo = -keeperTo;
+        busy = true;
+        (function step(now) {
+          var t = Math.min(1, (now - t0) / D), e = t * (2 - t);
+          ball.position.x = tx2 * e; ball.position.z = (GZ - 0.5) * e; ball.position.y = 0.22 + (ty - 0.22) * e + Math.sin(Math.PI * t) * 0.8; ball.rotation.x -= 0.25; ball.rotation.z += 0.12;
+          var kt = Math.min(1, t * 1.15), ke = kt * (2 - kt); kp.position.x = keeperTo * ke; kp.rotation.z = -Math.sign(keeperTo || 1) * 1.2 * ke; kp.position.y = 0.25 * Math.sin(Math.PI * ke);
+          if (saveTo && t > 0.9) { ball.position.x = kp.position.x; }
+          draw(); if (t < 1 && r.domElement.isConnected) requestAnimationFrame(step); else { busy = false; if (done) done(); }
+        })(t0);
+      }
+      reset();
+      return { el: r.domElement, reset: reset, shoot: shoot, dispose: function () { try { r.dispose(); } catch (e) {} } };
+    }
+    function shootGame(kind, _l) {
+      var pen = kind === 'pen', qs = shuffle(Q).slice(0, 10), i = 0, goals = 0, streak = 0, pts = 0, g3 = null;
+      if (pen && !_l) return loadThree(function () { shootGame(kind, 1); });
+      if (pen) { if (window.__g3old) window.__g3old.dispose(); g3 = window.__g3old = pen3d(); }
       function scene(res, side) {
         var bx = res === 'goal' ? [20, 50, 80][side] : (res === 'miss' ? [8, 50, 92][side] : 50), by = pen ? (res === 'goal' || res === 'save' ? 24 : 12) : (res === 'goal' ? 22 : 8);
+        if (pen && g3) return '<div class="scn pen3"></div>';
         if (pen) return '<div class="scn pen"><div class="goalf"><span class="kp" id="kp" style="left:' + (res === 'save' ? [20, 50, 80][side] : [80, 20, 50][side]) + '%">🧤</span></div><span class="ball" id="ball" style="left:50%;top:78%">⚽</span></div>';
         return '<div class="scn bsk"><div class="bboard"><div class="ring"></div></div><span class="ball" id="ball" style="left:50%;top:78%">🏀</span></div>';
       }
@@ -547,12 +598,13 @@
         if (i >= qs.length) return end();
         var q = qs[i]; window.__q = q;
         box.innerHTML = '<div class="gh"><span>' + (pen ? 'ضربة ' : 'رمية ') + (i + 1) + ' من ' + qs.length + '</span><span>' + (pen ? 'أهداف' : 'نقاط') + ': <b id="gsc">' + (pen ? goals : pts) + '</b></span></div>' + scene('idle', 1) + '<div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>';
+        if (g3) { $('.scn').appendChild(g3.el); g3.reset(); }
         box.querySelectorAll('.gopt').forEach(function (b) { b.onclick = function () {
           var k = +b.dataset.k, ok = k === q.a, side = Math.floor(Math.random() * 3); box.querySelectorAll('.gopt').forEach(function (x) { x.disabled = true; var xk = +x.dataset.k; if (xk === q.a) x.classList.add('ok'); else if (xk === k) x.classList.add('no'); });
-          var ball = $('#ball'), kp = $('#kp');
+          var ball = $('#ball'), kp = $('#kp'); if (g3) { g3.shoot(ok, side); }
           if (ok) { streak++; if (pen) goals++; else pts += streak >= 3 ? 3 : 2; } else streak = 0;
-          if (pen) { var tx = [20, 50, 80][side]; ball.style.left = tx + '%'; ball.style.top = '26%'; if (kp) kp.style.left = (ok ? [80, 20, 50][side] : tx) + '%'; }
-          else { ball.style.left = ok ? '50%' : ['25%', '75%', '90%'][side]; ball.style.top = ok ? '26%' : '14%'; if (!ok) later(function () { ball.style.top = '78%'; }, 450); }
+          if (pen && !g3) { var tx = [20, 50, 80][side]; ball.style.left = tx + '%'; ball.style.top = '26%'; if (kp) kp.style.left = (ok ? [80, 20, 50][side] : tx) + '%'; }
+          else if (!pen) { ball.style.left = ok ? '50%' : ['25%', '75%', '90%'][side]; ball.style.top = ok ? '26%' : '14%'; if (!ok) later(function () { ball.style.top = '78%'; }, 450); }
           $('#gsc').textContent = pen ? goals : pts;
           $('#gfb').innerHTML = (ok ? '<b class="gy">' + (pen ? 'جووول! ⚽' : 'سلة! 🏀' + (streak >= 3 ? ' ثلاثية' : '')) + '</b>' : '<b class="gn">' + (pen ? 'الحارس صدّها.' : 'ضاعت.') + '</b> <span>' + txt(q.s) + '</span>');
           later(function () { i++; show(); }, ok ? 1300 : 2400);
