@@ -983,7 +983,7 @@
     });
   }
   function xsaveLayout() { return xlayout(X, D).then(function (lo) { X.layout = lo; X.lsig = xsig(X); var i = EXAMS.map(function (z) { return z.id; }).indexOf(X.id), cp = JSON.parse(JSON.stringify(X)); if (i >= 0) EXAMS[i] = cp; else EXAMS.push(cp); saveExams(); }); }
-  window.__MX = { get EXAMS() { return EXAMS; }, saveExams: function () { saveExams(); }, xsections: xsections, xitems: xitems, xtitle: xtitle, xsig: xsig, fm: fm, txt: txt, esc: esc, L: L, $: $, toast: toast, loadH2C: loadH2C, D: function () { return D; }, get X() { return X; } };
+  window.__MX = { xdoc: xdoc, xlayout: xlayout, get EXAMS() { return EXAMS; }, saveExams: function () { saveExams(); }, xsections: xsections, xitems: xitems, xtitle: xtitle, xsig: xsig, fm: fm, txt: txt, esc: esc, L: L, $: $, toast: toast, loadH2C: loadH2C, D: function () { return D; }, get X() { return X; } };
   function chip(attr, v, on, label) { return '<button type="button" class="chip" ' + attr + '="' + v + '" aria-pressed="' + on + '">' + label + '</button>'; }
   function xcontrols() {
     var x = X, cp = xcaps(x);
