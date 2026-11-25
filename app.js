@@ -315,6 +315,9 @@
     show(0); arm();
   }
   var views = {
+    games: function () {
+      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button></div><div id="gbox" class="panelw"></div></section>';
+    },
     guide: function () {
       return '<section class="page-s guide"><h2>شرح استخدام المنصة</h2><div class="vidbox"><video controls preload="metadata" playsinline src="https://htkwymimktphqmpbqffq.supabase.co/storage/v1/object/public/media/1-explainer2.mp4"></video></div><p class="sub">وبعده شرح تفاعلي قصير بيوريك الخطوات من الاختيار لحد استلام الملف.</p><div class="gwrap"><div class="gstage" id="gst"></div><div class="gcap" id="gcap"></div></div><div class="gbar"><div id="gbar"></div></div><div class="gctl"><button class="btn" id="gprev">السابق</button><button class="btn y" id="gplay">❚❚ إيقاف</button><button class="btn" id="gnext">التالي</button><button class="btn" id="gvoice" aria-pressed="false">🔊 قراءة صوتية</button></div><div class="gdots">' + GSTEPS.map(function (g, k) { return '<button type="button" aria-label="' + g[1] + '">' + g[0] + '</button>'; }).join('') + '</div><div class="row"><a class="btn y" href="#/editor">ابدأ صمّم مذكرتك</a></div></section>';
     },
@@ -409,6 +412,53 @@
     } };
   }
 
+  function gamesInit() {
+    var box = $('#gbox');
+    function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+    function quiz() {
+      var qs = shuffle(Q).slice(0, 10), i = 0, score = 0, streak = 0, left = 20, tm;
+      function end() {
+        clearTimers(); var best = +localStorage.getItem('masarak_best') || 0; if (score > best) { best = score; try { localStorage.setItem('masarak_best', best); } catch (e) {} }
+        box.innerHTML = '<div class="gres"><h3>خلصت التحدي</h3><div class="gscore">' + score + '</div><p class="sub">أعلى نتيجة ليك: ' + best + '</p><button class="btn y" id="gagain">العب تاني</button></div>';
+        $('#gagain').onclick = quiz;
+      }
+      function show() {
+        if (i >= qs.length) return end();
+        var q = qs[i]; left = 20;
+        box.innerHTML = '<div class="gh"><span>سؤال ' + (i + 1) + ' من ' + qs.length + '</span><span>النقاط: <b>' + score + '</b></span><span>تتابع: <b>' + streak + '</b></span></div><div class="gtime"><i id="gtb"></i></div><div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>';
+        clearTimers(); tm = every(function () { left -= 0.1; var b = $('#gtb'); if (b) b.style.width = Math.max(0, left / 20 * 100) + '%'; if (left <= 0) pick(-1); }, 100);
+        box.querySelectorAll('.gopt').forEach(function (b) { b.onclick = function () { pick(+b.dataset.k); }; });
+        function pick(k) {
+          clearTimers(); var ok = k === q.a;
+          if (ok) { streak++; score += 10 + Math.round(left / 4) + Math.min(streak - 1, 5); } else streak = 0;
+          box.querySelectorAll('.gopt').forEach(function (b) { b.disabled = true; var bk = +b.dataset.k; if (bk === q.a) b.classList.add('ok'); else if (bk === k) b.classList.add('no'); });
+          $('#gfb').innerHTML = (ok ? '<b class="gy">صح!</b> ' : (k < 0 ? '<b class="gn">الوقت خلص.</b> ' : '<b class="gn">غلط.</b> ')) + '<span>' + txt(q.s) + '</span><div><button class="btn y" id="gnx">' + (i + 1 >= qs.length ? 'النتيجة' : 'التالي') + '</button></div>';
+          $('#gnx').onclick = function () { i++; show(); };
+        }
+      }
+      show();
+    }
+    function mem() {
+      var P = [['2^3 × 2^2', '2^5'], ['(3^2)^2', '3^4'], ['5^0', '1'], ['2^(-1)', '0.5'], ['7^3 ÷ 7^1', '7^2'], ['4^2', '16']];
+      var cards = []; P.forEach(function (p, i) { cards.push({ p: i, t: p[0] }); cards.push({ p: i, t: p[1] }); });
+      cards = shuffle(cards); var open = [], moves = 0, found = 0, lock = false;
+      box.innerHTML = '<div class="gh"><span>اقلب الكروت ووصّل كل عملية بنتيجتها</span><span>المحاولات: <b id="gmv">0</b></span></div><div class="mgrid">' + cards.map(function (c, i) { return '<button class="mc" data-i="' + i + '"><span class="mf">؟</span><span class="mb" dir="ltr">' + txt('{{' + c.t + '}}') + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>';
+      box.querySelectorAll('.mc').forEach(function (b) {
+        b.onclick = function () {
+          if (lock || b.classList.contains('open') || b.classList.contains('done')) return;
+          b.classList.add('open'); open.push(b);
+          if (open.length === 2) {
+            moves++; $('#gmv').textContent = moves; var x = open[0], y = open[1];
+            if (cards[+x.dataset.i].p === cards[+y.dataset.i].p) { x.classList.add('done'); y.classList.add('done'); open = []; found++; if (found === P.length) $('#gfb').innerHTML = '<b class="gy">برافو! خلصتها في ' + moves + ' محاولة.</b> <button class="btn y" id="gagain">العب تاني</button>', $('#gagain').onclick = mem; }
+            else { lock = true; later(function () { x.classList.remove('open'); y.classList.remove('open'); open = []; lock = false; }, 900); }
+          }
+        };
+      });
+    }
+    var cur = { quiz: quiz, mem: mem };
+    document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { clearTimers(); document.querySelectorAll('[data-g]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); cur[b.dataset.g](); }; });
+    quiz();
+  }
   function allPrint(D) {
     var h = '';
     for (var i = 0; i < Q.length; i++) h += questionPage(D, i, i + 1);
@@ -465,6 +515,7 @@
     if (name === 'q' || name === 's') { var v = viewer(name, parseInt(parts[1], 10) || 1); app.innerHTML = v.html; v.after(); return; }
     if (!views[name]) name = 'home';
     app.innerHTML = views[name]();
+    if (name === 'games') gamesInit();
     if (name === 'editor') {
       var tab = 's';
       var draw = function (full) {
