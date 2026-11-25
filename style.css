@@ -610,3 +610,4 @@ button,input,select,textarea{font-family:inherit}
 .mc.open,.mc.done{background:#fff;color:#12307a;border:2px solid #1f6fd1}.mc.open .mf,.mc.done .mf{display:none}.mc.open .mb,.mc.done .mb{display:inline}
 .mc.done{background:#d8f5e3;border-color:#14a05a}
 @media(max-width:560px){.gopts{grid-template-columns:1fr}.mgrid{grid-template-columns:repeat(3,1fr)}}
+.site-h nav{gap:0}.site-h nav a{padding:8px 9px;font-size:15px}.hbtns{gap:6px}.hbtns button,.hbtns a{padding:0 11px}
