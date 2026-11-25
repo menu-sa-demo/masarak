@@ -316,7 +316,7 @@
   }
   var views = {
     games: function () {
-      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل، وفي سباق مع زمايلك.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button><button class="chip" data-g="race" aria-pressed="false">🏁 سباق</button><button class="chip" data-g="team" aria-pressed="false">🏎️ سباق الفرق</button><button class="chip" data-g="tug" aria-pressed="false">🪢 شد الحبل</button></div><div id="gbox" class="panelw"></div></section>';
+      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل، وفي سباق مع زمايلك.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button><button class="chip" data-g="race" aria-pressed="false">🏁 سباق</button><button class="chip" data-g="team" aria-pressed="false">🏎️ سباق الفرق</button><button class="chip" data-g="tug" aria-pressed="false">🪢 شد الحبل</button><button class="chip" data-g="pen" aria-pressed="false">⚽ ضربات الجزاء</button><button class="chip" data-g="bsk" aria-pressed="false">🏀 كرة السلة</button></div><div id="gbox" class="panelw"></div></section>';
     },
     guide: function () {
       return '<section class="page-s guide"><h2>شرح استخدام المنصة</h2><div class="vidbox"><video controls preload="metadata" playsinline src="https://htkwymimktphqmpbqffq.supabase.co/storage/v1/object/public/media/1-explainer2.mp4"></video></div><p class="sub">وبعده شرح تفاعلي قصير بيوريك الخطوات من الاختيار لحد استلام الملف.</p><div class="gwrap"><div class="gstage" id="gst"></div><div class="gcap" id="gcap"></div></div><div class="gbar"><div id="gbar"></div></div><div class="gctl"><button class="btn" id="gprev">السابق</button><button class="btn y" id="gplay">❚❚ إيقاف</button><button class="btn" id="gnext">التالي</button><button class="btn" id="gvoice" aria-pressed="false">🔊 قراءة صوتية</button></div><div class="gdots">' + GSTEPS.map(function (g, k) { return '<button type="button" aria-label="' + g[1] + '">' + g[0] + '</button>'; }).join('') + '</div><div class="row"><a class="btn y" href="#/editor">ابدأ صمّم مذكرتك</a></div></section>';
@@ -522,7 +522,7 @@
           return '<ol class="rb">' + pos.map(function (p, k) { return '<li class="lane' + (k === t ? ' me' : '') + '"><span class="ln" style="color:' + CL[k] + '">' + NM[k] + '</span><span class="trk"><i style="inset-inline-start:' + Math.round(p / goal * 88) + '%">🏎️</i><em>🏁</em></span><span><b>' + p + '</b></span></li>'; }).join('') + '</ol>';
         }
         function ask() {
-          var q = qs[qi % qs.length]; qi++;
+          var q = qs[qi % qs.length]; qi++; window.__q = q;
           box.innerHTML = view() + '<div class="gh"><span>الدور على: <b style="color:' + CL[t] + '">' + NM[t] + '</b></span></div><div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>';
           box.querySelectorAll('.gopt').forEach(function (b) { b.onclick = function () {
             var k = +b.dataset.k, ok = k === q.a; box.querySelectorAll('.gopt').forEach(function (x) { x.disabled = true; var xk = +x.dataset.k; if (xk === q.a) x.classList.add('ok'); else if (xk === k) x.classList.add('no'); });
@@ -535,7 +535,37 @@
         ask();
       };
     }
-    var cur = { quiz: quiz, mem: mem, race: race, team: function () { teamsGame('race'); }, tug: function () { teamsGame('tug'); } };
+
+    function shootGame(kind) {
+      var pen = kind === 'pen', qs = shuffle(Q).slice(0, 10), i = 0, goals = 0, streak = 0, pts = 0;
+      function scene(res, side) {
+        var bx = res === 'goal' ? [20, 50, 80][side] : (res === 'miss' ? [8, 50, 92][side] : 50), by = pen ? (res === 'goal' || res === 'save' ? 24 : 12) : (res === 'goal' ? 22 : 8);
+        if (pen) return '<div class="scn pen"><div class="goalf"><span class="kp" id="kp" style="left:' + (res === 'save' ? [20, 50, 80][side] : [80, 20, 50][side]) + '%">🧤</span></div><span class="ball" id="ball" style="left:50%;top:78%">⚽</span></div>';
+        return '<div class="scn bsk"><div class="bboard"><div class="ring"></div></div><span class="ball" id="ball" style="left:50%;top:78%">🏀</span></div>';
+      }
+      function show() {
+        if (i >= qs.length) return end();
+        var q = qs[i]; window.__q = q;
+        box.innerHTML = '<div class="gh"><span>' + (pen ? 'ضربة ' : 'رمية ') + (i + 1) + ' من ' + qs.length + '</span><span>' + (pen ? 'أهداف' : 'نقاط') + ': <b id="gsc">' + (pen ? goals : pts) + '</b></span></div>' + scene('idle', 1) + '<div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>';
+        box.querySelectorAll('.gopt').forEach(function (b) { b.onclick = function () {
+          var k = +b.dataset.k, ok = k === q.a, side = Math.floor(Math.random() * 3); box.querySelectorAll('.gopt').forEach(function (x) { x.disabled = true; var xk = +x.dataset.k; if (xk === q.a) x.classList.add('ok'); else if (xk === k) x.classList.add('no'); });
+          var ball = $('#ball'), kp = $('#kp');
+          if (ok) { streak++; if (pen) goals++; else pts += streak >= 3 ? 3 : 2; } else streak = 0;
+          if (pen) { var tx = [20, 50, 80][side]; ball.style.left = tx + '%'; ball.style.top = '26%'; if (kp) kp.style.left = (ok ? [80, 20, 50][side] : tx) + '%'; }
+          else { ball.style.left = ok ? '50%' : ['25%', '75%', '90%'][side]; ball.style.top = ok ? '26%' : '14%'; if (!ok) later(function () { ball.style.top = '78%'; }, 450); }
+          $('#gsc').textContent = pen ? goals : pts;
+          $('#gfb').innerHTML = (ok ? '<b class="gy">' + (pen ? 'جووول! ⚽' : 'سلة! 🏀' + (streak >= 3 ? ' ثلاثية' : '')) + '</b>' : '<b class="gn">' + (pen ? 'الحارس صدّها.' : 'ضاعت.') + '</b> <span>' + txt(q.s) + '</span>');
+          later(function () { i++; show(); }, ok ? 1300 : 2400);
+        }; });
+      }
+      function end() {
+        var key = 'masarak_best_' + kind, best = +localStorage.getItem(key) || 0, sc = pen ? goals : pts; if (sc > best) { best = sc; try { localStorage.setItem(key, best); } catch (e) {} }
+        box.innerHTML = '<div class="gres"><h3>' + (pen ? '⚽ سجّلت ' + goals + ' أهداف من ١٠' : '🏀 جمعت ' + pts + ' نقطة') + '</h3><p class="sub">أعلى نتيجة ليك: ' + best + '</p><button class="btn y" id="gagain">العب تاني</button></div>';
+        $('#gagain').onclick = function () { shootGame(kind); };
+      }
+      show();
+    }
+    var cur = { pen: function () { shootGame('pen'); }, bsk: function () { shootGame('bsk'); }, quiz: quiz, mem: mem, race: race, team: function () { teamsGame('race'); }, tug: function () { teamsGame('tug'); } };
     document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { clearTimers(); document.querySelectorAll('[data-g]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); raceLeave(); cur[b.dataset.g](); }; });
     quiz();
   }
