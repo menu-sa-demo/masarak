@@ -106,13 +106,64 @@
     document.body.appendChild(d);
     d.onclick = function (e) { if (e.target === d || e.target.id === 'pwx' || e.target.id === 'pwgo') d.remove(); };
   }
+  function loadH2C() {
+    return new Promise(function (ok, no) {
+      if (window.html2canvas) return ok();
+      var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+      sc.onload = function () { ok(); }; sc.onerror = function () { no(new Error('load')); }; document.head.appendChild(sc);
+    });
+  }
+  function b64bytes(u) { var b = atob(u.split(',')[1]), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+  function makePdf(pages) {
+    var enc = new TextEncoder(), parts = [], off = [], len = 0;
+    function put(x) { var u = typeof x === 'string' ? enc.encode(x) : x; parts.push(u); len += u.length; }
+    function obj(n, body) { off[n] = len; put(n + ' 0 obj\n'); put(body); put('\nendobj\n'); }
+    put('%PDF-1.4\n');
+    var n = pages.length, kids = [];
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    for (var i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
+    obj(2, '<< /Type /Pages /Count ' + n + ' /Kids [' + kids.join(' ') + '] >>');
+    pages.forEach(function (p, i) {
+      var pg = 3 + i * 3, im = pg + 1, ct = pg + 2, w = (p.w * 0.75).toFixed(2), h = (p.h * 0.75).toFixed(2);
+      obj(pg, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + w + ' ' + h + '] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + ct + ' 0 R >>');
+      off[im] = len; put(im + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + p.cw + ' /Height ' + p.ch + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + p.jpg.length + ' >>\nstream\n'); put(p.jpg); put('\nendstream\nendobj\n');
+      var c = 'q ' + w + ' 0 0 ' + h + ' 0 0 cm /Im0 Do Q';
+      obj(ct, '<< /Length ' + c.length + ' >>\nstream\n' + c + '\nendstream');
+    });
+    var total = 3 + n * 3, xr = len;
+    put('xref\n0 ' + total + '\n0000000000 65535 f \n');
+    for (var k = 1; k < total; k++) put(('0000000000' + off[k]).slice(-10) + ' 00000 n \n');
+    put('trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xr + '\n%%EOF');
+    return new Blob(parts, { type: 'application/pdf' });
+  }
+  function burn(cv, nm) {
+    var g = cv.getContext('2d'); g.save(); g.globalAlpha = 0.07; g.fillStyle = '#000'; g.font = 'bold ' + Math.round(cv.width / 22) + 'px Cairo, Tajawal, sans-serif'; g.textAlign = 'center'; g.rotate(-0.5);
+    var t = nm + '  ·  مسارك', st = Math.round(cv.height / 7);
+    for (var y = -cv.width; y < cv.height * 1.6; y += st) for (var x = -cv.width * 0.2; x < cv.width * 1.8; x += cv.width * 0.6) g.fillText(t, x + (Math.round(y / st) % 2) * cv.width * 0.3, y);
+    g.restore();
+  }
+  function toast(m) { var t = $('#pdfmsg'); if (!t) { t = document.createElement('div'); t.id = 'pdfmsg'; t.style.cssText = 'position:fixed;inset:auto 0 24px 0;margin:auto;width:max-content;max-width:90vw;background:#12307a;color:#fff;padding:12px 22px;border-radius:14px;z-index:99999;font:700 15px Cairo,sans-serif;box-shadow:0 8px 30px #0006'; document.body.appendChild(t); } t.textContent = m; t.style.display = m ? 'block' : 'none'; }
   function printPages(html, slide, free, kind) {
     if (!free && !isPaid(kind)) { paywall(kind); return; }
-    var st = $('#pgsty'); if (!st) { st = document.createElement('style'); st.id = 'pgsty'; document.head.appendChild(st); }
-    st.textContent = slide ? '@page{size:1120px 630px;margin:0}' : '@page{size:A4;margin:0}';
-    $('#print-area').innerHTML = html;
-    document.body.classList.add('printing');
-    setTimeout(function () { window.print(); }, 50);
+    var pa = $('#print-area'); pa.innerHTML = html; pa.style.cssText = 'display:block;position:fixed;left:-20000px;top:0;background:#fff';
+    toast('جاري تجهيز الـPDF بعلامتك المدمجة…');
+    var nm = (D.name || '').trim() || 'اسم المدرس';
+    loadH2C().then(function () {
+      var els = Array.prototype.slice.call(pa.querySelectorAll('.page,.xp')); if (!els.length) els = [pa];
+      var out = [], i = 0;
+      function next() {
+        if (i >= els.length) return Promise.resolve();
+        var el = els[i++]; toast('جاري تجهيز الصفحة ' + i + ' من ' + els.length);
+        return html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false }).then(function (cv) {
+          burn(cv, nm); out.push({ w: el.offsetWidth, h: el.offsetHeight, cw: cv.width, ch: cv.height, jpg: b64bytes(cv.toDataURL('image/jpeg', 0.92)) });
+          return new Promise(function (r) { setTimeout(r, 20); }).then(next);
+        });
+      }
+      return next().then(function () {
+        var bl = makePdf(out), a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = 'masarak.pdf'; document.body.appendChild(a); a.click();
+        setTimeout(function () { a.remove(); URL.revokeObjectURL(a.href); }, 4000); toast('✔ تم تحميل الملف'); setTimeout(function () { toast(''); }, 2500);
+      });
+    }).catch(function () { toast('تعذّر تجهيز الملف. تأكد من الاتصال بالإنترنت وجرّب تاني.'); setTimeout(function () { toast(''); }, 4000); }).then(function () { pa.style.cssText = ''; pa.innerHTML = ''; });
   }
   window.addEventListener('afterprint', function () { document.body.classList.remove('printing'); });
 
