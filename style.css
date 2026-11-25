@@ -594,3 +594,19 @@ button,input,select,textarea{font-family:inherit}
 @keyframes ish{to{transform:translateX(120%)}}
 @media(max-width:520px){.ilogo .it{font-size:32px}.ilogo .ik{width:48px;height:48px;font-size:28px}}
 .vidbox{max-width:880px;margin:14px auto 18px;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 8px 26px rgba(10,20,60,.25)}.vidbox video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+/* games */
+.gtabs{display:flex;gap:8px;margin:14px 0}.games .panelw{padding:18px}
+.gh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:700;margin-bottom:10px}
+.gtime{height:8px;border-radius:6px;background:#e3eaf7;overflow:hidden;margin-bottom:14px}.gtime i{display:block;height:100%;width:100%;background:#ffc928}
+.gq{font-size:26px;padding:16px;background:#fdebd2;border-radius:12px;margin-bottom:14px;text-align:center}
+.gopts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gopt{display:flex;align-items:center;gap:10px;border:2px solid #cfd9ee;background:#fff;border-radius:12px;padding:12px 14px;font:inherit;font-size:22px;cursor:pointer;color:inherit;text-align:start}
+.gopt:hover:not(:disabled){border-color:#1f6fd1}.gopt.ok{background:#d8f5e3;border-color:#14a05a}.gopt.no{background:#fde0e0;border-color:#c23b3b}
+.gfb{margin-top:14px;line-height:1.9}.gy{color:#14a05a}.gn{color:#c23b3b}
+.gres{text-align:center;padding:20px}.gscore{font-size:64px;font-weight:800;color:#1f6fd1}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mc{position:relative;height:84px;border:0;border-radius:12px;background:#12307a;color:#fff;font:inherit;font-size:22px;cursor:pointer;perspective:600px}
+.mc .mf{font-size:30px;font-weight:800;color:#ffc928}.mc .mb{display:none}
+.mc.open,.mc.done{background:#fff;color:#12307a;border:2px solid #1f6fd1}.mc.open .mf,.mc.done .mf{display:none}.mc.open .mb,.mc.done .mb{display:inline}
+.mc.done{background:#d8f5e3;border-color:#14a05a}
+@media(max-width:560px){.gopts{grid-template-columns:1fr}.mgrid{grid-template-columns:repeat(3,1fr)}}
