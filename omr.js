@@ -63,9 +63,9 @@
   }
   /* decode the 6 code squares: [anchor 1, model, page bits x3, parity] */
   function readCode(bin, w, h, H, P, scale) {
-    var bits = P.cd.map(function (c) { return darkFrac(bin, w, h, H, c[0], c[1], c[2] * 0.28, scale) > 0.55 ? 1 : 0; });
-    if (bits.length < 6 || bits[0] !== 1) return null; var par = bits.slice(0, 5).reduce(function (a, b2) { return a + b2; }, 0) % 2; if (par !== bits[5]) return null;
-    return { model: bits[1] ? 'B' : 'A', page: bits[2] * 4 + bits[3] * 2 + bits[4] };
+    var bits = P.cd.map(function (c) { return darkFrac(bin, w, h, H, c[0], c[1], c[2] * 0.2, scale) > 0.55 ? 1 : 0; });
+    if (bits.length < 6 || bits[0] !== 1) return { bad: bits }; var par = bits.slice(0, 5).reduce(function (a, b2) { return a + b2; }, 0) % 2; if (par !== bits[5]) return { bad: bits };
+    return { model: bits[1] ? 'B' : 'A', page: bits[2] * 4 + bits[3] * 2 + bits[4], bits: bits };
   }
   /* image: {data: RGBA, width, height}; layout: {A:[pages], B:[pages]} */
   function readPage(img, layout, opts) {
@@ -78,7 +78,7 @@
     var H = homog([pt('tl'), pt('tr'), pt('bl'), pt('br')], [[mk.tl.cx, mk.tl.cy], [mk.tr.cx, mk.tr.cy], [mk.bl.cx, mk.bl.cy], [mk.br.cx, mk.br.cy]]);
     var scale = Math.hypot(mk.tr.cx - mk.tl.cx, mk.tr.cy - mk.tl.cy) / Math.hypot(P0.mk.tr[0] - P0.mk.tl[0], P0.mk.tr[1] - P0.mk.tl[1]);
     var code = readCode(bin, w, h, H, P0, scale);
-    if (!code) return { ok: false, err: 'code', H: H, mk: mk };
+    if (!code || code.bad) return { ok: false, err: 'code', H: H, mk: mk, bits: code && code.bad };
     var P = layout[code.model] && layout[code.model][code.page]; if (!P) return { ok: false, err: 'layout', code: code };
     var groups = {};
     P.bub.forEach(function (b2) { var key = b2[0] + '.' + b2[1], f = darkFrac(bin, w, h, H, b2[3], b2[4], b2[5] * 0.62, scale); (groups[key] = groups[key] || { q: b2[0], s: b2[1], f: [] }).f[b2[2]] = f; });
