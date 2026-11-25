@@ -164,3 +164,6 @@ body.lt .try .pv{border:1px solid #d3dcea}
 body.lt .pays label,body.lt .payc{color:#12264a}
 body.lt .authw h2{color:#1d5ea8}
 .co>*,.ed>*{min-width:0}
+.wlb{background:var(--card)!important;color:var(--i0)!important;border:1px solid var(--line)}
+.wlb h3,.wlb p{color:var(--i0)!important}.wlb .sub{color:var(--ink2)!important}
+.wlb .btn:not(.y){background:var(--btn)!important;color:var(--i0)!important}
