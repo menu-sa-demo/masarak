@@ -545,3 +545,4 @@ button,input,select,textarea{font-family:inherit}
 .gb{display:inline-block;background:#e8eefc;color:#12307a;border-radius:999px;padding:2px 10px;margin:2px;font-size:.9rem}
 .dl{background:#ffcd2b;color:#12307a;border-radius:999px;padding:6px 12px;font-weight:700;text-decoration:none;white-space:nowrap}.dl.low{background:#e74c3c;color:#fff}
 #spl{position:fixed;z-index:85;border-radius:12px;pointer-events:none;box-shadow:0 0 0 9999px rgba(8,16,40,.62);outline:3px solid #ffcd2b;transition:left .35s,top .35s,width .35s,height .35s}
+.tryc{margin:14px 0;padding:14px 16px;max-width:420px}.tryc h4{margin:0 0 8px}.trr{display:flex;gap:8px;margin-bottom:8px}.trr input{flex:1;min-width:0;padding:9px 10px;border-radius:10px;border:1px solid var(--line,#d3dcea);font:inherit;background:var(--card,#fff);color:inherit}.tryc .sw[aria-pressed=true]{outline:2px solid #12307a;outline-offset:2px}
