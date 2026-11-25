@@ -639,7 +639,7 @@
       var S = scene3(m, 900, 300, 0xcfe8ff), T = S.T, sc = S.sc; S.cam.position.set(0, 1.5, 4.4); S.cam.lookAt(0, 0.85, 0); ground3(S, '#7fae4d', '#76a548', 0);
       var mud = new T.Mesh(new T.CircleGeometry(1.5, 32), new T.MeshStandardMaterial({ color: 0x6b4a2b })); mud.rotation.x = -Math.PI / 2; mud.position.y = 0.01; mud.scale.set(1.5, 0.6, 1); sc.add(mud);
       var asm = new T.Group(); sc.add(asm); var A = S.human('ha', 0xd23b3b, 0x1b2a55, 1.1) || S.actor('female', 1.9), B = S.human('hb', 0x1f6fd1, 0x1b2a55, 1.1) || S.actor('male', 1.9); asm.add(A.obj); asm.add(B.obj); A.obj.position.set(-2.6, 0, 0); A.obj.rotation.y = Math.PI / 2; B.obj.position.set(2.6, 0, 0); B.obj.rotation.y = -Math.PI / 2; A.play('holding-both'); B.play('holding-both');
-      var rope = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 4.6, 10), new T.MeshStandardMaterial({ color: 0xb98a4a })); rope.rotation.z = Math.PI / 2; rope.position.set(0, 1.0, 0.12); rope.castShadow = true; asm.add(rope);
+      var rope = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 4.6, 10), new T.MeshStandardMaterial({ color: 0xb98a4a })); rope.rotation.z = Math.PI / 2; rope.position.set(0, 1.38, 0.12); rope.castShadow = true; asm.add(rope);
       var flag = new T.Mesh(new T.BoxGeometry(0.1, 0.5, 0.5), new T.MeshStandardMaterial({ color: 0xc23b3b })); flag.position.set(0, 0.8, 0.12); asm.add(flag);
       [-1.8, 1.8].forEach(function (x, i) { var st = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 1.4, 8), new T.MeshStandardMaterial({ color: i ? 0x1f6fd1 : 0xc23b3b })); st.position.set(x * 1.0, 0.7, -1.2); sc.add(st); });
       var mid = new T.Mesh(new T.BoxGeometry(0.06, 0.02, 3), new T.MeshBasicMaterial({ color: 0xffffff })); mid.position.set(0, 0.02, 0); sc.add(mid);
