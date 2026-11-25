@@ -542,7 +542,7 @@
     function load3d(cb) {
       if (window.__3d !== undefined) return cb(window.__3d);
       var C = 'https://cdn.jsdelivr.net/npm/three@0.160.0/';
-      Promise.all([import(C + '+esm'), import(C + 'examples/jsm/loaders/GLTFLoader.js/+esm'), import(C + 'examples/jsm/libs/meshopt_decoder.module.js/+esm'), new Promise(function (ok, no) { if (window.MODELS) return ok(); var sc = document.createElement('script'); sc.src = 'models.js?v=46'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); })]).then(function (x) {
+      Promise.all([import(C + '+esm'), import(C + 'examples/jsm/loaders/GLTFLoader.js/+esm'), import(C + 'examples/jsm/libs/meshopt_decoder.module.js/+esm'), new Promise(function (ok, no) { if (window.MODELS) return ok(); var sc = document.createElement('script'); sc.src = 'models.js?v=47'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); })]).then(function (x) {
         var T = x[0], ld = new x[1].GLTFLoader(); ld.setMeshoptDecoder(x[2].MeshoptDecoder); var models = {}, keys = Object.keys(window.MODELS);
         return Promise.all(keys.map(function (k) { var bin = atob(window.MODELS[k]), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Promise(function (ok, no) { ld.parse(u.buffer, '', function (g) { models[k] = g; ok(); }, no); }); })).then(function () { window.__3d = { T: T, models: models }; cb(window.__3d); });
       }).catch(function () { window.__3d = null; cb(null); });
@@ -581,7 +581,7 @@
       reset(); return { el: S.el, reset: reset, shoot: shoot };
     }
     function tug3d(m) {
-      var S = scene3(m, 900, 300, 0xcfe8ff), T = S.T, sc = S.sc; S.cam.position.set(0, 2.1, 7.2); S.cam.lookAt(0, 0.9, 0); ground3(S, '#7fae4d', '#76a548', 0);
+      var S = scene3(m, 900, 300, 0xcfe8ff), T = S.T, sc = S.sc; S.cam.position.set(0, 1.5, 4.4); S.cam.lookAt(0, 0.85, 0); ground3(S, '#7fae4d', '#76a548', 0);
       var mud = new T.Mesh(new T.CircleGeometry(1.5, 32), new T.MeshStandardMaterial({ color: 0x6b4a2b })); mud.rotation.x = -Math.PI / 2; mud.position.y = 0.01; mud.scale.set(1.5, 0.6, 1); sc.add(mud);
       var asm = new T.Group(); sc.add(asm); var A = S.actor('female', 1.9), B = S.actor('male', 1.9); asm.add(A.obj); asm.add(B.obj); A.obj.position.set(-2.6, 0, 0); A.obj.rotation.y = Math.PI / 2; B.obj.position.set(2.6, 0, 0); B.obj.rotation.y = -Math.PI / 2; A.play('holding-both'); B.play('holding-both');
       var rope = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 4.6, 10), new T.MeshStandardMaterial({ color: 0xb98a4a })); rope.rotation.z = Math.PI / 2; rope.position.set(0, 1.0, 0.12); rope.castShadow = true; asm.add(rope);
