@@ -583,3 +583,4 @@ button,input,select,textarea{font-family:inherit}
 .trytag{display:inline-block;background:#f07a2a;color:#fff;border-radius:14px;padding:0 14px;margin-inline-end:10px;font-weight:700;font-size:15px}
 .try .exq{display:inline;font-size:18px}.try .lines{margin-top:2px}.try .lines i{height:30px}
 .th-book .exbadge{background:#f07a2a}.th-book .sol{background:var(--nv)}
+.sl.sm{text-align:center;direction:ltr}
