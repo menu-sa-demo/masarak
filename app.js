@@ -49,7 +49,6 @@
     return '<div class="bottom">' + (d.logo ? '<img class="logo" alt="" src="' + d.logo + '">' : '') + '<div class="phone" dir="ltr">' + esc(d.phone.trim() || '01000000000') + '</div><div class="pg">' + n + '</div><div class="nm">' + esc(d.name.trim() || 'اسم المدرس') + '</div></div>';
   }
   function wm(d) {
-    if (!d.mark) return '';
     var n = esc(d.name.trim() || 'اسم المدرس');
     return '<div class="wm"><span>' + n + '</span><span>' + n + '</span><span>' + n + '</span><span>' + n + '</span><span>' + n + '</span></div>';
   }
@@ -136,7 +135,7 @@
       '<label>استدارة الأركان<input type="range" min="0" max="30" data-k="round" value="' + D.round + '"></label>' +
       swatchRow('fcol', 'لون الإطار') + swatchRow('qbg', 'لون مربع السؤال') + swatchRow('qtc', 'لون خط السؤال') + swatchRow('occ', 'لون الاختيارات') +
       '<div class="lab">اللوجو بتاعك</div><div class="pick"><label class="chip up">ارفع صورة<input type="file" accept="image/*" id="logoin" hidden></label>' + (D.logo ? '<button type="button" class="chip" id="logorm">شيل اللوجو</button>' : '') + '</div>' +
-      '<div class="lab">علامة الاسم على الصفحة</div><div class="pick"><button type="button" class="chip" data-mark="1" aria-pressed="' + D.mark + '">ظاهرة</button><button type="button" class="chip" data-mark="0" aria-pressed="' + !D.mark + '">مخفية</button></div></div>';
+      '</div>';
   }
   function bindControls(root, redraw) {
     root.querySelectorAll('input[data-k]').forEach(function (i) { i.addEventListener('input', function () { D[i.dataset.k] = i.value; save(); redraw(false); }); });
@@ -146,7 +145,6 @@
     root.querySelectorAll('[data-opt]').forEach(function (b) { b.onclick = function () { D[b.dataset.opt] = b.dataset.v; save(); if (b.dataset.opt === 'shape') { var t = document.querySelector('[data-tab="q"]'); if (t) t.click(); } redraw(true); }; });
     var lg = root.querySelector('#logoin'); if (lg) lg.onchange = function () { var f = lg.files[0]; if (!f || f.size > 400000) { alert('الصورة لازم تكون أقل من 400 كيلوبايت'); return; } var r = new FileReader(); r.onload = function () { D.logo = r.result; save(); redraw(true); }; r.readAsDataURL(f); };
     var lr = root.querySelector('#logorm'); if (lr) lr.onclick = function () { D.logo = ''; save(); redraw(true); };
-    root.querySelectorAll('[data-mark]').forEach(function (b) { b.onclick = function () { D.mark = b.dataset.mark === '1'; save(); redraw(true); }; });
   }
 
   var USER = {};
