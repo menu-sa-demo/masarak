@@ -34,7 +34,7 @@
     { id: 'bank', title: 'بنك أسئلة الأسس والجذور', grade: 'تالتة إعدادي', kind: 'بنك أسئلة', pages: Q.length + ' سؤال، سؤال في كل صفحة، مع نموذج الإجابة', price: 120, prev: 'q', to: '#/bank' }
   ];
   var cart = []; try { cart = JSON.parse(localStorage.getItem('masarak_cart') || '[]'); } catch (e) {}
-  var saveCart = function () { try { localStorage.setItem('masarak_cart', JSON.stringify(cart)); } catch (e) {} $('#cc').textContent = cart.length || ''; };
+  var saveCart = function () { try { localStorage.setItem('masarak_cart', JSON.stringify(cart)); } catch (e) {} $('#cc').textContent = cart.length; };
   var BUNDLE = 130;
   function dims(kind, d) { return kind === 'q' && d.shape === 'slide' ? [1120, 630] : [800, 1131]; }
   function thumb(p) { var k = p.prev === 's' ? 's' : 'q', w = dims(k, D); return '<div class="fit crop" data-crop="' + (k === 's' ? 0.6 : (w[0] === 1120 ? 1 : 0.6)) + '" data-w="' + w[0] + '" data-h="' + w[1] + '"><div class="scale" style="width:' + w[0] + 'px">' + (k === 's' ? summaryPage(D) : questionPage(D, 0)) + '</div></div>'; }
@@ -303,26 +303,22 @@
     document.querySelectorAll('.gdots button').forEach(function (b, k) { b.onclick = function () { clearTimers(); show(k); if (play) arm(); }; });
     show(0); arm();
   }
-  function stp(n) { return '<div class="stp">' + ['اختار الملف', 'شوف العينة', 'صمّم نسختك', 'اطلب وحوّل'].map(function (t, i) { return '<span class="' + (i + 1 === n ? 'on' : i + 1 < n ? 'dn' : '') + '">' + (i + 1) + ' · ' + t + '</span>'; }).join('') + '</div>'; }
-  var STAGES = ['الصفوف'];
   var views = {
     guide: function () {
       return '<section class="page-s guide"><h2>شرح استخدام المنصة</h2><p class="sub">فيديو تفاعلي قصير بيوريك الخطوات من الاختيار لحد استلام الملف.</p><div class="gwrap"><div class="gstage" id="gst"></div><div class="gcap" id="gcap"></div></div><div class="gbar"><div id="gbar"></div></div><div class="gctl"><button class="btn" id="gprev">السابق</button><button class="btn y" id="gplay">❚❚ إيقاف</button><button class="btn" id="gnext">التالي</button><button class="btn" id="gvoice" aria-pressed="false">🔊 قراءة صوتية</button></div><div class="gdots">' + GSTEPS.map(function (g, k) { return '<button type="button" aria-label="' + g[1] + '">' + g[0] + '</button>'; }).join('') + '</div><div class="row"><a class="btn y" href="#/editor">ابدأ صمّم مذكرتك</a></div></section>';
     },
     home: function () {
-      var dots = COLORS.map(function (c) { return '<button type="button" data-hc="' + c[0] + '" aria-label="' + c[1] + '" aria-pressed="' + (c[0] === D.color) + '" style="background:' + c[0] + '"></button>'; }).join('');
-      var frs = FRAMES.slice(0, 3).map(function (f) { return '<button type="button" data-hf="' + f[0] + '" aria-pressed="' + (f[0] === D.frame) + '">' + f[1] + '</button>'; }).join('');
-      return '<section class="hero"><div class="hero-t"><h1>مذكرتك باسمك،<br>جاهزة للطباعة.</h1><p>أسئلة وملخصات جاهزة لكل مرحلة. اكتب اسمك ورقمك، اختار اللون والإطار، وشوف الصفحة بتتغير قدامك. بعدها اطبعها PDF جاهزة للطلاب.</p><div class="cta"><a class="btn y" href="#/s/1">جرّب ١٠ أسئلة مجانًا</a><a class="btn" href="#/store">افتح المتجر</a><a class="lk" href="#/account" data-am="in">عندك حساب؟ سجّل الدخول</a></div><div class="ver">النموذج الحالي: الصف الثالث الإعدادي، الترم الأول، قبل ما تدفع.</div><a class="vid" href="#/guide">◀ شوف الموقع بيشتغل إزاي</a><div class="facts"><span><b>ملفات</b> لكل الصفوف قريبًا</span><span><b>أول عينة مجانية</b> قبل أي طلب</span><span><b>PDF</b> جاهز للطباعة</span></div></div>' +
-        '<div class="try"><div class="th"><b>جرّب بنفسك</b><span>اكتب اسمك وشوف الملف</span></div><div class="pv" id="hpv"></div><div class="row2"><label>اسمك<input id="hn" placeholder="مثلا: أ/ أحمد علي" value="' + esc(D.name) + '"></label><label>رقمك<input id="hp" dir="ltr" inputmode="tel" placeholder="01xxxxxxxxx" value="' + esc(D.phone) + '"></label></div><div class="lbl"><span>اللون</span><div class="dots">' + dots + '</div></div><div class="lbl"><span>الإطار</span><div class="frs">' + frs + '</div></div><a class="go2" href="#/editor">كمّل وجرّب ١٠ أسئلة مجانًا</a></div></section>' +
-        '<section class="howc"><div><h3>جرّب قبل ما تدفع</h3><p>اختار أي ملف وصمّم نسختك باسمك ورقمك وألوانك، ودوس «عينة مجانية». هتشوف ١٠ أسئلة بنفس تصميمك قبل ما تطلب الملف الكامل.</p></div><ol><li><i>١</i>اختار الملف</li><li><i>٢</i>صمّم نسختك</li><li><i>٣</i>اطلب واستلم الـPDF</li></ol></section>';
+      return '<section class="hero"><div class="syms" aria-hidden="true"><i>x²</i><i>√</i><i>÷</i><i>π</i><i>∑</i><i>%</i><i>a⁵</i></div><div class="hero-t"><h1>مذكرتك <em>باسمك</em> وعلامتك</h1><p>أسئلة وملخصات جاهزة لكل مرحلة. اكتب اسمك ورقمك، اختار اللون والإطار، وشوف الصفحة بتتغير قدامك. بعدها اطبعها بالـ PDF جاهزة للطلاب.</p><div class="cta"><a class="btn y" href="#/editor">صمّم مذكرتك</a><a class="btn" href="#/s/1">جرّب ١٠ أسئلة مجانًا</a><a class="btn ghost" href="#/guide">▶ شاهد الشرح</a></div><div class="ver">النموذج الحالي: الصف الثالث الإعدادي، الترم الأول</div></div><div class="hero-p"><div class="tilt" id="tilt">' + fitBox(summaryPage(DEMO)) + '</div></div></section>' +
+        '<section class="steps"><div><b>١</b><h4>اكتب بياناتك</h4><p>الاسم والرقم واسم السلسلة.</p></div><div><b>٢</b><h4>اختار الشكل</h4><p>لون وإطار وعلامة اسم.</p></div><div><b>٣</b><h4>اطبع واستلم</h4><p>صفحات PDF باسمك.</p></div></section>' +
+        '<section class="feat"><div class="fc"><h4>ملخصات منظمة</h4><p>قوانين وأمثلة في كروت ملونة مرتبة.</p></div><div class="fc"><h4>بنك أسئلة</h4><p>سؤال في كل صفحة، معه تلميح ومساحة للحل.</p></div><div class="fc"><h4>نموذج إجابة</h4><p>صفحة حل مرتبة لكل مجموعة أسئلة.</p></div><div class="fc"><h4>محتوى أصلي</h4><p>كل الأسئلة والشرح من تأليفنا.</p></div></section>';
     },
     store: function () {
-      return '<section class="page-s">' + stp(1) + '<div class="shero"><h2>المتجر</h2><p>اختار الملف وشوف عينة منه، وبعدين صمّم نسختك: اسمك ورقمك والإطار بتاعك وألوانك.</p><div class="yb"><b>جرّب قبل ما تدفع:</b> اختار أي ملف وصمّم نسختك، ودوس «جرّب عينة مجانًا». عينة من ١٠ أسئلة بتوصلك بالتصميم اللي اخترته.</div><div class="st4"><div class="on"><b>١</b>اختار الملف</div><div><b>٢</b>شوف العينة</div><div><b>٣</b>صمّم نسختك</div><div><b>٤</b>اطلب وحوّل</div></div></div>' +
+      return '<section class="page-s"><div class="shero"><h2>المتجر</h2><p>اختار الملف وشوف عينة منه، وبعدين صمّم نسختك: اسمك ورقمك والإطار بتاعك وألوانك.</p><div class="yb"><b>جرّب قبل ما تدفع:</b> اختار أي ملف وصمّم نسختك، ودوس «جرّب عينة مجانًا». عينة من ١٠ أسئلة بتوصلك بالتصميم اللي اخترته.</div><div class="st4"><div class="on"><b>١</b>اختار الملف</div><div><b>٢</b>شوف العينة</div><div><b>٣</b>صمّم نسختك</div><div><b>٤</b>اطلب</div></div></div>' +
         '<div class="chips"><span class="chip on">كل الصفوف</span><span class="chip off">أولى إعدادي (قريبًا)</span><span class="chip off">تانية إعدادي (قريبًا)</span><span class="chip on">تالتة إعدادي</span></div>' +
         '<div class="bundle"><span class="bd">الأوفر</span><h3>الباقة الكاملة</h3><p>ملخص الأسس + بنك الأسئلة مع نموذج الإجابة</p><div class="bl"><div><b>ملخص</b> قوانين الأسس</div><div><b>بنك أسئلة</b> الأسس والجذور</div></div><div class="price">' + BUNDLE + ' ج <small>بدل ' + (PRODUCTS[0].price + PRODUCTS[1].price) + ' ج، سعر تجريبي</small></div><button class="btn y" data-bundle="1">أضف الباقة للسلة</button></div>' +
-        '<div class="gcard"><h3 class="sec">تالتة إعدادي <small>' + (PRODUCTS.length + 1) + ' ملفات</small></h3><div class="gcol"><h4>رياضيات</h4><div class="pgrid">' + PRODUCTS.map(card).join('') +
-        '<div class="pc"><div class="free"><b>١٠</b><span>أسئلة</span></div><div class="tags"><span>تالتة إعدادي</span><span>عينة</span><span class="gr">مجاني</span></div><h4>عينة ١٠ أسئلة</h4><div class="meta">تجربة الشكل قبل الملف الكامل</div><div class="price">٠ ج</div><div class="pbtns"><a class="btn y" href="#/s/1">جرّب عينة مجانًا</a></div></div></div></div></div>' +
-        '<div class="gcard"><h3 class="sec">أولى وتانية إعدادي <small>قريبًا</small></h3><p class="sub">هنضيفهم بعد اعتماد نموذج تالتة إعدادي.</p></div></section>';
+        '<h3 class="sec">تالتة إعدادي <small>' + (PRODUCTS.length + 1) + ' ملفات</small></h3><div class="pgrid">' + PRODUCTS.map(card).join('') +
+        '<div class="pc"><div class="free"><b>١٠</b><span>أسئلة</span></div><div class="tags"><span>تالتة إعدادي</span><span>عينة</span><span class="gr">مجاني</span></div><h4>عينة ١٠ أسئلة</h4><div class="meta">تجربة الشكل قبل الملف الكامل</div><div class="price">٠ ج</div><div class="pbtns"><a class="btn y" href="#/s/1">جرّب عينة مجانًا</a></div></div></div>' +
+        '<h3 class="sec">أولى وتانية إعدادي <small>قريبًا</small></h3><p class="sub">هنضيفهم بعد اعتماد نموذج تالتة إعدادي.</p></section>';
     },
     cart: function () {
       var items = cart.map(function (id) { return PRODUCTS.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean);
@@ -334,13 +330,14 @@
       var items = cartItems(), sum = cartSum(items);
       if (!items.length) return '<section class="page-s"><h2>إتمام الطلب</h2><p class="sub">السلة فاضية.</p><a class="btn y" href="#/store">روح للمتجر</a></section>';
       var u = USER;
-      return '<section class="page-s">' + stp(4) + '<h2>اطلب وحوّل</h2><div class="co"><form id="cof" class="panelw"><h3>بيانات الطلب</h3>' +
+      return '<section class="page-s"><h2>إتمام الطلب</h2><div class="co"><form id="cof" class="panelw"><h3>بيانات الطلب</h3>' +
         '<label>الاسم<input name="n" required value="' + esc(u.name || D.name) + '"></label>' +
         '<label>رقم الموبايل<input name="p" required dir="ltr" inputmode="tel" value="' + esc(u.phone || D.phone) + '"></label>' +
-        '<div class="payc"><b>حوّل ' + sum + ' ج على</b><div class="pays"><label><input type="radio" name="m" value="تحويل بنكي أو إنستا" checked>إنستاباي</label><label><input type="radio" name="m" value="محفظة إلكترونية">محفظة إلكترونية</label></div><div class="payn"><span dir="ltr">01147795940</span><button type="button" id="cpn">انسخ</button></div></div>' +
+        '<div class="lab">طريقة الدفع</div><div class="pick"><label class="chip"><input type="radio" name="m" value="محفظة إلكترونية" checked> محفظة إلكترونية</label><label class="chip"><input type="radio" name="m" value="تحويل بنكي أو إنستا"> تحويل بنكي أو إنستا</label></div>' +
+        '<div class="yb2">رقم التحويل هيتحط هنا قبل الإطلاق الحقيقي. في النموذج التجريبي مفيش دفع فعلي.</div>' +
         '<label>الرقم اللي هتحوّل منه<input name="f" required dir="ltr" inputmode="tel"></label>' +
         '<label>طريقة استلام الملفات<select name="d"><option>رابط تحميل في صفحة الطلبات</option><option>على واتساب</option></select></label>' +
-        '<label>ملاحظات<textarea name="t" rows="3"></textarea></label><button class="btn y" type="submit">ابعت الطلب</button><p class="cnote">مفيش ملف بيتنفّذ قبل ما نراجع التحويل ونوافق. بعد الموافقة هتلاقي الملف في «الطلبات والملفات».</p></form>' +
+        '<label>ملاحظات<textarea name="t" rows="3"></textarea></label><button class="btn y" type="submit">ابعت الطلب</button></form>' +
         '<aside class="panelw"><h3>ملخص طلبك</h3>' + items.map(function (p) { return '<div class="ci"><span>' + p.title + '</span><span>' + p.price + ' ج</span></div>'; }).join('') + '<div class="ci tot"><span>الإجمالي</span><span>' + sum + ' ج</span></div><hr><div class="sm2"><div>الاسم على الملف: <b>' + esc(D.name || 'اسم المدرس') + '</b></div><div>الشكل: <b>' + (D.shape === 'slide' ? 'سلايد' : 'بوكليت A4') + '</b></div><div>مربع السؤال: <b>' + ({ full: 'كامل', dashed: 'منقط', none: 'بدون' })[D.qbox] + '</b></div><div>الاستدارة: <b>' + D.round + '</b></div><a href="#/editor">عدّل التصميم</a></div></aside></div></section>';
     },
     orders: function () {
@@ -357,17 +354,17 @@
     account: function () {
       if (USER.name) return '<section class="page-s"><h2>حسابك</h2><div class="panelw"><p>أهلًا <b>' + esc(USER.name) + '</b></p><p class="sub">' + esc(USER.phone || '') + ' ' + esc(USER.email || '') + '</p>' + (USER.grades && USER.grades.length ? '<p>صفوفك: ' + USER.grades.map(function (c) { return '<span class="gb">' + esc(gname(c)) + '</span>'; }).join(' ') + '</p>' : '') + '<a class="btn y" href="#/orders">طلباتك وملفاتك</a> ' + (USER.admin ? '<a class="btn" href="#/admin">صفحة الإدارة</a> ' : '') + '<button class="btn" id="lo">تسجيل خروج</button></div>' + planPanel() + '</section>';
       var up = ACCMODE === 'up';
-      return '<section class="authw"><form id="acf" class="panelw"><h2>' + (up ? 'إنشاء حساب' : 'تسجيل الدخول') + '</h2><p class="sub">' + (up ? 'اعمل حسابك علشان تطلب ملفات المتجر وتتابع طلباتك.' : 'ادخل بحسابك علشان تتابع طلباتك وملفاتك.') + '</p>' +
-        (up ? '<div class="r2"><label>الاسم الكامل<input name="n" required></label><label>رقم الهاتف<input name="p" required dir="ltr" inputmode="tel"></label></div>' : '') +
-        (up ? picker() : '') + '<label>البريد الإلكتروني<input name="e" type="email" dir="ltr" required autocomplete="email"></label>' + (up ? '<div class="r2"><label>كلمة المرور<input name="w" type="password" dir="ltr" required minlength="6" autocomplete="new-password"></label><label>تأكيد كلمة المرور<input name="w2" type="password" dir="ltr" required minlength="6" autocomplete="new-password"></label></div>' : '<label>كلمة المرور<input name="w" type="password" dir="ltr" required minlength="6" autocomplete="current-password"></label>') +
-        '<p class="sub" id="acerr" style="color:#ff8a80;margin:0 0 8px">' + esc(ACCERR) + '</p><button class="btn y" type="submit">' + (up ? 'إنشاء الحساب' : 'دخول') + '</button><p class="alt">' + (up ? 'لديك حساب؟ <button type="button" data-am="in">تسجيل الدخول</button>' : 'مفيش عندك حساب؟ <button type="button" data-am="up">إنشاء حساب</button>') + '</p></form></section>';
+      return '<section class="page-s"><h2>' + (up ? 'إنشاء حساب' : 'تسجيل الدخول') + '</h2><form id="acf" class="panelw"><div class="tabs"><button type="button" class="chip" data-am="up" aria-pressed="' + up + '">حساب جديد</button><button type="button" class="chip" data-am="in" aria-pressed="' + !up + '">عندي حساب</button></div>' +
+        (up ? '<label>الاسم الكامل<input name="n" required></label><label>رقم الموبايل<input name="p" required dir="ltr" inputmode="tel"></label>' : '') +
+        (up ? picker() : '') + '<label>الإيميل<input name="e" type="email" dir="ltr" required autocomplete="email"></label><label>كلمة السر<input name="w" type="password" dir="ltr" required minlength="6" autocomplete="' + (up ? 'new-password' : 'current-password') + '"></label>' +
+        '<p class="sub" id="acerr" style="color:#c0392b">' + esc(ACCERR) + '</p><button class="btn y" type="submit">' + (up ? 'إنشاء الحساب' : 'دخول') + '</button></form></section>';
     },
     admin: function () {
       if (!USER.admin) return '<section class="page-s"><h2>صفحة الإدارة</h2><div class="panelw"><p>الصفحة دي لصاحب الموقع بس.</p></div></section>';
       return '<section class="page-s"><h2>صفحة الإدارة</h2><div class="panelw"><p class="sub">المشتركين وطلبات الاشتراك. فعّل بعد ما تتأكد من التحويل.</p><div id="adl">جاري التحميل...</div></div></section>';
     },
     editor: function () {
-      return '<section class="page-s">' + stp(3) + '<h2>صمّم نسختك</h2><div class="ed"><div id="ctl"></div><div class="prev"><div class="tabs"><button class="chip" data-tab="s" aria-pressed="true">صفحة الملخص</button><button class="chip" data-tab="q" aria-pressed="false">صفحة سؤال</button></div><div id="pv"></div><div class="row"><button class="btn y" id="pr">اطبع أو احفظ PDF</button></div><p class="sub">الطباعة تفتح نافذة المتصفح. اختار "حفظ بصيغة PDF".</p></div></div></section>';
+      return '<section class="page-s"><h2>صمّم مذكرتك</h2><div class="ed"><div id="ctl"></div><div class="prev"><div class="tabs"><button class="chip" data-tab="s" aria-pressed="true">صفحة الملخص</button><button class="chip" data-tab="q" aria-pressed="false">صفحة سؤال</button></div><div id="pv"></div><div class="row"><button class="btn y" id="pr">اطبع أو احفظ PDF</button></div><p class="sub">الطباعة تفتح نافذة المتصفح. اختار "حفظ بصيغة PDF".</p></div></div></section>';
     },
     bank: function () {
       return '<section class="page-s"><h2>بنك الأسئلة</h2><p class="sub">أسئلة الأسس والجذور، الصف الثالث الإعدادي. سؤال في كل صفحة، مع تلميح ومساحة للحل.</p><div class="grid g2">' +
@@ -418,7 +415,7 @@
       box.querySelectorAll('[data-ap]').forEach(function (b) { b.onclick = function () { var x = b.dataset.ap.split('|'), bd = {}, uc = x[1] === 'plan' ? 'plan_until' : 'exams_until'; if (x[2] === 'renew') { var base = Math.max(Date.now(), x[3] ? new Date(x[3]).getTime() : 0); bd[x[1]] = 'paid'; bd[uc] = new Date(base + 30 * 86400000).toISOString(); } else { bd[x[1]] = x[2]; bd[uc] = null; } b.disabled = true; token().then(function (t) { return sbf('/rest/v1/profiles?id=eq.' + x[0], { method: 'PATCH', body: bd, prefer: 'return=minimal' }, t); }).then(loadAdmin).catch(function () { b.textContent = 'فشل'; }); }; });
     }).catch(function () { box.textContent = 'مشكلة في التحميل.'; });
   }
-  var TOUR = [['#/editor', '✏️', 'صمّم مذكرتك', 'اكتب اسمك ورقمك واختار اللون والإطار، وشوف المذكرة بتتغير قدامك.', '.site-f [data-nav=editor]'], ['#/bank', '📚', 'بنك الأسئلة', 'أسئلة مرتبة بالحل والتلميح. التصفح مفتوح للكل.', '.site-f [data-nav=bank]'], ['#/exams', '📝', 'الاختبارات', 'ركّب اختبار بالأسئلة اللي تختارها واطبعه بورقة أو ورقتين.', '.site-f [data-nav=exams]'], ['#/account', '🔓', 'الاشتراك', 'سجّل حساب واختار صفك. التحميل والطباعة بيتفتحوا بعد تفعيل اشتراكك.', '.hbtns .acc']];
+  var TOUR = [['#/editor', '✏️', 'صمّم مذكرتك', 'اكتب اسمك ورقمك واختار اللون والإطار، وشوف المذكرة بتتغير قدامك.', '[data-nav=editor]'], ['#/bank', '📚', 'بنك الأسئلة', 'أسئلة مرتبة بالحل والتلميح. التصفح مفتوح للكل.', '[data-nav=bank]'], ['#/exams', '📝', 'الاختبارات', 'ركّب اختبار بالأسئلة اللي تختارها واطبعه بورقة أو ورقتين.', '[data-nav=exams]'], ['#/account', '🔓', 'الاشتراك', 'سجّل حساب واختار صفك. التحميل والطباعة بيتفتحوا بعد تفعيل اشتراكك.', '.hbtns .acc']];
   function sheet(html, id) { var o = document.getElementById('wl'); if (o) o.remove(); var d = document.createElement('div'); d.id = 'wl'; d.innerHTML = '<div class="wlb" role="dialog" aria-modal="true">' + html + '</div>'; document.body.appendChild(d); return d; }
   var SPSEL = null;
   function spotPlace() {
@@ -448,15 +445,6 @@
       d.querySelector('#wg').onclick = function () { tourStep(0); }; d.querySelector('#wx').onclick = function () { d.remove(); };
     }, 900);
   }
-  function homeInit() {
-    var pv = $('#hpv'); if (!pv) return;
-    function draw() { pv.innerHTML = '<div class="fit crop" data-crop="0.5" data-w="800" data-h="1131"><div class="scale" style="width:800px">' + summaryPage(D) + '</div></div>'; fitAll(); }
-    draw();
-    $('#hn').oninput = function () { D.name = this.value; save(); draw(); };
-    $('#hp').oninput = function () { D.phone = this.value; save(); draw(); };
-    document.querySelectorAll('[data-hc]').forEach(function (b) { b.onclick = function () { D.color = b.dataset.hc; save(); document.querySelectorAll('[data-hc]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); draw(); }; });
-    document.querySelectorAll('[data-hf]').forEach(function (b) { b.onclick = function () { D.frame = b.dataset.hf; save(); document.querySelectorAll('[data-hf]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); draw(); }; });
-  }
   function route() {
     var h = location.hash.replace(/^#\/?/, '') || '', parts = h.split('/'), app = $('#app'), name = parts[0] || 'home';
     document.querySelectorAll('[data-nav]').forEach(function (a) { a.classList.toggle('on', a.dataset.nav === name || (name === 's' || name === 'q') && a.dataset.nav === 'bank'); });
@@ -480,7 +468,7 @@
     document.querySelectorAll('[data-add]').forEach(function (b) { b.onclick = function () { var id = b.dataset.add; if (cart.indexOf(id) < 0) cart.push(id); saveCart(); b.textContent = 'في السلة'; }; });
     document.querySelectorAll('[data-bundle]').forEach(function (b) { b.onclick = function () { PRODUCTS.forEach(function (p) { if (cart.indexOf(p.id) < 0) cart.push(p.id); }); saveCart(); location.hash = '#/cart'; }; });
     document.querySelectorAll('[data-rm]').forEach(function (b) { b.onclick = function () { cart = cart.filter(function (x) { return x !== b.dataset.rm; }); saveCart(); route(); }; });
-    if (name === 'home') homeInit();
+    if (name === 'home') { demoLoop($('.hero-p')); tiltInit(); }
     if (name === 'guide') startGuide();
     revealInit();
     var cf = $('#cof'); if (cf) cf.onsubmit = function (e) {
@@ -489,11 +477,9 @@
       ORDERS.unshift(o); localStorage.setItem('masarak_orders', JSON.stringify(ORDERS)); cart = []; saveCart(); location.hash = '#/orders';
     };
     document.querySelectorAll('[data-pk]').forEach(function (b) { b.onclick = function () { var c = b.dataset.pk, i = PICK.indexOf(c); if (i > -1) PICK.splice(i, 1); else PICK.push(c); b.setAttribute('aria-pressed', i === -1); }; });
-    document.querySelectorAll('#app [data-am]').forEach(function (b) { b.onclick = function () { ACCMODE = b.dataset.am; ACCERR = ''; if (b.tagName === 'BUTTON' || location.hash.indexOf('account') > -1) { location.hash = '#/account'; route(); } }; });
-    var cp = $('#cpn'); if (cp) cp.onclick = function () { try { navigator.clipboard.writeText('01147795940'); cp.textContent = 'اتنسخ'; } catch (e) {} };
+    document.querySelectorAll('[data-am]').forEach(function (b) { b.onclick = function () { ACCMODE = b.dataset.am; ACCERR = ''; route(); }; });
     var af = $('#acf'); if (af) af.onsubmit = function (e) {
       e.preventDefault(); var f = new FormData(af), em = String(f.get('e')).trim().toLowerCase(), pw = f.get('w'), btn = af.querySelector('button[type=submit]'), er = $('#acerr'); btn.disabled = true; er.textContent = '';
-      if (ACCMODE === 'up' && f.get('w') !== f.get('w2')) { er.textContent = 'كلمتا المرور مش متطابقتين.'; btn.disabled = false; return; }
       var go = ACCMODE === 'up' ? sbf('/auth/v1/signup', { method: 'POST', body: { email: em, password: pw, data: { name: String(f.get('n')).trim(), phone: String(f.get('p')).trim(), grades: PICK } } }).then(function (j) { if (!j.access_token) throw new Error('confirm'); setSess(j); }) : sbf('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: em, password: pw } }).then(setSess);
       go.then(loadProfile).then(function () { if (USER.name && !D.name) { D.name = USER.name; D.phone = USER.phone; save(); } route(); }).catch(function (x) {
         var m = String(x.message); btn.disabled = false;
@@ -524,7 +510,7 @@
     $('#iskip').onclick = end; d.onclick = end; setTimeout(end, 4600);
   }
   function hdr() {
-    var a = document.querySelector('.hbtns .acc'), lg = document.getElementById('lgb'); if (a) { if (USER.name) { a.innerHTML = '<span class="av">' + esc(USER.name.trim().slice(0, 2)) + '</span> ' + esc(USER.name.split(' ')[0]); a.removeAttribute('data-am'); } else { a.textContent = 'إنشاء حساب'; a.setAttribute('data-am', 'up'); } } if (lg) lg.style.display = USER.name ? 'none' : '';
+    var a = document.querySelector('.hbtns .acc'); if (a) a.textContent = USER.name ? USER.name.split(' ')[0] : 'إنشاء حساب';
     var d = document.getElementById('dl'), best = 0;
     [[USER.plan, USER.until]].forEach(function (e) { if (e[0] === 'paid' && e[1] && new Date(e[1]).getTime() > Date.now()) best = Math.max(best, daysLeft(e[1])); });
     if (!best) { if (d) d.remove(); return; }
@@ -532,9 +518,7 @@
     d.className = 'dl' + (best <= 3 ? ' low' : ''); d.title = 'الأيام المتبقية في اشتراكك'; d.innerHTML = '⏳ <b>' + best + '</b> يوم';
   }
   hdr(); intro();
-  $('#dk').onclick = function () { var l = document.body.classList.toggle('lt'); $('#dkt').textContent = l ? 'ليلي' : 'نهاري'; $('#dki').textContent = l ? '☀' : '☾'; try { localStorage.setItem('masarak_lt', l ? '1' : ''); } catch (e) {} };
-  try { if (localStorage.getItem('masarak_lt')) { document.body.classList.add('lt'); $('#dkt').textContent = 'ليلي'; $('#dki').textContent = '☀'; } } catch (e) {}
-  document.querySelectorAll('.hbtns [data-am]').forEach(function (b) { b.addEventListener('click', function () { ACCMODE = b.dataset.am || ACCMODE; ACCERR = ''; if (location.hash.indexOf('account') > -1) setTimeout(route, 0); }); });
+  $('#dk').onclick = function () { document.body.classList.toggle('dark'); };
   saveCart();
 
   /* ===== exams ===== */
