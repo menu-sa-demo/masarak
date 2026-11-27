@@ -1,7 +1,7 @@
 /* Masarak: تصحيح الاختبارات من صور الورق. Runs in the teacher's browser, nothing is uploaded. Uses omr.js and window.__MX from app.js. */
 (function () {
   'use strict';
-  var MX, G = { exam: null, st: [], rub: null, pass: 50, log: [], cam: null }, DB = null, saveT = 0;
+  var MX, G = { exam: null, st: [], un: [], rub: null, pass: 50, log: [], cam: null }, DB = null, saveT = 0;
   var LET = ['أ', 'ب', 'ج', 'د'];
   var css = '.gr{max-width:1100px;margin:0 auto;padding:18px 14px 60px}.gr h1{font-size:26px;margin:0 0 6px}.gr .sub{color:#59627a;margin:0 0 16px}.gr .card{background:#fff;border:1px solid #dfe4f0;border-radius:14px;padding:14px 16px;margin:0 0 14px}.gr h2{font-size:18px;margin:0 0 10px}.gr .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.gr select,.gr input[type=text],.gr input[type=number]{font:inherit;padding:8px 10px;border:1px solid #c9d1e6;border-radius:9px;background:#fff;min-height:40px}.gr .tag{display:inline-block;border-radius:20px;padding:3px 10px;font-size:13px;background:#eef2fb;color:#12307a}.gr .tag.ok{background:#e3f6e8;color:#14692c}.gr .tag.bad{background:#fde7e7;color:#a11d1d}.gr .tag.w{background:#fff4d6;color:#7a5600}.gr table{border-collapse:collapse;width:100%;font-size:14px}.gr th,.gr td{border-bottom:1px solid #e6eaf4;padding:7px 6px;text-align:start;vertical-align:middle}.gr th{background:#f3f6fd}.gr .crop{max-width:100%;border:1px solid #dfe4f0;border-radius:8px;display:block}.gr .nm{width:340px;max-width:100%;height:auto}.gr .cell{border:1px solid #dfe4f0;border-radius:10px;padding:8px;background:#fafcff}.gr .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.gr .b{font:inherit;border:1px solid #c9d1e6;background:#fff;border-radius:9px;padding:6px 12px;min-height:38px;cursor:pointer}.gr .b.on{background:#12307a;color:#fff;border-color:#12307a}.gr .b.g.on{background:#1b8a3c;border-color:#1b8a3c}.gr .b.r.on{background:#c0392b;border-color:#c0392b}.gr .b.h.on{background:#e0a100;border-color:#e0a100;color:#111}.gr .bar{height:16px;background:#12307a;border-radius:4px;min-width:2px}.gr video{width:100%;max-width:520px;border-radius:12px;background:#000}.gr .gxn{font-size:13px;color:#59627a}.gr .chips{display:flex;gap:6px;flex-wrap:wrap}@media print{body>header,.site-h,.site-f,.gr .noprint{display:none!important}.gr .card{break-inside:avoid;border:0}}';
 
@@ -18,7 +18,7 @@
   }
   function dbGet(k) { return idb().then(function (d) { return d ? new Promise(function (res) { var q = d.transaction('g').objectStore('g').get(k); q.onsuccess = function () { res(q.result); }; q.onerror = function () { res(null); }; }) : null; }); }
   function dbPut(k, v) { return idb().then(function (d) { return d ? new Promise(function (res) { var t = d.transaction('g', 'readwrite'); t.objectStore('g').put(v, k); t.oncomplete = res; t.onerror = res; }) : null; }); }
-  function persist() { clearTimeout(saveT); saveT = setTimeout(function () { if (G.exam) dbPut(G.exam.id, { st: G.st, rub: G.rub, pass: G.pass }); }, 400); }
+  function persist() { clearTimeout(saveT); saveT = setTimeout(function () { if (G.exam) dbPut(G.exam.id, { st: G.st, un: G.un, rub: G.rub, pass: G.pass }); }, 400); }
 
   /* ---------- exam helpers ---------- */
   function secs(model) { return MX.xsections(G.exam, model); }
@@ -67,12 +67,22 @@
     Object.keys(r.ans).forEach(function (k) { if (r.ans[k].st !== 'ok') need[r.ans[k].q] = 1; });
     (P.crop || []).forEach(function (cr) { var it = items[cr[0]]; if (!it) return; if (it.k === 'fill' || it.k === 'essay' || need[cr[0]]) crops[cr[0]] = warp(data, w, h, r.H, cr[1], cr[2], cr[3], cr[4], 600); });
     var ans = {}; Object.keys(r.ans).forEach(function (k) { var a = r.ans[k]; ans[k] = { v: a.v, st: a.st, f: a.f.map(function (v) { return Math.round(v * 100) / 100; }), q: a.q, s: a.s }; });
-    return { ok: true, model: r.model, page: r.page, ans: ans, name: name, crops: crops, label: label, est: false };
+    return { ok: true, model: r.model, page: r.page, sid: r.sid || { st: 'none' }, ans: ans, name: name, crops: crops, label: label, est: false };
   }
   function addResult(r) {
     if (!r.ok) { G.log.push({ ok: false, t: r.label + ': الصفحة مش واضحة (' + (r.err === 'markers' ? 'علامات الأركان مش ظاهرة كلها' : r.err === 'code' ? 'كود الصفحة مش مقروء' : 'ورقة من اختبار تاني') + '). صوّرها تاني.' }); return false; }
-    var s = G.st[G.st.length - 1], last = s ? Math.max.apply(null, Object.keys(s.pg).map(Number)) : -1;
+    var ex = G.exam, req = ex && ex.sidn > 0, sd = r.sid || { st: 'none' }, s, nf0 = Object.keys(r.ans).filter(function (k) { return r.ans[k].st !== 'ok'; }).length;
+    if (req || sd.st !== 'none') {
+      var why = sd.st === 'bad' ? 'رقم الطالب على الصفحة مش مقروء' : sd.st === 'none' ? 'مفيش رقم طالب على الصفحة' : (req && sd.id > ex.sidn) ? 'رقم الطالب (' + sd.id + ') أكبر من عدد الطلاب المطبوع (' + ex.sidn + ')' : null;
+      var ent = { why: why, sid: sd.st === 'ok' ? sd.id : null, model: r.model, page: r.page, ans: r.ans, crops: r.crops, name: r.name, label: r.label };
+      if (!why) why = attach(ent, sd.id);
+      if (why) { ent.why = why; G.un.push(ent); G.log.push({ ok: false, t: r.label + ': اتحطت في الصفحات المش متوزعة (' + why + ')' }); persist(); return false; }
+      G.log.push({ ok: true, t: r.label + ': طالب رقم ' + sd.id + '، صفحة ' + (r.page + 1) + ' (نموذج ' + r.model + ')' + (nf0 ? '، ' + nf0 + ' إجابة محتاجة مراجعة' : '') });
+      persist(); return true;
+    }
+    s = G.st[G.st.length - 1]; var last = s ? Math.max.apply(null, Object.keys(s.pg).map(Number)) : -1;
     if (!s || s.model !== r.model || r.page <= last || s.pg[r.page]) { s = { id: Date.now() + '' + G.st.length, model: r.model, name: '', pg: {}, ov: {}, sc: {}, nm: null }; G.st.push(s); }
+    s.ok = false;
     s.pg[r.page] = { ans: r.ans, crops: r.crops }; if (r.name) s.nm = r.name; Object.keys(r.crops).forEach(function (q) { (s.cr = s.cr || {})[q] = r.crops[q]; });
     var nf = Object.keys(r.ans).filter(function (k) { return r.ans[k].st !== 'ok'; }).length;
     G.log.push({ ok: true, t: r.label + ': طالب ' + G.st.length + '، صفحة ' + (r.page + 1) + ' (نموذج ' + r.model + ')' + (nf ? '، ' + nf + ' إجابة محتاجة مراجعة' : '') });
@@ -121,11 +131,11 @@
 
   /* ---------- export ---------- */
   function tableRows() {
-    var rows = [], head = ['#', 'الاسم', 'النموذج', 'الدرجة', 'من', 'النسبة', 'النتيجة', 'مراجعة مطلوبة'];
+    var rows = [], head = ['رقم الطالب', 'الاسم', 'النموذج', 'الدرجة', 'من', 'النسبة', 'النتيجة', 'مراجعة مطلوبة'];
     var ex = G.exam, maxq = []; secs('A').forEach(function (sc) { sc.items.forEach(function (it) { maxq.push(it); }); });
     head = head.concat(maxq.map(function (it) { return 'س' + (it.qi + 1); }));
     rows.push(head);
-    G.st.forEach(function (s, i) { var r = score(s), pct = r.max ? r.tot / r.max * 100 : 0; var row = [i + 1, s.name || '', s.model, r.tot, r.max, Math.round(pct), pct >= G.pass ? 'ناجح' : 'راسب', flagged(s).length + r.pend]; var m = {}; secs(s.model).forEach(function (sc) { sc.items.forEach(function (it) { m[it.qi] = it; }); }); /* model B order differs: report by question number inside that model */ maxq.forEach(function (it) { var v = r.per[qOf(s, it)]; row.push(v == null ? '' : v); }); rows.push(row); });
+    G.st.forEach(function (s, i) { var r = score(s), pct = r.max ? r.tot / r.max * 100 : 0; var row = [s.sid || i + 1, s.name || '', s.model, r.tot, r.max, Math.round(pct), !s.ok ? 'لم يُعتمد' : pct >= G.pass ? 'ناجح' : 'راسب', flagged(s).length + r.pend]; var m = {}; secs(s.model).forEach(function (sc) { sc.items.forEach(function (it) { m[it.qi] = it; }); }); /* model B order differs: report by question number inside that model */ maxq.forEach(function (it) { var v = r.per[qOf(s, it)]; row.push(v == null ? '' : v); }); rows.push(row); });
     return rows;
   }
   function download(name, blob) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
@@ -172,13 +182,28 @@
     h += '</div>';
     return h + '<div id="gr-body"></div></div>';
   }
+  /* put a read page on the student with this printed ID. Returns a reason string if it cannot, else null */
+  function attach(e, id) {
+    var s = G.st.filter(function (x) { return x.sid === id; })[0];
+    if (s && s.model !== e.model) return 'نموذج الصفحة مختلف عن باقي صفحات الطالب ده';
+    if (s && s.pg[e.page]) return 'صفحة مكررة: الطالب ' + id + ' عنده صفحة ' + (e.page + 1) + ' بالفعل';
+    if (!s) { s = { id: Date.now() + '' + G.st.length, sid: id, model: e.model, name: '', pg: {}, ov: {}, sc: {}, nm: null }; G.st.push(s); G.st.sort(function (a, b) { return (a.sid || 1e9) - (b.sid || 1e9); }); }
+    s.pg[e.page] = { ans: e.ans, crops: e.crops }; if (e.name) s.nm = e.name; Object.keys(e.crops || {}).forEach(function (q) { (s.cr = s.cr || {})[q] = e.crops[q]; }); s.ok = false;
+    return null;
+  }
+  function missing(s) { var n = npages(s.model), m = []; for (var p = 0; p < n; p++) if (!s.pg[p]) m.push(p + 1); return m; }
+  function problems(s) { var o = []; if (missing(s).length) o.push('صفحات ناقصة'); if (flagged(s).length) o.push('إجابات محتاجة مراجعة'); if (score(s).pend) o.push('درجات الإكمل أو المقالي ناقصة'); return o; }
+  function unHtml() {
+    if (!G.un.length) return '';
+    return '<div class="card"><h2>صفحات مش متوزعة على طلاب (' + G.un.length + ')</h2><p class="gxn">الصفحات دي ما اتحسبتش لأي طالب عشان رقم الطالب مش واضح أو الصفحة مكررة. لو عرفت صاحبها اكتب رقمه واضغط ضيفها.</p><div style="overflow:auto"><table><tr><th>الملف</th><th>السبب</th><th>الرقم المقروء</th><th>صفحة</th><th></th></tr>' + G.un.map(function (u, i) { return '<tr><td>' + esc(u.label) + '</td><td>' + esc(u.why) + '</td><td>' + (u.sid || '-') + '</td><td>' + (u.page + 1) + ' (نموذج ' + u.model + ')</td><td class="noprint"><input type="number" min="1" data-uan="' + i + '" placeholder="رقم الطالب" style="width:90px;min-height:30px"> <button class="b" data-ua="' + i + '">ضيفها</button> <button class="b" data-ud="' + i + '">تجاهل</button></td></tr>'; }).join('') + '</table></div></div>';
+  }
   function bodyHtml() {
-    if (!G.st.length) return '';
-    var h = '', R = G.st.map(score), P = G.st.length;
-    h += '<div class="card"><h2>٣) الطلاب (' + P + ')</h2><div style="overflow:auto"><table><tr><th>#</th><th>الاسم (اكتبه من الصورة)</th><th>الصفحات</th><th>الدرجة</th><th>محتاج مراجعة</th><th></th></tr>';
+    if (!G.st.length) return unHtml();
+    var h = unHtml(), R = G.st.map(score), P = G.st.length;
+    h += '<div class="card"><h2>٣) الطلاب (' + P + ')</h2><div style="overflow:auto"><table><tr><th>رقم الطالب</th><th>الاسم (اكتبه من الصورة)</th><th>الصفحات</th><th>الدرجة</th><th>محتاج مراجعة</th><th></th></tr>';
     G.st.forEach(function (s, i) {
       var r = R[i], f = flagged(s).length, pgs = Object.keys(s.pg).map(function (p) { return +p + 1; }).sort().join('، '), tot = npages(s.model);
-      h += '<tr><td>' + (i + 1) + '</td><td>' + (s.nm ? '<img class="crop nm" src="' + s.nm + '">' : '') + '<input type="text" data-nm="' + i + '" value="' + esc(s.name) + '" placeholder="اسم الطالب"></td><td>' + pgs + ' <span class="gxn">من ' + tot + '</span></td><td><b>' + fm(r.tot) + '</b> / ' + fm(r.max) + '</td><td>' + (f ? '<span class="tag w">' + f + ' إجابة</span> <button class="b" data-rv="' + i + '">راجع</button>' : '<span class="tag ok">لا</span>') + (r.pend ? ' <span class="tag">' + r.pend + ' لسه من غير درجة</span>' : '') + '</td><td><button class="b" data-del="' + i + '">حذف</button></td></tr>';
+      var mi = missing(s), pr = problems(s); h += '<tr><td>' + (s.sid || i + 1) + '</td><td>' + (s.nm ? '<img class="crop nm" src="' + s.nm + '">' : '') + '<input type="text" data-nm="' + i + '" value="' + esc(s.name) + '" placeholder="اسم الطالب"></td><td>' + pgs + ' <span class="gxn">من ' + tot + '</span>' + (mi.length ? ' <span class="tag bad">ناقص: ' + mi.join('، ') + '</span>' : '') + '</td><td><b>' + fm(r.tot) + '</b> / ' + fm(r.max) + '</td><td>' + (f ? '<span class="tag w">' + f + ' إجابة</span> <button class="b" data-rv="' + i + '">راجع</button>' : '<span class="tag ok">لا</span>') + (r.pend ? ' <span class="tag">' + r.pend + ' لسه من غير درجة</span>' : '') + '</td><td>' + (s.ok ? '<span class="tag ok">معتمد</span> <button class="b noprint" data-us="' + i + '">إلغاء</button>' : pr.length ? '<span class="tag w">مش جاهز: ' + pr.join('، ') + '</span>' : '<button class="b on noprint" data-sg="' + i + '">اعتمد</button>') + ' <button class="b" data-del="' + i + '">حذف</button></td></tr>';
     });
     h += '</table></div></div>';
     /* fill + essay grid */
@@ -204,13 +229,13 @@
       h += '</div>';
     }
     /* report */
-    var pcts = R.map(function (r) { return r.max ? r.tot / r.max * 100 : 0; }), pass = pcts.filter(function (p) { return p >= G.pass; }).length, avg = pcts.reduce(function (a, b) { return a + b; }, 0) / P, mx = Math.max.apply(null, pcts), mn = Math.min.apply(null, pcts), bins = [0, 0, 0, 0, 0];
+    var pall = R.map(function (r) { return r.max ? r.tot / r.max * 100 : 0; }), pcts = pall.filter(function (p, i) { return G.st[i].ok; }), pass = pcts.filter(function (p) { return p >= G.pass; }).length, avg = pcts.reduce(function (a, b) { return a + b; }, 0) / (pcts.length || 1), mx = pcts.length ? Math.max.apply(null, pcts) : 0, mn = pcts.length ? Math.min.apply(null, pcts) : 0, bins = [0, 0, 0, 0, 0];
     pcts.forEach(function (p) { bins[Math.min(4, Math.floor(p / 20))]++; });
-    h += '<div class="card" id="gr-rep"><h2>٥) تقرير النتايج</h2><div class="row"><span class="tag ok">ناجحين: ' + pass + '</span><span class="tag bad">راسبين: ' + (P - pass) + '</span><span class="tag">المتوسط: ' + fm(avg) + '%</span><span class="tag">الأعلى: ' + fm(mx) + '%</span><span class="tag">الأقل: ' + fm(mn) + '%</span><span class="tag">عدد الطلاب: ' + P + '</span></div>';
+    h += '<div class="card" id="gr-rep"><h2>٥) تقرير النتايج</h2><div class="row"><span class="tag ok">ناجحين: ' + pass + '</span><span class="tag bad">راسبين: ' + (pcts.length - pass) + '</span><span class="tag">المتوسط: ' + fm(avg) + '%</span><span class="tag">الأعلى: ' + fm(mx) + '%</span><span class="tag">الأقل: ' + fm(mn) + '%</span><span class="tag">الطلاب المعتمدين: ' + pcts.length + ' من ' + P + '</span></div>' + (pcts.length < P ? '<p class="gxn">الأرقام فوق بتحسب الطلاب المعتمدين بس. اعتمد كل طالب بعد ما تراجع إجاباته.</p>' : '');
     var mb = Math.max.apply(null, bins) || 1; h += '<div style="margin:12px 0">' + ['٠-٢٠', '٢٠-٤٠', '٤٠-٦٠', '٦٠-٨٠', '٨٠-١٠٠'].map(function (l, i) { return '<div class="row" style="margin-bottom:4px"><span style="width:70px">' + l + '%</span><div class="bar" style="width:' + Math.round(bins[i] / mb * 260) + 'px"></div><b>' + bins[i] + '</b></div>'; }).join('') + '</div>';
     h += '<h3 style="font-size:15px">نسبة الإجابة الصح لكل سؤال</h3><div class="chips">';
-    sec.forEach(function (c) { c.items.forEach(function (it) { var ok = 0, n = 0; G.st.forEach(function (s, i) { if (s.model !== 'A' && false) return; var q = R[i].per[qOf(s, it)]; if (q != null) { n++; if (q >= it.m - 0.001) ok++; } }); h += '<span class="tag' + (n && ok / n < 0.5 ? ' bad' : '') + '">س' + (it.qi + 1) + ': ' + (n ? Math.round(ok / n * 100) : 0) + '%</span>'; }); });
-    h += '</div><table style="margin-top:12px"><tr><th>#</th><th>الاسم</th><th>الدرجة</th><th>النسبة</th><th>النتيجة</th></tr>' + G.st.map(function (s, i) { var r = R[i]; return '<tr><td>' + (i + 1) + '</td><td>' + esc(s.name || 'طالب ' + (i + 1)) + '</td><td>' + fm(r.tot) + ' / ' + fm(r.max) + '</td><td>' + Math.round(pcts[i]) + '%</td><td>' + (pcts[i] >= G.pass ? '<span class="tag ok">ناجح</span>' : '<span class="tag bad">راسب</span>') + '</td></tr>'; }).join('') + '</table>';
+    sec.forEach(function (c) { c.items.forEach(function (it) { var ok = 0, n = 0; G.st.forEach(function (s, i) { if (!s.ok) return; var q = R[i].per[qOf(s, it)]; if (q != null) { n++; if (q >= it.m - 0.001) ok++; } }); h += '<span class="tag' + (n && ok / n < 0.5 ? ' bad' : '') + '">س' + (it.qi + 1) + ': ' + (n ? Math.round(ok / n * 100) : 0) + '%</span>'; }); });
+    h += '</div><table style="margin-top:12px"><tr><th>#</th><th>الاسم</th><th>الدرجة</th><th>النسبة</th><th>النتيجة</th></tr>' + G.st.map(function (s, i) { var r = R[i]; return '<tr><td>' + (s.sid || i + 1) + '</td><td>' + esc(s.name || 'طالب ' + (s.sid || i + 1)) + '</td><td>' + fm(r.tot) + ' / ' + fm(r.max) + '</td><td>' + Math.round(pall[i]) + '%</td><td>' + (!s.ok ? '<span class="tag w">لم يُعتمد</span>' : pall[i] >= G.pass ? '<span class="tag ok">ناجح</span>' : '<span class="tag bad">راسب</span>') + '</td></tr>'; }).join('') + '</table>';
     h += '<div class="row noprint" style="margin-top:12px"><button class="b on" id="gr-xl">تصدير Excel</button><button class="b" id="gr-csv">تصدير CSV</button><button class="b" id="gr-pr">طباعة / PDF</button><button class="b r" id="gr-clr">مسح كل الطلاب</button></div><p class="gxn noprint">ملاحظة: النتايج دي تقدير من قراءة الصور وتصحيحك. راجع الإجابات المعلّمة قبل ما تعتمد الدرجات.</p></div>';
     return h;
   }
@@ -227,7 +252,7 @@
     });
     if (!ks.length) h += '<p>مفيش حاجة للمراجعة.</p>';
     var d = document.createElement('div'); d.innerHTML = h + '</div></div>'; document.body.appendChild(d);
-    d.querySelectorAll('[data-ov]').forEach(function (b) { b.onclick = function () { var p = b.dataset.ov.split('|'); G.st[+p[0]].ov[p[1]] = +p[2]; persist(); d.remove(); review(i); draw(true); }; });
+    d.querySelectorAll('[data-ov]').forEach(function (b) { b.onclick = function () { var p = b.dataset.ov.split('|'); G.st[+p[0]].ov[p[1]] = +p[2]; G.st[+p[0]].ok = false; persist(); d.remove(); review(i); draw(true); }; });
     $('#gr-rvx').onclick = function () { d.remove(); draw(true); };
   }
 
@@ -238,22 +263,26 @@
   }
   function bindBody() {
     document.querySelectorAll('[data-nm]').forEach(function (e) { e.oninput = function () { G.st[+e.dataset.nm].name = e.value; persist(); }; e.onchange = function () { draw(true); }; });
+    document.querySelectorAll('[data-sg]').forEach(function (e) { e.onclick = function () { var s = G.st[+e.dataset.sg]; if (problems(s).length) return; s.ok = true; persist(); draw(true); }; });
+    document.querySelectorAll('[data-us]').forEach(function (e) { e.onclick = function () { G.st[+e.dataset.us].ok = false; persist(); draw(true); }; });
+    document.querySelectorAll('[data-ud]').forEach(function (e) { e.onclick = function () { G.un.splice(+e.dataset.ud, 1); persist(); draw(true); }; });
+    document.querySelectorAll('[data-ua]').forEach(function (e) { e.onclick = function () { var i = +e.dataset.ua, inp = document.querySelector('[data-uan="' + i + '"]'), id = parseInt(inp.value, 10), ex = G.exam; if (!(id >= 1 && id <= (ex.sidn > 0 ? ex.sidn : 255))) { alert('اكتب رقم طالب صح'); return; } var why = attach(G.un[i], id); if (why) { alert(why); return; } G.un.splice(i, 1); persist(); draw(true); }; });
     document.querySelectorAll('[data-del]').forEach(function (e) { e.onclick = function () { if (confirm('حذف الطالب ده؟')) { G.st.splice(+e.dataset.del, 1); persist(); draw(true); } }; });
     document.querySelectorAll('[data-rv]').forEach(function (e) { e.onclick = function () { review(+e.dataset.rv); }; });
-    document.querySelectorAll('[data-fs]').forEach(function (e) { e.onclick = function () { var p = e.dataset.fs.split('.'), s = G.st[+p[0]]; s.sc[p[1]] = +(p[2] + (p[3] ? '.' + p[3] : '')); persist(); draw(true); }; });
-    document.querySelectorAll('[data-es]').forEach(function (e) { e.onclick = function () { var p = e.dataset.es.split('.'), s = G.st[+p[0]]; var a = s.sc[p[1]] = s.sc[p[1]] || {}; a[+p[2]] = +(p[3] + (p[4] ? '.' + p[4] : '')); persist(); draw(true); }; });
+    document.querySelectorAll('[data-fs]').forEach(function (e) { e.onclick = function () { var p = e.dataset.fs.split('.'), s = G.st[+p[0]]; s.sc[p[1]] = +(p[2] + (p[3] ? '.' + p[3] : '')); s.ok = false; persist(); draw(true); }; });
+    document.querySelectorAll('[data-es]').forEach(function (e) { e.onclick = function () { var p = e.dataset.es.split('.'), s = G.st[+p[0]]; var a = s.sc[p[1]] = s.sc[p[1]] || {}; a[+p[2]] = +(p[3] + (p[4] ? '.' + p[4] : '')); s.ok = false; persist(); draw(true); }; });
     document.querySelectorAll('[data-rw]').forEach(function (e) { e.onchange = function () { var p = e.dataset.rw.split('.'), o2 = []; secs('A').forEach(function (c) { if (c.k === 'fill' || c.k === 'essay') c.items.forEach(function (z) { o2.push(z); }); }); rubric(o2[+p[0]])[+p[1]].w = Math.max(0, +e.value || 0); persist(); draw(true); }; });
     var x = $('#gr-xl'); if (!x) return;
     var nm = function (e) { return 'نتايج-' + (MX.xtitle(G.exam) || 'اختبار').replace(/[^\u0600-\u06FFa-zA-Z0-9]+/g, '-'); };
     x.onclick = function () { download(nm() + '.xlsx', xlsx()); };
     $('#gr-csv').onclick = function () { download(nm() + '.csv', new Blob([csv()], { type: 'text/csv;charset=utf-8' })); };
     $('#gr-pr').onclick = function () { window.print(); };
-    $('#gr-clr').onclick = function () { if (confirm('مسح كل الطلاب ونتايجهم من الجهاز؟')) { G.st = []; G.log = []; persist(); draw(); } };
+    $('#gr-clr').onclick = function () { if (confirm('مسح كل الطلاب ونتايجهم من الجهاز؟')) { G.st = []; G.un = []; G.log = []; persist(); draw(); } };
   }
   function pick(id) {
-    G.exam = MX.EXAMS.filter(function (e) { return e.id === id; })[0] || null; G.st = []; G.rub = {}; G.log = [];
+    G.exam = MX.EXAMS.filter(function (e) { return e.id === id; })[0] || null; G.st = []; G.un = []; G.rub = {}; G.log = [];
     if (!G.exam) return Promise.resolve();
-    return dbGet(G.exam.id).then(function (v) { if (v) { G.st = v.st || []; G.rub = v.rub || {}; G.pass = v.pass == null ? 50 : v.pass; } });
+    return dbGet(G.exam.id).then(function (v) { if (v) { G.st = v.st || []; G.un = v.un || []; G.rub = v.rub || {}; G.pass = v.pass == null ? 50 : v.pass; } });
   }
   function bind() {
     var s = $('#gr-ex'); if (!s) return;
