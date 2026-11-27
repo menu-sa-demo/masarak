@@ -1011,8 +1011,9 @@
     return out + '</div>' + xfoot(d, 1, 1) + '</div>';
   }
   var SID = 0;
+  function sidTable() { var t = [0]; for (var v = 1; v < 2048 && t.length <= 63; v++) { var ok = true; for (var i = 0; i < t.length; i++) { var x = v ^ t[i], c = 0; while (x) { c += x & 1; x >>= 1; } if (c < 4) { ok = false; break; } } if (ok) t.push(v); } return t; }
   function sidStrip() {
-    if (!SID) return ''; var id = SID < 0 ? 1 : SID, bits = [1]; for (var k = 7; k >= 0; k--) bits.push((id >> k) & 1); bits.push(bits.reduce(function (a, b) { return a + b; }, 0) % 2);
+    if (!SID) return ''; var id = SID < 0 ? 1 : SID, cw = sidTable()[id], bits = [1]; for (var k = 10; k >= 0; k--) bits.push((cw >> k) & 1);
     return '<div class="xsd">' + bits.map(function (b, k) { return '<u data-b="' + k + '" class="' + (b ? 'on' : '') + '"></u>'; }).join('') + '</div>';
   }
   function mk(model, i) {
