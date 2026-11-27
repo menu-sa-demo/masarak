@@ -1039,7 +1039,7 @@
     return out;
   }
   function xdoc(x, d, model) { var h = examPages(x, d, model); if (x.ans === 'sheet') h += sheetPages(x, d, model); var i = 0; return h.replace(/%%MK%%/g, function () { return mk(model, Math.min(7, i++)); }); }
-  function xclass(x, d, n) { var h = ''; for (var id = 1; id <= n; id++) { SID = id; h += xdoc(x, d, 'A'); if (x.models > 1) h += xdoc(x, d, 'B'); } SID = 0; if (x.key) h += examKey(x, d); return h; }
+  function xclass(x, d, n) { var h = ''; for (var id = 1; id <= n; id++) { SID = id; h += xdoc(x, d, x.models > 1 && id % 2 === 0 ? 'B' : 'A'); } SID = 0; if (x.key) h += examKey(x, d); return h; }
   function xall(x, d) { var h = xdoc(x, d, 'A'); if (x.models > 1) h += xdoc(x, d, 'B'); if (x.key) h += examKey(x, d); return h; }
   function xsig(x) { return JSON.stringify([xitems(x, 'A'), x.models > 1 ? xitems(x, 'B') : 0, x.ans, x.total, x.sheets]).length + ':' + (function (t) { var h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h; })(JSON.stringify([xitems(x, 'A'), x.models > 1 ? xitems(x, 'B') : 0, x.ans, x.total, x.sheets])); }
   function xlayout(x, d) {
@@ -1135,7 +1135,7 @@
     }
     $('#xsv').onclick = function () { xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ. تقدر تعمل اختبار تاني من "+ اختبار جديد".'; draw(false); }); };
     $('#xpr').onclick = function () { X.sidn = 0; xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ الاختبار تلقائي عشان تقدر تصححه من الصور.'; printPages(xall(X, D), false, false, 'x'); }); };
-    $('#xprc').onclick = function () { var n = Math.max(1, Math.min(60, parseInt($('#xcn').value, 10) || 0)); if (!n) return; X.sidn = n; xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ. هتتطبع نسخة لكل طالب برقمه (١ إلى ' + n + ') عشان التصحيح يوزّع الصفحات صح.'; printPages(xclass(X, D, n), false, false, 'x'); }); };
+    $('#xprc').onclick = function () { var n = Math.max(1, Math.min(60, parseInt($('#xcn').value, 10) || 0)); if (!n) return; X.sidn = n; xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ. هتتطبع نسخة لكل طالب برقمه (١ إلى ' + n + (X.models > 1 ? '، الأرقام الفردي نموذج أ والزوجي نموذج ب' : '') + ') عشان التصحيح يوزّع الصفحات صح.'; printPages(xclass(X, D, n), false, false, 'x'); }); };
     draw();
   }
 
