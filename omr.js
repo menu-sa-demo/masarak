@@ -29,11 +29,13 @@
   function dk(b, w, h, x, y) { x = Math.round(x); y = Math.round(y); return x >= 0 && y >= 0 && x < w && y < h && b[y * w + x] ? 1 : 0; }
   /* finder pattern: black ring with a white gap and a black dot in the centre */
   function isFinder(b, w, h, c) {
-    var cx = c.minx + c.bw / 2, cy = c.miny + c.bh / 2, s = (c.bw + c.bh) / 2, n = 0, i, j;
-    for (i = -1; i <= 1; i++) for (j = -1; j <= 1; j++) n += dk(b, w, h, cx + i * 0.06 * s, cy + j * 0.06 * s);
-    if (n < 7) return false;
-    var gap = 0; for (i = 0; i < 8; i++) { var a = i * Math.PI / 4; gap += dk(b, w, h, cx + Math.cos(a) * 0.225 * s, cy + Math.sin(a) * 0.225 * s); }
-    return gap <= 3;
+    var cx = c.minx + c.bw / 2, cy = c.miny + c.bh / 2, s = (c.bw + c.bh) / 2, good = 0, st = Math.max(0.4, s / 70);
+    for (var a = 0; a < 8; a++) {
+      var ang = a * Math.PI / 4, ca = Math.cos(ang), sa = Math.sin(ang), runs = [], last = -1;
+      for (var r = 0; r <= 0.5 * s; r += st) { var v = dk(b, w, h, cx + ca * r, cy + sa * r); if (v !== last) { runs.push([v, 0]); last = v; } runs[runs.length - 1][1] += st; }
+      if (runs.length >= 3 && runs[0][0] === 1 && runs[1][0] === 0 && runs[2][0] === 1 && runs[0][1] >= 0.07 * s && runs[1][1] >= 0.025 * s && runs[2][1] >= 0.07 * s) good++;
+    }
+    return good >= 6;
   }
   function finders(b, w, h) { var M = Math.max(w, h); return comps(b, w, h, 30, M * 0.16).filter(function (c) { return c.fill > 0.3 && c.bw > M * 0.008 && c.bw / c.bh > 0.6 && c.bw / c.bh < 1.6; }).map(function (c) { return [Math.round(c.minx + c.bw / 2), Math.round(c.miny + c.bh / 2), c.bw, c.bh, +c.fill.toFixed(2), isFinder(b, w, h, c)]; }); }
   /* find the 4 corner finder markers: three small and one big (bottom-right on the page) */
