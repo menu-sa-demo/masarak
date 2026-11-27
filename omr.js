@@ -93,6 +93,16 @@
     if (bits.length < 6 || bits[0] !== 1) return { bad: bits }; var par = bits.slice(0, 5).reduce(function (a, b2) { return a + b2; }, 0) % 2; if (par !== bits[5]) return { bad: bits };
     return { model: bits[1] ? 'B' : 'A', page: bits[2] * 4 + bits[3] * 2 + bits[4], bits: bits };
   }
+  /* student ID strip: 10 squares [anchor 1, 8 id bits, parity]. 'none' = no strip printed (all squares white) */
+  function readSid(bin, w, h, H, P, scale) {
+    if (!P.sd || P.sd.length !== 10) return { st: 'none' };
+    var bits = P.sd.map(function (c) { return darkFrac(bin, w, h, H, c[0], c[1], c[2] * 0.25, scale) > 0.55 ? 1 : 0; });
+    if (!bits.some(function (v) { return v; })) return { st: 'none' };
+    var par = bits.slice(0, 9).reduce(function (a, b2) { return a + b2; }, 0) % 2;
+    if (bits[0] !== 1 || par !== bits[9]) return { st: 'bad', bits: bits };
+    var id = 0; for (var i = 1; i <= 8; i++) id = id * 2 + bits[i];
+    return id > 0 ? { st: 'ok', id: id } : { st: 'bad', bits: bits };
+  }
   /* image: {data: RGBA, width, height}; layout: {A:[pages], B:[pages]} */
   function readPage(img, layout, opts) {
     opts = opts || {};
@@ -106,10 +116,11 @@
     var code = readCode(bin, w, h, H, P0, scale);
     if (!code || code.bad) return { ok: false, err: 'code', H: H, mk: mk, bits: code && code.bad };
     var P = layout[code.model] && layout[code.model][code.page]; if (!P) return { ok: false, err: 'layout', code: code };
+    var sid = readSid(bin, w, h, H, P0, scale);
     var groups = {};
     P.bub.forEach(function (b2) { var key = b2[0] + '.' + b2[1], f = darkFrac(bin, w, h, H, b2[3], b2[4], b2[5] * 0.62, scale); (groups[key] = groups[key] || { q: b2[0], s: b2[1], f: [] }).f[b2[2]] = f; });
     var ans = {}; Object.keys(groups).forEach(function (k) { ans[k] = decide(groups[k].f, opts); ans[k].q = groups[k].q; ans[k].s = groups[k].s; });
-    return { ok: true, model: code.model, page: code.page, H: H, scale: scale, ans: ans, P: P };
+    return { ok: true, model: code.model, page: code.page, sid: sid, H: H, scale: scale, ans: ans, P: P };
   }
   /* decision on one question's option darkness values */
   function decide(f, opts) {
