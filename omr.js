@@ -32,7 +32,7 @@
     var cx = c.minx + c.bw / 2, cy = c.miny + c.bh / 2, s = (c.bw + c.bh) / 2, n = 0, i, j;
     for (i = -1; i <= 1; i++) for (j = -1; j <= 1; j++) n += dk(b, w, h, cx + i * 0.06 * s, cy + j * 0.06 * s);
     if (n < 7) return false;
-    var gap = 0; for (i = 0; i < 8; i++) { var a = i * Math.PI / 4; gap += dk(b, w, h, cx + Math.cos(a) * 0.265 * s, cy + Math.sin(a) * 0.265 * s); }
+    var gap = 0; for (i = 0; i < 8; i++) { var a = i * Math.PI / 4; gap += dk(b, w, h, cx + Math.cos(a) * 0.235 * s, cy + Math.sin(a) * 0.235 * s); }
     return gap <= 2;
   }
   function finders(b, w, h) { var M = Math.max(w, h); return comps(b, w, h, 30, M * 0.16).filter(function (c) { return c.fill > 0.3 && c.bw > M * 0.008 && c.bw / c.bh > 0.6 && c.bw / c.bh < 1.6; }).map(function (c) { return [Math.round(c.minx + c.bw / 2), Math.round(c.miny + c.bh / 2), c.bw, c.bh, +c.fill.toFixed(2), isFinder(b, w, h, c)]; }); }
