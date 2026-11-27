@@ -1010,9 +1010,14 @@
     });
     return out + '</div>' + xfoot(d, 1, 1) + '</div>';
   }
+  var SID = 0;
+  function sidStrip() {
+    if (!SID) return ''; var id = SID < 0 ? 1 : SID, bits = [1]; for (var k = 7; k >= 0; k--) bits.push((id >> k) & 1); bits.push(bits.reduce(function (a, b) { return a + b; }, 0) % 2);
+    return '<div class="xsd">' + bits.map(function (b, k) { return '<u data-b="' + k + '" class="' + (b ? 'on' : '') + '"></u>'; }).join('') + '</div>';
+  }
   function mk(model, i) {
     var bits = [1, model === 'B' ? 1 : 0, (i >> 2) & 1, (i >> 1) & 1, i & 1], par = bits.reduce(function (a, b) { return a + b; }, 0) % 2; bits.push(par);
-    return '<i class="xmk" data-m="tl"></i><i class="xmk" data-m="tr"></i><i class="xmk" data-m="bl"></i><i class="xmk big" data-m="br"></i><div class="xcd">' + bits.map(function (b, k) { return '<u data-b="' + k + '" class="' + (b ? 'on' : '') + '"></u>'; }).join('') + '</div>';
+    return '<i class="xmk" data-m="tl"></i><i class="xmk" data-m="tr"></i><i class="xmk" data-m="bl"></i><i class="xmk big" data-m="br"></i><div class="xcd">' + bits.map(function (b, k) { return '<u data-b="' + k + '" class="' + (b ? 'on' : '') + '"></u>'; }).join('') + '</div>' + sidStrip();
   }
   function sheetPages(x, d, model) {
     var secs = xsections(x, model), rows = [];
@@ -1033,19 +1038,21 @@
     return out;
   }
   function xdoc(x, d, model) { var h = examPages(x, d, model); if (x.ans === 'sheet') h += sheetPages(x, d, model); var i = 0; return h.replace(/%%MK%%/g, function () { return mk(model, Math.min(7, i++)); }); }
+  function xclass(x, d, n) { var h = ''; for (var id = 1; id <= n; id++) { SID = id; h += xdoc(x, d, 'A'); if (x.models > 1) h += xdoc(x, d, 'B'); } SID = 0; if (x.key) h += examKey(x, d); return h; }
   function xall(x, d) { var h = xdoc(x, d, 'A'); if (x.models > 1) h += xdoc(x, d, 'B'); if (x.key) h += examKey(x, d); return h; }
   function xsig(x) { return JSON.stringify([xitems(x, 'A'), x.models > 1 ? xitems(x, 'B') : 0, x.ans, x.total, x.sheets]).length + ':' + (function (t) { var h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h; })(JSON.stringify([xitems(x, 'A'), x.models > 1 ? xitems(x, 'B') : 0, x.ans, x.total, x.sheets])); }
   function xlayout(x, d) {
     var host = document.createElement('div'); host.style.cssText = 'position:fixed;left:-12000px;top:0;width:800px;visibility:hidden'; document.body.appendChild(host);
     var res = {};
     return (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
+      SID = -1;
       ['A', 'B'].slice(0, x.models > 1 ? 2 : 1).forEach(function (m) {
         host.innerHTML = xdoc(x, d, m); var pgs = [];
         host.querySelectorAll('.xp').forEach(function (pg) {
           var o = pg.getBoundingClientRect(), W = 800 / o.width, nb = pg.getAttribute('data-nb') === '1', P = { mk: {}, bub: [], crop: [], cd: [] };
           var cc = function (el) { var r = el.getBoundingClientRect(); return [(r.left + r.width / 2 - o.left) * W, (r.top + r.height / 2 - o.top) * W, r.width * W, r.height * W]; };
           pg.querySelectorAll('.xmk').forEach(function (e) { var c = cc(e); P.mk[e.dataset.m] = [c[0], c[1], c[2]]; });
-          pg.querySelectorAll('.xcd u').forEach(function (e) { var c = cc(e); P.cd.push([c[0], c[1], c[2]]); });
+          pg.querySelectorAll('.xcd u').forEach(function (e) { var c = cc(e); P.cd.push([c[0], c[1], c[2]]); }); P.sd = []; pg.querySelectorAll('.xsd u').forEach(function (e) { var c = cc(e); P.sd.push([c[0], c[1], c[2]]); });
           if (!nb || pg.querySelector('.xsg')) pg.querySelectorAll('.xl').forEach(function (e) { var c = cc(e); P.bub.push([+e.dataset.q, +e.dataset.s, +e.dataset.o, c[0], c[1], c[2] / 2]); });
           pg.querySelectorAll('.xq').forEach(function (e) { var r = e.getBoundingClientRect(); P.crop.push([+e.dataset.q, (r.left - o.left) * W, (r.top - o.top) * W, r.width * W, r.height * W]); });
           var ni = pg.querySelector('.xinfo'); if (ni) { var r2 = ni.getBoundingClientRect(); P.name = [(r2.left - o.left) * W, (r2.top - o.top) * W, r2.width * W, r2.height * W]; }
@@ -1053,11 +1060,11 @@
         });
         res[m] = pgs;
       });
-      host.remove(); return res;
+      SID = 0; host.remove(); return res;
     });
   }
   function xsaveLayout() { return xlayout(X, D).then(function (lo) { X.layout = lo; X.lsig = xsig(X); var i = EXAMS.map(function (z) { return z.id; }).indexOf(X.id), cp = JSON.parse(JSON.stringify(X)); if (i >= 0) EXAMS[i] = cp; else EXAMS.push(cp); saveExams(); }); }
-  window.__MX = { xdoc: xdoc, xlayout: xlayout, get EXAMS() { return EXAMS; }, saveExams: function () { saveExams(); }, xsections: xsections, xitems: xitems, xtitle: xtitle, xsig: xsig, fm: fm, txt: txt, esc: esc, L: L, $: $, toast: toast, loadH2C: loadH2C, D: function () { return D; }, get X() { return X; } };
+  window.__MX = { xclass: xclass, xdoc: xdoc, xlayout: xlayout, get EXAMS() { return EXAMS; }, saveExams: function () { saveExams(); }, xsections: xsections, xitems: xitems, xtitle: xtitle, xsig: xsig, fm: fm, txt: txt, esc: esc, L: L, $: $, toast: toast, loadH2C: loadH2C, D: function () { return D; }, get X() { return X; } };
   function chip(attr, v, on, label) { return '<button type="button" class="chip" ' + attr + '="' + v + '" aria-pressed="' + on + '">' + label + '</button>'; }
   function xcontrols() {
     var x = X, cp = xcaps(x);
@@ -1081,7 +1088,7 @@
     return '<div class="xlist"><b>اختباراتك:</b> ' + (EXAMS.length ? EXAMS.map(function (e) { return '<span class="xli' + (X && e.id === X.id ? ' on' : '') + '"><button type="button" class="chip" data-xo="' + e.id + '">' + esc(xtitle(e)) + '</button><button type="button" class="chip" data-xd="' + e.id + '" aria-label="حذف">×</button></span>'; }).join('') : '<span class="muted">لسه مفيش اختبار محفوظ</span>') + ' <button type="button" class="chip" id="xnew">+ اختبار جديد</button></div>';
   }
   views.exams = function () {
-    return '<section class="page-s"><h2>الاختبارات</h2><p class="sub">اعمل اختبار شهري على اللي اتشرح في الشهر، أو اختبار شامل على المنهج كله، بكل أنواع الأسئلة: اختر، صح وخطأ، أكمل، ومقالي. كل اختبار بيطلع باسمك وبرقمك وجاهز للطباعة، بنموذجين ونموذج إجابة.</p><div id="xl"></div><div class="ed"><div id="xc"></div><div class="prev"><div class="tabs" id="xtabs"></div><div id="xv"></div><button class="btn" id="xpr" style="margin-top:14px">اطبع الاختبار أو احفظ PDF</button> <button class="chip" id="xsv" style="margin-top:14px">💾 احفظ الاختبار</button><p class="muted" id="xmsg"></p></div></div></section>';
+    return '<section class="page-s"><h2>الاختبارات</h2><p class="sub">اعمل اختبار شهري على اللي اتشرح في الشهر، أو اختبار شامل على المنهج كله، بكل أنواع الأسئلة: اختر، صح وخطأ، أكمل، ومقالي. كل اختبار بيطلع باسمك وبرقمك وجاهز للطباعة، بنموذجين ونموذج إجابة.</p><div id="xl"></div><div class="ed"><div id="xc"></div><div class="prev"><div class="tabs" id="xtabs"></div><div id="xv"></div><button class="btn" id="xpr" style="margin-top:14px">اطبع الاختبار أو احفظ PDF</button> <button class="chip" id="xsv" style="margin-top:14px">💾 احفظ الاختبار</button><div class="panelw" style="margin-top:12px"><b>نسخة لكل طالب برقمه</b><p class="sub">كل ورقة بتتطبع برقم الطالب (كود مربعات صغير فوق). التصحيح بيوزّع الصفحات على الطلاب بالرقم، فلو صفحة ضاعت أو اتلخبطت ما تروحش لطالب غلط. اكتب رقم الطالب بالقلم جنب اسمه.</p><label>عدد الطلاب (حد أقصى ٦٠)<input id="xcn" type="number" min="1" max="60" value="30"></label> <button class="btn" id="xprc">اطبع نسخة لكل طالب</button></div><p class="muted" id="xmsg"></p></div></div></section>';
   };
   function examInit() {
     if (!X) { X = newExam(); var qs = /[?&]sh=(\d)/.exec(location.search); if (qs) X.sheets = +qs[1]; xgen(X); }
@@ -1126,7 +1133,8 @@
       document.querySelectorAll('[data-xd]').forEach(function (b) { b.onclick = function () { EXAMS = EXAMS.filter(function (z) { return z.id !== b.dataset.xd; }); saveExams(); if (X && X.id === b.dataset.xd) { X = newExam(); xgen(X); } draw(); }; });
     }
     $('#xsv').onclick = function () { xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ. تقدر تعمل اختبار تاني من "+ اختبار جديد".'; draw(false); }); };
-    $('#xpr').onclick = function () { xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ الاختبار تلقائي عشان تقدر تصححه من الصور.'; printPages(xall(X, D), false, false, 'x'); }); };
+    $('#xpr').onclick = function () { X.sidn = 0; xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ الاختبار تلقائي عشان تقدر تصححه من الصور.'; printPages(xall(X, D), false, false, 'x'); }); };
+    $('#xprc').onclick = function () { var n = Math.max(1, Math.min(60, parseInt($('#xcn').value, 10) || 0)); if (!n) return; X.sidn = n; xsaveLayout().then(function () { $('#xmsg').textContent = 'اتحفظ. هتتطبع نسخة لكل طالب برقمه (١ إلى ' + n + ') عشان التصحيح يوزّع الصفحات صح.'; printPages(xclass(X, D, n), false, false, 'x'); }); };
     draw();
   }
 
