@@ -316,7 +316,7 @@
   }
   var views = {
     games: function () {
-      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل، وفي سباق مع زمايلك.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button><button class="chip" data-g="race" aria-pressed="false">🏁 سباق</button><button class="chip" data-g="team" aria-pressed="false">🏎️ سباق الفرق</button><button class="chip" data-g="tug" aria-pressed="false">🪢 شد الحبل</button><button class="chip" data-g="pen" aria-pressed="false">⚽ ضربات الجزاء</button><button class="chip" data-g="bsk" aria-pressed="false">🏀 كرة السلة</button></div><div id="gbox" class="panelw"></div></section>';
+      return '<section class="page-s games"><h2>ألعاب تعليمية</h2><p class="sub">العب وراجع قوانين الأسس. مجانية ومفتوحة للكل، وفي سباق مع زمايلك.</p><div class="gtabs"><button class="chip" data-g="quiz" aria-pressed="true">⚡ تحدي السرعة</button><button class="chip" data-g="mem" aria-pressed="false">🧠 لعبة الذاكرة</button><button class="chip" data-g="race" aria-pressed="false">🏁 سباق</button><button class="chip" data-g="team" aria-pressed="false">🏎️ سباق الفرق</button><button class="chip" data-g="tug" aria-pressed="false">🪢 شد الحبل</button><button class="chip" data-g="pen" aria-pressed="false">⚽ ضربات الجزاء</button><button class="chip" data-g="bsk" aria-pressed="false">🏀 كرة السلة</button><button class="chip" data-g="maze" aria-pressed="false">🧩 المتاهة</button></div><div id="gbox" class="panelw"></div></section>';
     },
     guide: function () {
       return '<section class="page-s guide"><h2>شرح استخدام المنصة</h2><div class="vidbox"><video controls preload="metadata" playsinline src="https://htkwymimktphqmpbqffq.supabase.co/storage/v1/object/public/media/1-explainer2.mp4"></video></div><p class="sub">وبعده شرح تفاعلي قصير بيوريك الخطوات من الاختيار لحد استلام الملف.</p><div class="gwrap"><div class="gstage" id="gst"></div><div class="gcap" id="gcap"></div></div><div class="gbar"><div id="gbar"></div></div><div class="gctl"><button class="btn" id="gprev">السابق</button><button class="btn y" id="gplay">❚❚ إيقاف</button><button class="btn" id="gnext">التالي</button><button class="btn" id="gvoice" aria-pressed="false">🔊 قراءة صوتية</button></div><div class="gdots">' + GSTEPS.map(function (g, k) { return '<button type="button" aria-label="' + g[1] + '">' + g[0] + '</button>'; }).join('') + '</div><div class="row"><a class="btn y" href="#/editor">ابدأ صمّم مذكرتك</a></div></section>';
@@ -680,7 +680,81 @@
       }
       show();
     }
-    var cur = { pen: function () { shootGame('pen'); }, bsk: function () { shootGame('bsk'); }, quiz: quiz, mem: mem, race: race, team: function () { teamsGame('race'); }, tug: function () { teamsGame('tug'); } };
+    function maze() {
+      var N = 10, S = 40, W = N * S;
+      var wl = [], seen = [], r, c;
+      for (r = 0; r < N; r++) { wl.push([]); seen.push([]); for (c = 0; c < N; c++) { wl[r].push([1, 1, 1, 1]); seen[r].push(0); } }
+      var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1];
+      var st = [[0, 0]]; seen[0][0] = 1;
+      while (st.length) {
+        var cu = st[st.length - 1], nb = [];
+        for (var d = 0; d < 4; d++) { var nr = cu[0] + DR[d], nc = cu[1] + DC[d]; if (nr >= 0 && nc >= 0 && nr < N && nc < N && !seen[nr][nc]) nb.push(d); }
+        if (!nb.length) { st.pop(); continue; }
+        var dd = nb[Math.floor(Math.random() * nb.length)], r2 = cu[0] + DR[dd], c2 = cu[1] + DC[dd];
+        wl[cu[0]][cu[1]][dd] = 0; wl[r2][c2][(dd + 2) % 4] = 0; seen[r2][c2] = 1; st.push([r2, c2]);
+      }
+      var prev = {}, qu = [[0, 0]]; prev['0,0'] = null;
+      while (qu.length) { var p = qu.shift(); for (var e = 0; e < 4; e++) { if (wl[p[0]][p[1]][e]) continue; var a = p[0] + DR[e], b = p[1] + DC[e], k = a + ',' + b; if (!(k in prev)) { prev[k] = p; qu.push([a, b]); } } }
+      var path = [], x = [N - 1, N - 1]; while (x) { path.unshift(x); x = prev[x[0] + ',' + x[1]]; }
+      var gates = {}; [0.3, 0.55, 0.8].forEach(function (f) { var g = path[Math.floor(path.length * f)]; gates[g[0] + ',' + g[1]] = 1; });
+      var qs = shuffle(Q).slice(0, 12), qi = 0;
+      var pos = [0, 0], t0 = Date.now(), pen = 0, busy = null, done = false, solved = 0;
+      box.innerHTML = '<div class="gh"><span>اوصل للعلم 🏁. في 3 بوابات 🔒 وكل واحدة بسؤال</span><span>الوقت: <b id="mzt">0</b> ث</span><span>بوابات: <b id="mzg">0</b>/3</span></div><div class="mzw"><canvas id="mzc" width="' + W + '" height="' + W + '"></canvas></div><div class="mzpad"><button class="chip" data-m="0" aria-label="فوق">▲</button><div><button class="chip" data-m="3" aria-label="شمال">◀</button><button class="chip" data-m="2" aria-label="تحت">▼</button><button class="chip" data-m="1" aria-label="يمين">▶</button></div></div><div id="mzq"></div><div id="gfb" class="gfb"></div>';
+      var cv = $('#mzc'), cx = cv.getContext('2d');
+      function draw() {
+        cx.clearRect(0, 0, W, W); cx.fillStyle = '#f4f7fd'; cx.fillRect(0, 0, W, W);
+        cx.fillStyle = '#d8f5e3'; cx.fillRect((N - 1) * S + 3, (N - 1) * S + 3, S - 6, S - 6);
+        cx.font = (S * 0.6) + 'px sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+        cx.fillText('🏁', (N - 0.5) * S, (N - 0.5) * S + 2);
+        for (var g in gates) { var q2 = g.split(','); cx.fillStyle = '#fff3c4'; cx.fillRect(q2[1] * S + 3, q2[0] * S + 3, S - 6, S - 6); cx.fillStyle = '#000'; cx.fillText('🔒', (+q2[1] + 0.5) * S, (+q2[0] + 0.5) * S + 2); }
+        cx.strokeStyle = '#12307a'; cx.lineWidth = 4; cx.lineCap = 'round'; cx.beginPath();
+        for (var i = 0; i < N; i++) for (var j = 0; j < N; j++) {
+          var w = wl[i][j], X = j * S, Y = i * S;
+          if (w[0]) { cx.moveTo(X, Y); cx.lineTo(X + S, Y); }
+          if (w[3]) { cx.moveTo(X, Y); cx.lineTo(X, Y + S); }
+          if (i === N - 1 && w[2]) { cx.moveTo(X, Y + S); cx.lineTo(X + S, Y + S); }
+          if (j === N - 1 && w[1]) { cx.moveTo(X + S, Y); cx.lineTo(X + S, Y + S); }
+        }
+        cx.stroke();
+        cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse((pos[1] + 0.5) * S, (pos[0] + 0.5) * S + 11, 11, 5, 0, 0, 7); cx.fill();
+        var gr = cx.createRadialGradient((pos[1] + 0.5) * S - 4, (pos[0] + 0.5) * S - 5, 2, (pos[1] + 0.5) * S, (pos[0] + 0.5) * S, 13);
+        gr.addColorStop(0, '#ffe07a'); gr.addColorStop(1, '#e0a400'); cx.fillStyle = gr; cx.beginPath(); cx.arc((pos[1] + 0.5) * S, (pos[0] + 0.5) * S, 12, 0, 7); cx.fill();
+      }
+      function tm() { return (Date.now() - t0) / 1000 + pen; }
+      function ask() {
+        if (qi >= qs.length) qi = 0; var q = qs[qi++];
+        $('#mzq').innerHTML = '<div class="qtext gq">🔒 ' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div>';
+        $('#mzq').querySelectorAll('.gopt').forEach(function (b) {
+          b.onclick = function () {
+            if (+b.dataset.k === q.a) {
+              delete gates[busy]; busy = null; solved++; $('#mzg').textContent = solved; $('#mzq').innerHTML = ''; $('#gfb').innerHTML = '<b class="gy">صح! البوابة اتفتحت.</b>'; draw();
+            } else { pen += 10; $('#gfb').innerHTML = '<b class="gn">غلط. زاد 10 ثواني على وقتك، جرّب سؤال تاني.</b>'; ask(); }
+          };
+        });
+      }
+      function fin() {
+        done = true; clearTimers(); var tt = Math.round(tm() * 10) / 10, best = +localStorage.getItem('masarak_maze') || 0;
+        if (!best || tt < best) { best = tt; try { localStorage.setItem('masarak_maze', best); } catch (e) {} }
+        box.innerHTML = '<div class="gres"><h3>🏁 وصلت!</h3><div class="gscore">' + tt + ' ث</div><p class="sub">أحسن وقت ليك: ' + best + ' ث (والغلط بيزوّد 10 ثواني)</p><button class="btn y" id="gagain">متاهة جديدة</button></div>';
+        $('#gagain').onclick = maze;
+      }
+      function mv(d) {
+        if (busy || done || !$('#mzc')) return;
+        if (wl[pos[0]][pos[1]][d]) return;
+        pos = [pos[0] + DR[d], pos[1] + DC[d]]; draw();
+        if (pos[0] === N - 1 && pos[1] === N - 1) return fin();
+        var k = pos[0] + ',' + pos[1]; if (gates[k]) { busy = k; $('#gfb').innerHTML = ''; ask(); }
+      }
+      box.querySelectorAll('[data-m]').forEach(function (b) { b.onclick = function () { mv(+b.dataset.m); }; });
+      window.__mzk = function (ev) { var m = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3 }[ev.key]; if (m === undefined || !$('#mzc')) return; ev.preventDefault(); mv(m); };
+      document.removeEventListener('keydown', window.__mzk0); window.__mzk0 = window.__mzk; document.addEventListener('keydown', window.__mzk0);
+      var tx, ty; cv.addEventListener('touchstart', function (ev) { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; }, { passive: true });
+      cv.addEventListener('touchend', function (ev) { var dx = ev.changedTouches[0].clientX - tx, dy = ev.changedTouches[0].clientY - ty; if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return; mv(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0)); }, { passive: true });
+      every(function () { var t = $('#mzt'); if (t) t.textContent = Math.floor(tm()); }, 250);
+      window.__mzdbg = { path: path, gates: gates };
+      draw();
+    }
+    var cur = { pen: function () { shootGame('pen'); }, bsk: function () { shootGame('bsk'); }, quiz: quiz, mem: mem, race: race, team: function () { teamsGame('race'); }, tug: function () { teamsGame('tug'); }, maze: maze };
     document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { clearTimers(); document.querySelectorAll('[data-g]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); raceLeave(); cur[b.dataset.g](); }; });
     quiz();
   }
