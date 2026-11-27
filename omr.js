@@ -93,15 +93,16 @@
     if (bits.length < 6 || bits[0] !== 1) return { bad: bits }; var par = bits.slice(0, 5).reduce(function (a, b2) { return a + b2; }, 0) % 2; if (par !== bits[5]) return { bad: bits };
     return { model: bits[1] ? 'B' : 'A', page: bits[2] * 4 + bits[3] * 2 + bits[4], bits: bits };
   }
-  /* student ID strip: 10 squares [anchor 1, 8 id bits, parity]. 'none' = no strip printed (all squares white) */
+  /* student ID strip: 12 squares [anchor 1, 11 code bits]. Codewords are at least 4 bits apart, so up to 3 misread squares can never turn into another valid ID. 'none' = no strip printed (all squares white) */
+  var SIDT = null; function sidTable() { var t = [0]; for (var v = 1; v < 2048 && t.length <= 63; v++) { var ok = true; for (var i = 0; i < t.length; i++) { var x = v ^ t[i], c = 0; while (x) { c += x & 1; x >>= 1; } if (c < 4) { ok = false; break; } } if (ok) t.push(v); } return t; }
   function readSid(bin, w, h, H, P, scale) {
-    if (!P.sd || P.sd.length !== 10) return { st: 'none' };
+    if (!P.sd || P.sd.length !== 12) return { st: 'none' };
     var bits = P.sd.map(function (c) { return darkFrac(bin, w, h, H, c[0], c[1], c[2] * 0.25, scale) > 0.55 ? 1 : 0; });
     if (!bits.some(function (v) { return v; })) return { st: 'none' };
-    var par = bits.slice(0, 9).reduce(function (a, b2) { return a + b2; }, 0) % 2;
-    if (bits[0] !== 1 || par !== bits[9]) return { st: 'bad', bits: bits };
-    var id = 0; for (var i = 1; i <= 8; i++) id = id * 2 + bits[i];
-    return id > 0 ? { st: 'ok', id: id } : { st: 'bad', bits: bits };
+    if (bits[0] !== 1) return { st: 'bad', bits: bits };
+    var cw = 0; for (var i = 1; i <= 11; i++) cw = cw * 2 + bits[i];
+    SIDT = SIDT || sidTable(); var id = SIDT.indexOf(cw);
+    return id > 0 && id <= 60 ? { st: 'ok', id: id } : { st: 'bad', bits: bits };
   }
   /* image: {data: RGBA, width, height}; layout: {A:[pages], B:[pages]} */
   function readPage(img, layout, opts) {
