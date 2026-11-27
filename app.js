@@ -348,7 +348,7 @@
         '<label>الاسم<input name="n" required value="' + esc(u.name || D.name) + '"></label>' +
         '<label>رقم الموبايل<input name="p" required dir="ltr" inputmode="tel" value="' + esc(u.phone || D.phone) + '"></label>' +
         '<div class="lab">طريقة الدفع</div><div class="pick"><label class="chip"><input type="radio" name="m" value="محفظة إلكترونية" checked> محفظة إلكترونية</label><label class="chip"><input type="radio" name="m" value="تحويل بنكي أو إنستا"> تحويل بنكي أو إنستا</label></div>' +
-        '<div class="yb2">رقم التحويل هيتحط هنا قبل الإطلاق الحقيقي. في النموذج التجريبي مفيش دفع فعلي.</div>' +
+        '<div class="yb2"><b>أرقام التحويل</b><br>فودافون كاش: <b dir="ltr">01025645426</b><br>إنستا باي: <b dir="ltr">01147795940</b><br>في النموذج التجريبي مفيش دفع فعلي.</div>' +
         '<label>الرقم اللي هتحوّل منه<input name="f" required dir="ltr" inputmode="tel"></label>' +
         '<label>طريقة استلام الملفات<select name="d"><option>رابط تحميل في صفحة الطلبات</option><option>على واتساب</option></select></label>' +
         '<label>ملاحظات<textarea name="t" rows="3"></textarea></label><button class="btn y" type="submit">ابعت الطلب</button><p class="sub">بعد التحويل، من صفحة الطلبات دوس "ابعت صورة التحويل على واتساب" وابعت الصورة ورقم الطلب.</p></form>' +
@@ -398,7 +398,7 @@
   function planPanel() {
     var t = '<div class="panelw plan"><h3>اشتراكك</h3><p class="sub">التصفح والتصميم والمعاينة وكل بنك الأسئلة مفتوحين للكل. المقفول لحد الاشتراك: تحميل وطباعة PDF.</p><div class="plcs">' +
       planCard('n', 'الاشتراك الشهري', 'يفتح تحميل وطباعة المذكرات وبنك الأسئلة والاختبارات للصف اللي اشتركت فيه.', USER.plan || 'free', USER.until) + '</div>';
-    if (!live(USER.plan, USER.until)) t += '<div class="payl"><b>طرق الدفع</b><ul><li>إنستا باي: <b dir="ltr">01147795940</b></li><li>تحويل بنكي: هيتضاف قريبًا</li><li>فودافون كاش: هيتضاف قريبًا</li></ul><p class="sub">حوّل، وابعت الإيصال، واضغط "اطلب الاشتراك". بيتفعّل بعد التأكيد.</p></div>';
+    if (!live(USER.plan, USER.until)) t += '<div class="payl"><b>طرق الدفع</b><ul><li>إنستا باي: <b dir="ltr">01147795940</b></li><li>تحويل بنكي: هيتضاف قريبًا</li><li>فودافون كاش: <b dir="ltr">01025645426</b></li></ul><p class="sub">حوّل، وابعت الإيصال، واضغط "اطلب الاشتراك". بيتفعّل بعد التأكيد.</p></div>';
     return t + '</div>';
   }
   function viewer(mode, n) {
