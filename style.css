@@ -638,4 +638,4 @@ button,input,select,textarea{font-family:inherit}
 .xp .xf{inset-inline:62px;border-radius:10px 10px 0 0}
 
 .mzw{display:flex;justify-content:center;margin:10px 0}#mzc{width:100%;max-width:440px;height:auto;aspect-ratio:1;border-radius:14px;border:3px solid #12307a;touch-action:none;box-shadow:0 8px 20px rgba(18,48,122,.18)}.mzpad{display:flex;flex-direction:column;align-items:center;gap:6px;margin:8px 0;direction:ltr}.mzpad .chip{min-width:56px;min-height:48px;font-size:20px}.mzpad div{display:flex;gap:6px}
-.xsd{position:absolute;left:64px;top:21px;background:#fff;padding:2px 4px;display:flex;gap:4px;direction:ltr;z-index:6}.xsd u{display:block;width:20px;height:20px;border:3px solid #000;box-sizing:border-box;text-decoration:none}.xsd u.on{background:#000}
+.xsd{position:absolute;left:64px;top:22px;background:#fff;padding:2px 4px;display:flex;gap:2px;direction:ltr;z-index:6}.xsd u{display:block;width:17px;height:17px;border:3px solid #000;box-sizing:border-box;text-decoration:none}.xsd u.on{background:#000}
