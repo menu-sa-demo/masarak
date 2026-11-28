@@ -637,7 +637,7 @@
       reset(); return { el: S.el, reset: reset, shoot: shoot };
     }
     function bsk3d(m) {
-      var S = scene3(m, 900, 300, 0xdfeaff), T = S.T, sc = S.sc; S.cam.position.set(0, 2.3, 6.2); S.cam.lookAt(0, 2.5, -3); ground3(S, '#c98a4b', '#bd7e42', -14);
+      var S = scene3(m, 900, 300, 0xdfeaff), T = S.T, sc = S.sc; S.cam.position.set(0, 2.5, 5.2); S.cam.lookAt(0, 2.75, -3); ground3(S, '#c98a4b', '#bd7e42', -14);
       var HZ = -3.6, HY = 3.05, wh = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 }), og = new T.MeshStandardMaterial({ color: 0xe5481f, roughness: 0.4 });
       var wall = new T.Mesh(new T.BoxGeometry(60, 9, 1), new T.MeshStandardMaterial({ color: 0x2b3f6b })); wall.position.set(0, 4.5, -14); sc.add(wall);
       var pole = new T.Mesh(new T.CylinderGeometry(0.1, 0.1, 3.6, 12), new T.MeshStandardMaterial({ color: 0x555b66 })); pole.position.set(0, 1.8, HZ - 0.9); pole.castShadow = true; sc.add(pole);
@@ -646,10 +646,10 @@
       var sq = new T.Mesh(new T.BoxGeometry(0.7, 0.5, 0.07), new T.MeshStandardMaterial({ color: 0xe5481f })); sq.position.set(0, 3.35, HZ - 0.4); sc.add(sq); var sq2 = new T.Mesh(new T.BoxGeometry(0.58, 0.38, 0.08), new T.MeshStandardMaterial({ color: 0xffffff })); sq2.position.set(0, 3.35, HZ - 0.4); sc.add(sq2);
       var ring = new T.Mesh(new T.TorusGeometry(0.25, 0.021, 10, 36), og); ring.rotation.x = Math.PI / 2; ring.position.set(0, HY, HZ); ring.castShadow = true; sc.add(ring);
       var net = new T.Mesh(new T.CylinderGeometry(0.25, 0.15, 0.42, 16, 5, true), new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.7 })); net.position.set(0, HY - 0.21, HZ); sc.add(net);
-      var A = S.human('hb', 0xe5481f, 0x1b2a55, 1.15, 'ready') || S.actor('male', 2.4); A.obj.position.set(0, 0, 0.9); A.obj.rotation.y = Math.PI; A.play('idle');
+      var A = S.human('hb', 0xe5481f, 0x1b2a55, 1.15, 'ready') || S.actor('male', 2.4); A.obj.position.set(0, 0, 1.3); A.obj.rotation.y = Math.PI; A.play('idle');
       var ball = new T.Group(), bm = new T.Mesh(new T.SphereGeometry(0.2, 28, 20), new T.MeshStandardMaterial({ color: 0xe8742a, roughness: 0.7 })); bm.castShadow = true; ball.add(bm);
       var lm = new T.MeshStandardMaterial({ color: 0x1a1a1a }); [[0, 0, 0], [Math.PI / 2, 0, 0], [0, Math.PI / 2, 0]].forEach(function (r) { var t = new T.Mesh(new T.TorusGeometry(0.2, 0.006, 6, 32), lm); t.rotation.set(r[0], r[1], r[2]); ball.add(t); }); sc.add(ball);
-      var fly = null, SY = 1.45, SZ = 0.4;
+      var fly = null, SY = 2.2, SZ = 0.9;
       S.ups.push(function () { if (!fly) return; var n = performance.now() - fly.t0; if (n < 0) return; var t = Math.min(1, n / 900);
         if (n <= 900) { ball.position.set(fly.hx * t, SY + (HY + 0.15 - SY) * t + 1.5 * Math.sin(Math.PI * t), SZ + (HZ - SZ) * t); }
         else { var u = Math.min(1, (n - 900) / 700), yy = fly.ok ? HY + 0.1 - (HY - 0.2) * u * u : HY + 0.1 - (HY - 0.2) * u * u + Math.abs(Math.sin(u * 6)) * 0.5 * (1 - u); ball.position.set(fly.ok ? 0 : fly.hx + fly.s * 1.6 * u, Math.max(0.2, yy), fly.ok ? HZ + 0.1 * u : HZ + 0.6 * u); }
