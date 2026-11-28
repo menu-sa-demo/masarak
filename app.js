@@ -603,6 +603,7 @@
             'attack-kick-right': [K(0, PP(IDLE, { ua_l: [1, -.2, .2], ua_r: [1, -.2, -.2] }), 0, 0), K(.22, PP(IDLE, { th_r: [.05, -.8, -.7], ca_r: [0, -.35, -1], ua_l: [1, -.2, .4], ua_r: [1, -.3, -.3] }), -.15, 0), K(.38, PP(IDLE, { th_r: [.05, -.35, 1], ca_r: [0, -1, .7], ua_l: [1, -.2, -.3], ua_r: [1, -.2, .4] }), .2, 0), K(.8, PP(IDLE, { th_r: [.05, -.1, 1], ca_r: [0, -1, .3], ua_l: [1, -.2, -.3], ua_r: [1, -.2, .4] }), .15, 0)],
             jump: [K(0, READY, .1, -.08), K(.35, JUMP, 0, .15)],
             'emote-yes': [K(0, sym([.35, 1, 0], [.25, 1, 0], [.15, -1, 0], [0, -1, 0]), 0, 0), K(.25, sym([.5, .9, .1], [.3, 1, .1], [.15, -1, 0], [0, -.8, -.4]), 0, .2), K(.5, sym([.35, 1, 0], [.25, 1, 0], [.15, -1, 0], [0, -1, 0]), 0, 0)],
+            run: [K(0, PP(IDLE, { th_l: [0, -1, .75], ca_l: [0, -1, .2], th_r: [0, -1, -.6], ca_r: [0, -.45, -1], ua_l: [0, -1, -.6], la_l: [0, -.7, .4], ua_r: [0, -1, .6], la_r: [0, -.5, 1] }), .22, 0), K(.25, PP(IDLE, { th_r: [0, -1, .75], ca_r: [0, -1, .2], th_l: [0, -1, -.6], ca_l: [0, -.45, -1], ua_r: [0, -1, -.6], la_r: [0, -.7, .4], ua_l: [0, -1, .6], la_l: [0, -.5, 1] }), .22, .05), K(.5, PP(IDLE, { th_l: [0, -1, .75], ca_l: [0, -1, .2], th_r: [0, -1, -.6], ca_r: [0, -.45, -1], ua_l: [0, -1, -.6], la_l: [0, -.7, .4], ua_r: [0, -1, .6], la_r: [0, -.5, 1] }), .22, 0)],
             fall: [K(0, PL1, -.3, -.1), K(.7, sym([1, .3, 0], [1, .3, 0], [.1, -1, .2], [0, -1, -.3]), -1.45, 0)]
           };
           var cur = { p: PP(IDLE, {}), lean: 0, y: 0 }, seq = SEQ.idle, tt = 0, loop = true, from = null, bl = 1;
@@ -646,16 +647,24 @@
       var sq = new T.Mesh(new T.BoxGeometry(0.7, 0.5, 0.07), new T.MeshStandardMaterial({ color: 0xe5481f })); sq.position.set(0, 3.35, HZ - 0.4); sc.add(sq); var sq2 = new T.Mesh(new T.BoxGeometry(0.58, 0.38, 0.08), new T.MeshStandardMaterial({ color: 0xffffff })); sq2.position.set(0, 3.35, HZ - 0.4); sc.add(sq2);
       var ring = new T.Mesh(new T.TorusGeometry(0.25, 0.021, 10, 36), og); ring.rotation.x = Math.PI / 2; ring.position.set(0, HY, HZ); ring.castShadow = true; sc.add(ring);
       var net = new T.Mesh(new T.CylinderGeometry(0.25, 0.15, 0.42, 16, 5, true), new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.7 })); net.position.set(0, HY - 0.21, HZ); sc.add(net);
-      var A = S.human('hb', 0xe5481f, 0x1b2a55, 1.15, 'ready') || S.actor('male', 2.4); A.obj.position.set(0, 0, 1.3); A.obj.rotation.y = Math.PI; A.play('idle');
+      var A = S.human('hb', 0xe5481f, 0x1b2a55, 1.15, 'ready') || S.actor('male', 2.4), Z0 = 1.6, Z1 = -2.2; A.obj.rotation.y = Math.PI; A.obj.position.set(0, 0, Z0); A.play('idle');
       var ball = new T.Group(), bm = new T.Mesh(new T.SphereGeometry(0.2, 28, 20), new T.MeshStandardMaterial({ color: 0xe8742a, roughness: 0.7 })); bm.castShadow = true; ball.add(bm);
       var lm = new T.MeshStandardMaterial({ color: 0x1a1a1a }); [[0, 0, 0], [Math.PI / 2, 0, 0], [0, Math.PI / 2, 0]].forEach(function (r) { var t = new T.Mesh(new T.TorusGeometry(0.2, 0.006, 6, 32), lm); t.rotation.set(r[0], r[1], r[2]); ball.add(t); }); sc.add(ball);
-      var fly = null, SY = 2.2, SZ = 0.9;
-      S.ups.push(function () { if (!fly) return; var n = performance.now() - fly.t0; if (n < 0) return; var t = Math.min(1, n / 900);
-        if (n <= 900) { ball.position.set(fly.hx * t, SY + (HY + 0.15 - SY) * t + 1.5 * Math.sin(Math.PI * t), SZ + (HZ - SZ) * t); }
-        else { var u = Math.min(1, (n - 900) / 700), yy = fly.ok ? HY + 0.1 - (HY - 0.2) * u * u : HY + 0.1 - (HY - 0.2) * u * u + Math.abs(Math.sin(u * 6)) * 0.5 * (1 - u); ball.position.set(fly.ok ? 0 : fly.hx + fly.s * 1.6 * u, Math.max(0.2, yy), fly.ok ? HZ + 0.1 * u : HZ + 0.6 * u); }
-        ball.rotation.x -= 0.25; ball.rotation.z += 0.1; });
-      function reset() { fly = null; ball.position.set(0, SY, SZ); ball.rotation.set(0, 0, 0); A.play('idle'); }
-      function shoot(ok, side) { var s = [-1, 0, 1][side] || 1; A.play('jump', true); setTimeout(function () { fly = { t0: performance.now(), ok: ok, hx: ok ? 0 : s * 0.42 || 0.42, s: s || 1 }; }, 300); }
+      var run = null;
+      S.ups.push(function () {
+        if (!run) return; var n = performance.now() - run.t0; if (n < 0) return; var z = Z0, y = 0, u;
+        if (n < 1500) { u = n / 1500; z = Z0 + (Z1 - Z0) * u; ball.position.set(0.28, 0.3 + 0.85 * Math.abs(Math.sin(n / 135)), z - 0.3); }
+        else {
+          z = Z1; u = Math.min(1, (n - 1500) / 550); if (!run.j) { run.j = 1; A.play('jump', true); }
+          if (n < 2050) { y = 0.55 * Math.sin(Math.PI * u); var sx = 0.28, sy = 1.3, sz = Z1 - 0.3, tx = run.ok ? 0 : 0.42, ty = HY + 0.14; ball.position.set(sx + (tx - sx) * u, sy + (ty - sy) * u + 0.35 * Math.sin(Math.PI * u), sz + (HZ - sz) * u); }
+          else { if (!run.c) { run.c = 1; A.play(run.ok ? 'emote-yes' : 'idle'); } var u3 = Math.min(1, (n - 2050) / 700);
+            if (run.ok) ball.position.set(0, Math.max(0.2, HY + 0.1 - (HY - 0.2) * u3 * u3), HZ + 0.1 * u3);
+            else ball.position.set(0.42 + 1.4 * u3, Math.max(0.2, HY + 0.14 - (HY - 0.2) * u3 * u3 + Math.abs(Math.sin(u3 * 6)) * 0.5 * (1 - u3)), HZ + 0.8 * u3); }
+        }
+        A.obj.position.set(0, y, z); ball.rotation.x -= 0.2;
+      });
+      function reset() { run = null; A.obj.position.set(0, 0, Z0); ball.position.set(0.28, 1.0, Z0 - 0.3); ball.rotation.set(0, 0, 0); A.play('idle'); }
+      function shoot(ok) { A.play('run'); run = { t0: performance.now(), ok: ok }; }
       reset(); return { el: S.el, reset: reset, shoot: shoot };
     }
     function tug3d(m) {
@@ -692,7 +701,7 @@
           else if (!pen && !g3) { ball.style.left = ok ? '50%' : ['25%', '75%', '90%'][side]; ball.style.top = ok ? '26%' : '14%'; if (!ok) later(function () { ball.style.top = '78%'; }, 450); }
           $('#gsc').textContent = pen ? goals : pts;
           $('#gfb').innerHTML = (ok ? '<b class="gy">' + (pen ? 'جووول! ⚽' : 'سلة! 🏀' + (streak >= 3 ? ' ثلاثية' : '')) + '</b>' : '<b class="gn">' + (pen ? 'الحارس صدّها.' : 'ضاعت.') + '</b> <span>' + txt(q.s) + '</span>');
-          later(function () { i++; show(); }, ok ? 1300 : 2400);
+          later(function () { i++; show(); }, g3 && bsk ? 4200 : ok ? 1300 : 2400);
         }; });
       }
       function end() {
