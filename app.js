@@ -636,6 +636,28 @@
       function shoot(ok, side, done) { var tx = [-3, 0, 3][side], ty = [1.9, 0.8, 1.7][side], kx = ok ? (tx > 0 ? -2.2 : tx < 0 ? 2.2 : 3) : tx; kk.play('attack-kick-right', true); setTimeout(function () { kp.play('jump', true); fly = { t0: performance.now(), D: 800, tx: tx, ty: ty, kx: kx, done: done }; }, 350); }
       reset(); return { el: S.el, reset: reset, shoot: shoot };
     }
+    function bsk3d(m) {
+      var S = scene3(m, 900, 300, 0xdfeaff), T = S.T, sc = S.sc; S.cam.position.set(0, 2.3, 6.2); S.cam.lookAt(0, 2.5, -3); ground3(S, '#c98a4b', '#bd7e42', -14);
+      var HZ = -3.6, HY = 3.05, wh = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 }), og = new T.MeshStandardMaterial({ color: 0xe5481f, roughness: 0.4 });
+      var wall = new T.Mesh(new T.BoxGeometry(60, 9, 1), new T.MeshStandardMaterial({ color: 0x2b3f6b })); wall.position.set(0, 4.5, -14); sc.add(wall);
+      var pole = new T.Mesh(new T.CylinderGeometry(0.1, 0.1, 3.6, 12), new T.MeshStandardMaterial({ color: 0x555b66 })); pole.position.set(0, 1.8, HZ - 0.9); pole.castShadow = true; sc.add(pole);
+      var arm = new T.Mesh(new T.BoxGeometry(0.12, 0.12, 0.9), new T.MeshStandardMaterial({ color: 0x555b66 })); arm.position.set(0, 3.45, HZ - 0.45); sc.add(arm);
+      var bb = new T.Mesh(new T.BoxGeometry(1.9, 1.15, 0.06), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, transparent: true, opacity: 0.92 })); bb.position.set(0, 3.55, HZ - 0.4); bb.castShadow = true; sc.add(bb);
+      var sq = new T.Mesh(new T.BoxGeometry(0.7, 0.5, 0.07), new T.MeshStandardMaterial({ color: 0xe5481f })); sq.position.set(0, 3.35, HZ - 0.4); sc.add(sq); var sq2 = new T.Mesh(new T.BoxGeometry(0.58, 0.38, 0.08), new T.MeshStandardMaterial({ color: 0xffffff })); sq2.position.set(0, 3.35, HZ - 0.4); sc.add(sq2);
+      var ring = new T.Mesh(new T.TorusGeometry(0.25, 0.021, 10, 36), og); ring.rotation.x = Math.PI / 2; ring.position.set(0, HY, HZ); ring.castShadow = true; sc.add(ring);
+      var net = new T.Mesh(new T.CylinderGeometry(0.25, 0.15, 0.42, 16, 5, true), new T.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.7 })); net.position.set(0, HY - 0.21, HZ); sc.add(net);
+      var A = S.human('hb', 0xe5481f, 0x1b2a55, 1.15, 'ready') || S.actor('male', 2.4); A.obj.position.set(0, 0, 0.9); A.obj.rotation.y = Math.PI; A.play('idle');
+      var ball = new T.Group(), bm = new T.Mesh(new T.SphereGeometry(0.2, 28, 20), new T.MeshStandardMaterial({ color: 0xe8742a, roughness: 0.7 })); bm.castShadow = true; ball.add(bm);
+      var lm = new T.MeshStandardMaterial({ color: 0x1a1a1a }); [[0, 0, 0], [Math.PI / 2, 0, 0], [0, Math.PI / 2, 0]].forEach(function (r) { var t = new T.Mesh(new T.TorusGeometry(0.2, 0.006, 6, 32), lm); t.rotation.set(r[0], r[1], r[2]); ball.add(t); }); sc.add(ball);
+      var fly = null, SY = 1.45, SZ = 0.4;
+      S.ups.push(function () { if (!fly) return; var n = performance.now() - fly.t0; if (n < 0) return; var t = Math.min(1, n / 900);
+        if (n <= 900) { ball.position.set(fly.hx * t, SY + (HY + 0.15 - SY) * t + 1.5 * Math.sin(Math.PI * t), SZ + (HZ - SZ) * t); }
+        else { var u = Math.min(1, (n - 900) / 700), yy = fly.ok ? HY + 0.1 - (HY - 0.2) * u * u : HY + 0.1 - (HY - 0.2) * u * u + Math.abs(Math.sin(u * 6)) * 0.5 * (1 - u); ball.position.set(fly.ok ? 0 : fly.hx + fly.s * 1.6 * u, Math.max(0.2, yy), fly.ok ? HZ + 0.1 * u : HZ + 0.6 * u); }
+        ball.rotation.x -= 0.25; ball.rotation.z += 0.1; });
+      function reset() { fly = null; ball.position.set(0, SY, SZ); ball.rotation.set(0, 0, 0); A.play('idle'); }
+      function shoot(ok, side) { var s = [-1, 0, 1][side] || 1; A.play('jump', true); setTimeout(function () { fly = { t0: performance.now(), ok: ok, hx: ok ? 0 : s * 0.42 || 0.42, s: s || 1 }; }, 300); }
+      reset(); return { el: S.el, reset: reset, shoot: shoot };
+    }
     function tug3d(m) {
       var S = scene3(m, 900, 300, 0xcfe8ff), T = S.T, sc = S.sc; S.cam.position.set(0, 1.5, 4.4); S.cam.lookAt(0, 0.85, 0); ground3(S, '#7fae4d', '#76a548', 0);
       var mud = new T.Mesh(new T.CircleGeometry(1.5, 32), new T.MeshStandardMaterial({ color: 0x6b4a2b })); mud.rotation.x = -Math.PI / 2; mud.position.y = 0.01; mud.scale.set(1.5, 0.6, 1); sc.add(mud);
@@ -648,12 +670,12 @@
       return { el: S.el, set: function (d) { tgt = -d * 0.5; }, win: function (w) { (w === 0 ? A : B).play('emote-yes', true); (w === 0 ? B : A).play('fall', true); } };
     }
     function shootGame(kind, _l) {
-      var pen = kind === 'pen', qs = shuffle(Q).slice(0, 10), i = 0, goals = 0, streak = 0, pts = 0, g3 = null;
-      if (pen && !_l) return load3d(function (m) { window.__m3 = m; shootGame(kind, 1); });
-      if (pen && window.__m3) g3 = pen3d(window.__m3);
+      var pen = kind === 'pen', bsk = kind === 'bsk', qs = shuffle(Q).slice(0, 10), i = 0, goals = 0, streak = 0, pts = 0, g3 = null;
+      if ((pen || bsk) && !_l) return load3d(function (m) { window.__m3 = m; shootGame(kind, 1); });
+      if ((pen || bsk) && window.__m3) g3 = pen ? pen3d(window.__m3) : bsk3d(window.__m3);
       function scene(res, side) {
         var bx = res === 'goal' ? [20, 50, 80][side] : (res === 'miss' ? [8, 50, 92][side] : 50), by = pen ? (res === 'goal' || res === 'save' ? 24 : 12) : (res === 'goal' ? 22 : 8);
-        if (pen && g3) return '<div class="scn pen3"></div>';
+        if (g3) return '<div class="scn pen3"></div>';
         if (pen) return '<div class="scn pen"><div class="goalf"><span class="kp" id="kp" style="left:' + (res === 'save' ? [20, 50, 80][side] : [80, 20, 50][side]) + '%">🧤</span></div><span class="ball" id="ball" style="left:50%;top:78%">⚽</span></div>';
         return '<div class="scn bsk"><div class="bboard"><div class="ring"></div></div><span class="ball" id="ball" style="left:50%;top:78%">🏀</span></div>';
       }
@@ -667,7 +689,7 @@
           var ball = $('#ball'), kp = $('#kp'); if (g3) { g3.shoot(ok, side); }
           if (ok) { streak++; if (pen) goals++; else pts += streak >= 3 ? 3 : 2; } else streak = 0;
           if (pen && !g3) { var tx = [20, 50, 80][side]; ball.style.left = tx + '%'; ball.style.top = '26%'; if (kp) kp.style.left = (ok ? [80, 20, 50][side] : tx) + '%'; }
-          else if (!pen) { ball.style.left = ok ? '50%' : ['25%', '75%', '90%'][side]; ball.style.top = ok ? '26%' : '14%'; if (!ok) later(function () { ball.style.top = '78%'; }, 450); }
+          else if (!pen && !g3) { ball.style.left = ok ? '50%' : ['25%', '75%', '90%'][side]; ball.style.top = ok ? '26%' : '14%'; if (!ok) later(function () { ball.style.top = '78%'; }, 450); }
           $('#gsc').textContent = pen ? goals : pts;
           $('#gfb').innerHTML = (ok ? '<b class="gy">' + (pen ? 'جووول! ⚽' : 'سلة! 🏀' + (streak >= 3 ? ' ثلاثية' : '')) + '</b>' : '<b class="gn">' + (pen ? 'الحارس صدّها.' : 'ضاعت.') + '</b> <span>' + txt(q.s) + '</span>');
           later(function () { i++; show(); }, ok ? 1300 : 2400);
