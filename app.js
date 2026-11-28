@@ -504,7 +504,7 @@
           box.innerHTML = '<div class="gres"><h3>' + (all ? 'النتيجة النهائية' : 'خلصت أسئلتك. مستني الباقي...') + '</h3>' + board() + '<button class="btn y" id="rend">سباق جديد</button></div>';
           $('#rend').onclick = function () { raceLeave(); race(); };
         }
-        ch.on('presence', { event: 'join' }, function () { if (started && sidx) { var pl = players(); if (pl[0] && pl[0].id === uid) ch.send({ type: 'broadcast', event: 'start', payload: { idx: sidx } }); } })
+        ch.on('presence', { event: 'join' }, function () { if (started && qs) push(i >= qs.length); if (started && sidx) { var pl = players(); if (pl[0] && pl[0].id === uid) ch.send({ type: 'broadcast', event: 'start', payload: { idx: sidx } }); } })
           .on('presence', { event: 'sync' }, lobby)
           .on('broadcast', { event: 'start' }, function (m) { begin(m.payload.idx); })
           .on('broadcast', { event: 'score' }, function (m) { var p = m.payload; scores[p.id] = p; if (over) return; var l = $('#rlive'); if (l) l.innerHTML = board(); else if (qs && i >= qs.length) finish(); })
