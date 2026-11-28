@@ -1,4 +1,4 @@
-var C='masarak-v41',A=['./','index.html','style.css?v=79','data.js?v=79','app.js?v=79','omr.js?v=79','grade.js?v=79','impact.js?v=79','manifest.json'];
+var C='masarak-v41',A=['./','index.html','style.css?v=80','data.js?v=80','app.js?v=80','omr.js?v=80','grade.js?v=80','impact.js?v=80','manifest.json'];
 self.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(A)}).then(function(){return self.skipWaiting()}))});
 self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(n){return n!==C}).map(function(n){return caches.delete(n)}))}).then(function(){return self.clients.claim()}))});
 self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(function(r){var c=r.clone();caches.open(C).then(function(x){x.put(e.request,c)});return r}).catch(function(){return caches.match(e.request)}))});
