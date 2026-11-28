@@ -84,5 +84,5 @@
   function onHash() { if (location.hash.indexOf('#/impact') === 0) setTimeout(show, 0); }
   window.addEventListener('hashchange', onHash);
   window.__IM = { compute: compute, show: show };
-  if (document.readyState !== 'loading') setTimeout(onHash, 50); else document.addEventListener('DOMContentLoaded', function () { setTimeout(onHash, 50); });
+  var again = function () { if (location.hash.indexOf('#/impact') === 0 && !document.querySelector('.im')) show(); }; setTimeout(again, 500); setTimeout(again, 1500); setTimeout(again, 3000); if (document.readyState !== 'loading') setTimeout(onHash, 50); else document.addEventListener('DOMContentLoaded', function () { setTimeout(onHash, 50); });
 })();
