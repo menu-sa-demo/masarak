@@ -517,24 +517,24 @@
       box.innerHTML = '<div class="gh"><span>' + (tug ? 'شد الحبل: فريقين بيتبادلوا الأسئلة، كل إجابة صح بتشد الحبل ناحيتكم' : 'سباق الفرق: الفرق بتتبادل الأسئلة على نفس الشاشة، كل إجابة صح بتقدّم عربيتكم') + '</span></div>' + (tug ? '' : '<div class="rform"><span class="sub">عدد الفرق:</span><button class="chip" data-n="2" aria-pressed="true">٢</button><button class="chip" data-n="3" aria-pressed="false">٣</button><button class="chip" data-n="4" aria-pressed="false">٤</button></div>') + '<button class="btn y" id="tgo">ابدأ</button>';
       var N = 2; box.querySelectorAll('[data-n]').forEach(function (b) { b.onclick = function () { N = +b.dataset.n; box.querySelectorAll('[data-n]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); }; });
       $('#tgo').onclick = function () {
-        var t3 = null; if (tug && !window.__tl) { return load3d(function (m) { window.__m3 = m; window.__tl = 1; $('#tgo').onclick(); }); } if (tug && window.__m3) t3 = tug3d(window.__m3);
+        var t3 = null; if (!window.__tl) { return load3d(function (m) { window.__m3 = m; window.__tl = 1; $('#tgo').onclick(); }); } if (window.__m3) t3 = tug ? tug3d(window.__m3) : race3d(window.__m3, N, CL);
         var qs = shuffle(Q), qi = 0, pos = [], t = 0, goal = tug ? 4 : 8, done = false; for (var k = 0; k < N; k++) pos.push(0);
         function view() {
           if (tug && t3) return '<div class="tug"><span style="color:' + CL[0] + '">' + NM[0] + '</span><span style="color:' + CL[1] + '">' + NM[1] + '</span></div><div class="scn tug3"></div>';
-          if (tug) { var d = pos[1] - pos[0]; return '<div class="tug"><span style="color:' + CL[0] + '">' + NM[0] + '</span><div class="tbar"><i style="inset-inline-start:' + (50 + d * 11) + '%">🪢</i></div><span style="color:' + CL[1] + '">' + NM[1] + '</span></div>'; }
+          if (!tug && t3) return '<div class="tug">' + pos.map(function (p, k) { return '<span style="color:' + CL[k] + '">' + NM[k] + ': ' + p + '</span>'; }).join('') + '</div><div class="scn tug3"></div>'; if (tug) { var d = pos[1] - pos[0]; return '<div class="tug"><span style="color:' + CL[0] + '">' + NM[0] + '</span><div class="tbar"><i style="inset-inline-start:' + (50 + d * 11) + '%">🪢</i></div><span style="color:' + CL[1] + '">' + NM[1] + '</span></div>'; }
           return '<ol class="rb">' + pos.map(function (p, k) { return '<li class="lane' + (k === t ? ' me' : '') + '"><span class="ln" style="color:' + CL[k] + '">' + NM[k] + '</span><span class="trk"><i style="inset-inline-start:' + Math.round(p / goal * 88) + '%">🏎️</i><em>🏁</em></span><span><b>' + p + '</b></span></li>'; }).join('') + '</ol>';
         }
         function ask() {
           var q = qs[qi % qs.length]; qi++; window.__q = q;
-          box.innerHTML = view() + '<div class="gh"><span>الدور على: <b style="color:' + CL[t] + '">' + NM[t] + '</b></span></div><div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>'; if (t3) { $('.tug3').appendChild(t3.el); t3.set(pos[0] - pos[1]); }
+          box.innerHTML = view() + '<div class="gh"><span>الدور على: <b style="color:' + CL[t] + '">' + NM[t] + '</b></span></div><div class="qtext gq">' + txt(q.t) + '</div><div class="gopts">' + q.o.map(function (o, k) { return '<button class="gopt" data-k="' + k + '"><span class="lt">' + L[k] + '</span><span>' + txt(o) + '</span></button>'; }).join('') + '</div><div id="gfb" class="gfb"></div>'; if (t3) { $('.tug3').appendChild(t3.el); t3.set(tug ? pos[0] - pos[1] : pos, goal); }
           box.querySelectorAll('.gopt').forEach(function (b) { b.onclick = function () {
             var k = +b.dataset.k, ok = k === q.a; box.querySelectorAll('.gopt').forEach(function (x) { x.disabled = true; var xk = +x.dataset.k; if (xk === q.a) x.classList.add('ok'); else if (xk === k) x.classList.add('no'); });
-            if (ok) pos[t]++; if (t3) t3.set(pos[0] - pos[1]); $('#gfb').innerHTML = ok ? '<b class="gy">صح! الفريق اتقدم.</b>' : '<b class="gn">غلط.</b> <span>' + txt(q.s) + '</span>';
+            if (ok) pos[t]++; if (t3) t3.set(tug ? pos[0] - pos[1] : pos, goal); $('#gfb').innerHTML = ok ? '<b class="gy">صح! الفريق اتقدم.</b>' : '<b class="gn">غلط.</b> <span>' + txt(q.s) + '</span>';
             var win = tug ? (pos[0] - pos[1] >= goal ? 0 : pos[1] - pos[0] >= goal ? 1 : -1) : (pos[t] >= goal ? t : -1);
             later(function () { if (win >= 0) return fin(win); t = (t + 1) % N; ask(); }, ok ? 1100 : 2200);
           }; });
         }
-        function fin(w) { box.innerHTML = view() + '<div class="gres"><h3>🏆 ' + NM[w] + ' كسب!</h3><button class="btn y" id="tag">العب تاني</button></div>'; if (t3) { $('.tug3').appendChild(t3.el); t3.set(pos[0] - pos[1]); t3.win(w); } $('#tag').onclick = function () { teamsGame(mode); }; }
+        function fin(w) { box.innerHTML = view() + '<div class="gres"><h3>🏆 ' + NM[w] + ' كسب!</h3><button class="btn y" id="tag">العب تاني</button></div>'; if (t3) { $('.tug3').appendChild(t3.el); t3.set(tug ? pos[0] - pos[1] : pos, goal); t3.win(w); } $('#tag').onclick = function () { teamsGame(mode); }; }
         ask();
       };
     }
@@ -677,6 +677,23 @@
       var mid = new T.Mesh(new T.BoxGeometry(0.06, 0.02, 3), new T.MeshBasicMaterial({ color: 0xffffff })); mid.position.set(0, 0.02, 0); sc.add(mid);
       var tgt = 0; S.ups.push(function (dt) { asm.position.x += (tgt - asm.position.x) * Math.min(1, dt * 5); });
       return { el: S.el, set: function (d) { tgt = -d * 0.5; }, win: function (w) { (w === 0 ? A : B).play('emote-yes', true); (w === 0 ? B : A).play('fall', true); } };
+    }
+    function race3d(m, N, CL) {
+      var S = scene3(m, 900, 340, 0xcfe8ff), T = S.T, sc = S.sc; S.cam.position.set(0, 5.4, 7.4); S.cam.lookAt(0, 0, 0.3); ground3(S, '#6d7178', '#656970', 0);
+      var X0 = -5, X1 = 5, cars = [], tgt = [], clk = 0, wn = -1;
+      var fl = new T.Mesh(new T.BoxGeometry(0.3, 0.02, 1.8 * N), new T.MeshBasicMaterial({ color: 0xffffff })); fl.position.set(X1 + 0.9, 0.03, 0); sc.add(fl);
+      var st = new T.Mesh(new T.BoxGeometry(0.08, 0.02, 1.8 * N), new T.MeshBasicMaterial({ color: 0xffd23f })); st.position.set(X0 - 0.9, 0.03, 0); sc.add(st);
+      for (var k = 0; k < N; k++) {
+        var z = (k - (N - 1) / 2) * 1.8, c = new T.Group(), col = new T.Color(CL[k]);
+        if (k) { var ln = new T.Mesh(new T.BoxGeometry(12.5, 0.02, 0.05), new T.MeshBasicMaterial({ color: 0xffffff })); ln.position.set(0.2, 0.03, z - 0.9); sc.add(ln); }
+        var body = new T.Mesh(new T.BoxGeometry(1.5, 0.35, 0.8), new T.MeshStandardMaterial({ color: col, roughness: 0.4, metalness: 0.3 })); body.position.y = 0.4; body.castShadow = true; c.add(body);
+        var cab = new T.Mesh(new T.BoxGeometry(0.7, 0.3, 0.64), new T.MeshStandardMaterial({ color: 0xdff1ff, roughness: 0.1, metalness: 0.2 })); cab.position.set(-0.1, 0.72, 0); cab.castShadow = true; c.add(cab);
+        var sp = new T.Mesh(new T.BoxGeometry(0.12, 0.05, 0.9), new T.MeshStandardMaterial({ color: col })); sp.position.set(-0.72, 0.72, 0); c.add(sp);
+        var wh = []; [[0.5, 0.38], [0.5, -0.38], [-0.5, 0.38], [-0.5, -0.38]].forEach(function (p) { var w = new T.Mesh(new T.CylinderGeometry(0.22, 0.22, 0.16, 18), new T.MeshStandardMaterial({ color: 0x1b1b1b })); w.rotation.x = Math.PI / 2; w.position.set(p[0], 0.22, p[1]); w.castShadow = true; c.add(w); wh.push(w); });
+        c.position.set(X0, 0, z); sc.add(c); cars.push({ g: c, wh: wh }); tgt.push(X0);
+      }
+      S.ups.push(function (dt) { clk += dt; cars.forEach(function (o, k) { var dx = (tgt[k] - o.g.position.x) * Math.min(1, dt * 3); o.g.position.x += dx; o.wh.forEach(function (w) { w.rotation.y += dx * 4.5; }); o.g.position.y = k === wn ? Math.abs(Math.sin(clk * 6)) * 0.5 : 0; }); });
+      return { el: S.el, set: function (p, goal) { for (var k = 0; k < N; k++) tgt[k] = X0 + (p[k] / goal) * (X1 - X0); }, win: function (w) { wn = w; } };
     }
     function shootGame(kind, _l) {
       var pen = kind === 'pen', bsk = kind === 'bsk', qs = shuffle(Q).slice(0, 10), i = 0, goals = 0, streak = 0, pts = 0, g3 = null;
