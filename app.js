@@ -933,25 +933,7 @@
   function xest(x) { var t = 0; (x.gen || []).concat(x.custom || []).forEach(function (it) { t += XTM[it.k] || 1; }); return t; }
   function xcest(x) { var t = 0; (x.custom || []).forEach(function (it) { t += XTM[it.k] || 1; }); return t; }
   function xfit(x) {
-    var cap = xcaps(x), budget = Math.max(0, Math.floor(x.time * 0.9) - xcest(x)), base = { n: x.n, nt: x.nt, nf: x.nf, nm: x.nm || 0, ne: x.ne };
-    if (!(base.n + base.nt + base.nf + base.nm + base.ne)) base = { n: 6, nt: 3, nf: 3, nm: 1, ne: 2 };
-    var key = { n: ['mcq', 1.5], nt: ['tf', 1], nf: ['fill', 1.5], nm: ['match', 3], ne: ['essay', 6] };
-    var capOf = { n: cap.mcq, nt: cap.tf, nf: cap.fill, nm: cap.match, ne: cap.essay };
-    function est(c) { var t = 0; Object.keys(key).forEach(function (k) { t += c[k] * key[k][1]; }); return t; }
-    var best = { n: 0, nt: 0, nf: 0, nm: 0, ne: 0 };
-    for (var k = 0.02; k <= 30; k += 0.02) { var c = {}; Object.keys(key).forEach(function (f) { c[f] = Math.min(capOf[f], Math.round(base[f] * k)); }); if (est(c) <= budget) best = c; else break; }
-    while (est(best) + 1.5 <= budget && best.n < capOf.n) best.n++;
-    x.n = best.n; x.nt = best.nt; x.nf = best.nf; x.nm = best.nm; x.ne = best.ne; xgen(x);
-  }
-  function xtimebox(x) {
-    var e = xest(x), b = Math.floor(x.time * 0.9), msg = e > x.time ? '<b class="gn">الأسئلة محتاجة حوالي ' + fm(e) + ' دقيقة، وده أكتر من الزمن (' + x.time + '). اضغط "ظبّط الأسئلة على الزمن".</b>' : e < x.time * 0.6 ? 'الزمن واسع على الأسئلة دي. تقدر تزوّد أسئلة أو تضغط "ظبّط الأسئلة على الزمن".' : 'الزمن مناسب للأسئلة.';
-    return '<div class="lab">الزمن والأسئلة</div><div class="pick">' + [10, 20, 30, 45, 60, 90, 120].map(function (t) { return chip('data-xtm', t, x.time === t, t + ' د'); }).join('') + '</div><p class="muted" id="xtmi">الزمن المقدّر للأسئلة: حوالي <b>' + fm(e) + '</b> دقيقة من ' + x.time + ' (بنسيب ١٠٪ تقريبًا للمراجعة، يعني الأسئلة تتظبط على ' + b + '). التقدير تقريبي حسب نوع السؤال: اختر ١٫٥ د، صح وخطأ ١ د، أكمل ١٫٥ د، مزاوجة ٣ د، مقالي ٦ د. <br>' + msg + '</p><button type="button" class="chip" id="xfit" style="width:100%">⏱️ ظبّط الأسئلة على الزمن</button>';
-  }
-  var XTM = { mcq: 1.5, tf: 1, fill: 1.5, match: 3, essay: 6 };
-  function xest(x) { var t = 0; (x.gen || []).concat(x.custom || []).forEach(function (it) { t += XTM[it.k] || 1; }); return t; }
-  function xcest(x) { var t = 0; (x.custom || []).forEach(function (it) { t += XTM[it.k] || 1; }); return t; }
-  function xfit(x) {
-    var cap = xcaps(x), budget = Math.max(0, Math.floor(x.time * 0.9) - xcest(x)), base = { n: x.n, nt: x.nt, nf: x.nf, nm: x.nm || 0, ne: x.ne };
+    var cap = xcaps(x), budget = Math.max(0, Math.floor(x.time * 0.9) - xcest(x)), base = { n: 6, nt: 3, nf: 3, nm: 1, ne: 2 };
     if (!(base.n + base.nt + base.nf + base.nm + base.ne)) base = { n: 6, nt: 3, nf: 3, nm: 1, ne: 2 };
     var key = { n: ['mcq', 1.5], nt: ['tf', 1], nf: ['fill', 1.5], nm: ['match', 3], ne: ['essay', 6] };
     var capOf = { n: cap.mcq, nt: cap.tf, nf: cap.fill, nm: cap.match, ne: cap.essay };
@@ -1115,7 +1097,7 @@
       num('n', 'اختر الإجابة الصحيحة (متاح ' + cp.mcq + ')', cp.mcq) + num('nt', 'صح أو خطأ (متاح ' + cp.tf + ')', cp.tf) + num('nf', 'أكمل (متاح ' + cp.fill + ')', cp.fill) + num('nm', 'مزاوجة، كل سؤال ٤ عبارات (متاح ' + cp.match + ')', cp.match) + num('ne', 'أسئلة مقالية (متاح ' + cp.essay + ')', cp.essay) +
       '<div class="lab">الدرجة الكلية (بتتوزع على الأسئلة تلقائي)</div><div class="pick">' + [20, 40, 60, 100].map(function (t) { return chip('data-xtot', t, x.total === t, t); }).join('') + chip('data-xtot', '0', !x.total, 'يدوي') + '</div>' +
       '<div class="lab">الطالب بيجاوب فين؟ (للتصحيح من الصور)</div><div class="pick">' + chip('data-xans', 'paper', x.ans !== 'sheet', 'على ورقة الأسئلة نفسها') + chip('data-xans', 'sheet', x.ans === 'sheet', 'ورقة إجابة بدوائر منفصلة') + '</div>' +
-      (x.total ? '' : num('per', 'درجة السؤال (اختر، صح وخطأ، أكمل)', 10) + num('pe', 'درجة السؤال المقالي', 20)) + num('time', 'الزمن بالدقائق', 180) + xtimebox(x) + xtimebox(x) +
+      (x.total ? '' : num('per', 'درجة السؤال (اختر، صح وخطأ، أكمل)', 10) + num('pe', 'درجة السؤال المقالي', 20)) + num('time', 'الزمن بالدقائق', 180) + xtimebox(x) +
       '<div class="lab">حجم الاختبار على الورق</div><div class="pick">' + chip('data-xsh', '0', !x.sheets, 'تلقائي') + chip('data-xsh', '1', x.sheets === 1, 'ورقة واحدة') + chip('data-xsh', '2', x.sheets === 2, 'ورقتين') + '</div>' + '<div class="lab">النماذج</div><div class="pick">' + chip('data-xmd', '1', x.models === 1, 'نموذج واحد') + chip('data-xmd', '2', x.models === 2, 'نموذجين (أ و ب) بترتيب مختلف') + '</div>' +
       '<div class="lab">نموذج الإجابة</div><div class="pick">' + chip('data-xkey', '1', x.key, 'اطبعه مع الاختبار') + chip('data-xkey', '0', !x.key, 'من غير') + '</div>' +
       '<button type="button" class="chip" id="xre" style="margin-top:12px;width:100%">🔀 أسئلة مختلفة من نفس الدروس</button>' +
@@ -1152,8 +1134,6 @@
       c.querySelectorAll('[data-xsh]').forEach(function (b) { b.onclick = function () { X.sheets = +b.dataset.xsh; draw(); }; });
       c.querySelectorAll('[data-xmd]').forEach(function (b) { b.onclick = function () { X.models = +b.dataset.xmd; draw(); }; });
       c.querySelectorAll('[data-xkey]').forEach(function (b) { b.onclick = function () { X.key = b.dataset.xkey === '1'; draw(); }; });
-      c.querySelectorAll('[data-xtm]').forEach(function (b) { b.onclick = function () { X.time = +b.dataset.xtm; xfit(X); draw(); }; });
-      $('#xfit').onclick = function () { xfit(X); draw(); };
       c.querySelectorAll('[data-xtm]').forEach(function (b) { b.onclick = function () { X.time = +b.dataset.xtm; xfit(X); draw(); }; });
       $('#xfit').onclick = function () { xfit(X); draw(); };
       $('#xre').onclick = function () { X.seed += 13; xgen(X); draw(false); };
